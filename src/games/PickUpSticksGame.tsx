@@ -1,4 +1,6 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+
+import { segmentsOverlap } from "./mechanics";
 
 type Stick = {
   id: number;
@@ -20,14 +22,18 @@ const palette = [
 ];
 
 function createSticks(): Stick[] {
-  return Array.from({ length: 18 }, (_, i) => {
-    const tone = palette[i % palette.length];
+  const tones = Array.from({ length: 18 }, (_, i) => palette[i % palette.length]);
+  for (let i = tones.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [tones[i], tones[j]] = [tones[j], tones[i]];
+  }
+  return tones.map((tone, i) => {
     return {
       id: i,
-      x: 23 + ((i * 37) % 54),
-      y: 20 + ((i * 53) % 55),
-      length: 46 + (i % 4) * 4,
-      angle: -65 + ((i * 31) % 130),
+      x: 32 + Math.random() * 36,
+      y: 40 + Math.random() * 20,
+      length: 38 + Math.random() * 9,
+      angle: Math.random() * 180,
       color: tone.color,
       points: tone.points,
       removed: false,
@@ -35,13 +41,9 @@ function createSticks(): Stick[] {
   });
 }
 
-function angleDiff(a: number, b: number) {
-  let d = Math.abs(a - b) % 180;
-  if (d > 90) d = 180 - d;
-  return d;
-}
-
 export default function PickUpSticksGame() {
+  const boardRef = useRef<HTMLDivElement>(null);
+  const [hint, setHint] = useState<number | null>(null);
   const [sticks, setSticks] = useState<Stick[]>(createSticks);
   const [score, setScore] = useState(0);
   const [mistakes, setMistakes] = useState(0);
@@ -54,6 +56,7 @@ export default function PickUpSticksGame() {
 
   const reset = () => {
     setSticks(createSticks());
+    setHint(null);
     setScore(0);
     setMistakes(0);
     setStreak(0);
@@ -63,14 +66,38 @@ export default function PickUpSticksGame() {
   };
 
   const isBlocked = (stick: Stick) => {
+    const board = boardRef.current;
+    const rect = board ? { width: board.clientWidth, height: board.clientHeight } : null;
+    if (!rect) return true;
+    const segment = (item: Stick) => {
+      const angle = item.angle * Math.PI / 180;
+      const half = item.length / 100 * rect.width / 2;
+      const x = item.x / 100 * rect.width;
+      const y = item.y / 100 * rect.height;
+      return [{ x: x - Math.cos(angle) * half, y: y - Math.sin(angle) * half },
+        { x: x + Math.cos(angle) * half, y: y + Math.sin(angle) * half }];
+    };
     return sticks.some((other) => {
-      if (other.removed || other.id <= stick.id || other.id === stick.id) return false;
-      const dx = Math.abs(other.x - stick.x);
-      const dy = Math.abs(other.y - stick.y);
-      const close = dx < 17 && dy < 17;
-      const crossing = angleDiff(other.angle, stick.angle) > 16;
-      return close && crossing;
+      if (other.removed || other.id <= stick.id) return false;
+      const [a, b] = segment(stick);
+      const [c, d] = segment(other);
+      return segmentsOverlap(a, b, c, d);
     });
+  };
+
+  const collect = (stick: Stick) => {
+    if (stick.removed) return;
+    if (isBlocked(stick)) {
+      setMistakes((value) => value + 1);
+      setStreak(0);
+      setMessage("That stick is underneath another. Clear the one above first.");
+      return;
+    }
+    setSticks((current) => current.map((item) => item.id === stick.id ? { ...item, removed: true } : item));
+    setHint(null);
+    setScore((value) => value + stick.points);
+    setStreak((value) => value + 1);
+    setMessage(stick.points === 50 ? "Purple stick! +50 points." : `Clean pickup! +${stick.points} points.`);
   };
 
   const startDrag = (event: React.PointerEvent<HTMLDivElement>, stick: Stick) => {
@@ -82,6 +109,7 @@ export default function PickUpSticksGame() {
       return;
     }
 
+    if (!event.isPrimary || dragging !== null) return;
     const rect = event.currentTarget.parentElement?.getBoundingClientRect();
     if (!rect) return;
     setDragging(stick.id);
@@ -94,22 +122,17 @@ export default function PickUpSticksGame() {
     if (dragging !== stick.id || !origin) return;
     const dx = event.clientX - origin.x;
     const dy = event.clientY - origin.y;
-    event.currentTarget.style.transform = `translate(${dx}px, ${dy}px) rotate(${stick.angle}deg)`;
+    event.currentTarget.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) rotate(${stick.angle}deg)`;
   };
 
   const finishDrag = (event: React.PointerEvent<HTMLDivElement>, stick: Stick) => {
     if (dragging !== stick.id || !origin) return;
 
     const distance = Math.hypot(event.clientX - origin.x, event.clientY - origin.y);
-    event.currentTarget.style.transform = `rotate(${stick.angle}deg)`;
+    event.currentTarget.style.transform = `translate(-50%, -50%) rotate(${stick.angle}deg)`;
 
-    if (distance > 90) {
-      setSticks((current) =>
-        current.map((item) => (item.id === stick.id ? { ...item, removed: true } : item))
-      );
-      setScore((value) => value + stick.points);
-      setStreak((value) => value + 1);
-      setMessage(stick.points === 50 ? "Rare purple stick collected!" : "Clean pickup.");
+    if (distance > Math.min(90, (boardRef.current?.clientWidth ?? 600) * 0.15)) {
+      collect(stick);
     } else {
       setMessage("Drag the stick farther away to collect it.");
     }
@@ -142,39 +165,49 @@ export default function PickUpSticksGame() {
             </div>
           ))}
         </div>
-        <div className="panel-card compact">
+        <div className="panel-card compact" role="status" aria-live="polite">
           <span className="status-dot" />
-          <p>{cleared ? "Pile cleared. Perfect finish." : message}</p>
+          <p>{cleared ? `Pile cleared! ${score} points / ${mistakes === 0 ? "Perfect finish." : `${mistakes} mistakes. Try for a clean round!`}` : message}</p>
         </div>
-        <button className="secondary-button" onClick={reset}>Restart pile</button>
+        <button className="secondary-button" disabled={cleared} onClick={() => {
+          const exposed = activeSticks.find((stick) => !isBlocked(stick));
+          if (exposed) { setHint(exposed.id); setMessage("The highlighted stick is free. Drag it away or focus it and press Enter."); }
+        }}>Show a free stick</button>
+        <button className="secondary-button" onClick={reset}>New random pile</button>
       </aside>
 
       <div className="play-column">
-        <div className="sticks-board">
+        <div className="sticks-board" ref={boardRef}>
           <div className="floor-label">PICK-UP STICKS</div>
-          {sticks.map((stick) => (
+          {activeSticks.map((stick) => (
             <div
               key={stick.id}
-              className={`stick ${stick.removed ? "removed" : ""}`}
+              className={`stick ${hint === stick.id ? "hinted" : ""}`}
               style={{
                 left: `${stick.x}%`,
                 top: `${stick.y}%`,
                 width: `${stick.length}%`,
                 background: stick.color,
-                transform: `rotate(${stick.angle}deg)`,
+                transform: `translate(-50%, -50%) rotate(${stick.angle}deg)`,
                 zIndex: stick.id + 1,
               }}
               onPointerDown={(event) => startDrag(event, stick)}
               onPointerMove={(event) => moveDrag(event, stick)}
               onPointerUp={(event) => finishDrag(event, stick)}
-              onPointerCancel={(event) => finishDrag(event, stick)}
+              onPointerCancel={(event) => {
+                event.currentTarget.style.transform = `translate(-50%, -50%) rotate(${stick.angle}deg)`;
+                setDragging(null); setOrigin(null);
+              }}
+              onKeyDown={(event) => {
+                if ((event.key === "Enter" || event.key === " ") && !event.repeat) { event.preventDefault(); collect(stick); }
+              }}
               role="button"
               tabIndex={0}
               aria-label={`Stick worth ${stick.points} points`}
             />
           ))}
         </div>
-        <p className="control-hint">Tip: sticks drawn later sit above earlier sticks. Clear the top layer first.</p>
+        <p className="control-hint">Drag a top stick away to collect it. Keyboard: Tab to a stick, then Enter or Space to lift. Need help? Show a free stick.</p>
       </div>
     </section>
   );

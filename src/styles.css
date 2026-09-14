@@ -501,7 +501,7 @@ a:focus-visible {
   height: 11px;
   border: 2px solid rgba(43,38,31,0.25);
   border-radius: 8px;
-  transform-origin: 0 50%;
+  transform-origin: 50% 50%;
   box-shadow: 0 4px 5px rgba(60,45,35,0.22);
   cursor: grab;
   touch-action: none;
@@ -700,4 +700,43 @@ a:focus-visible {
     scroll-behavior: auto !important;
     transition: none !important;
   }
+}
+
+/* Keep the action close to the controls on small screens. */
+.shot-controls, .foot-controls {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 18px 0 0;
+}
+.shot-controls label { flex: 1; font-size: .85rem; color: var(--muted); }
+.shot-controls strong { float: right; color: var(--ink); }
+input[type="range"] { display: block; width: 100%; accent-color: var(--green); margin-top: 12px; }
+.foot-controls button { flex: 1; background: var(--panel); min-height: 52px; }
+kbd { font: inherit; font-size: .8em; opacity: .7; margin-left: 8px; }
+button:disabled { cursor: not-allowed; opacity: .5; }
+.pace-control { display: grid; gap: 8px; font-weight: 700; font-size: .85rem; }
+.pace-control select { padding: 12px; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; font: inherit; width: 100%; }
+.round-cue { padding: 16px; background: var(--panel); border: 1px solid var(--line); }
+.round-cue strong { font-size: .95rem; }
+.round-cue progress { display: block; width: 100%; height: 8px; margin-top: 12px; accent-color: var(--green); }
+.beanbag b { display: grid; place-items: center; height: 100%; color: white; text-shadow: 0 1px 3px #000; }
+.stick.hinted { outline: 3px solid #fffdf0; outline-offset: 4px; }
+[tabindex]:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid var(--blue); outline-offset: 4px; }
+@media (max-width: 980px) {
+  .play-column { grid-row: 1; }
+  .game-layout { gap: 20px; }
+}
+@media (max-width: 720px) {
+  .game-header { padding-top: 20px; gap: 14px; }
+  .game-layout { padding-top: 20px; }
+  .game-panel { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .game-panel > .panel-card:first-child, .game-panel > .compact, .game-panel > .stat-grid { grid-column: 1 / -1; }
+  .stat-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .stat-grid div { padding: 10px; }
+  .sticks-board, .five-stones-board { min-height: 360px; }
+  .beanbag { width: 48px; height: 46px; }
+  .air-stone { width: 56px; height: 48px; }
+  .shot-controls { flex-wrap: wrap; gap: 12px; }
+  .shot-controls .primary-button { width: 100%; }
 }

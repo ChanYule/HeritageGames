@@ -32,6 +32,7 @@ export default function FiveStonesGame() {
   const [progress, setProgress] = useState(0);
   const [message, setMessage] = useState("Press Toss, collect the right number, then catch.");
   const [selectedThisThrow, setSelectedThisThrow] = useState<number[]>([]);
+  const [pace, setPace] = useState("practice");
   const timerRef = useRef<number | null>(null);
 
   const sequence = stageSequences[stage - 1];
@@ -69,10 +70,11 @@ export default function FiveStonesGame() {
     setProgress(0);
     setMessage(`Collect exactly ${target} stone${target > 1 ? "s" : ""}, then catch.`);
 
-    let p = 0;
+    const started = performance.now();
+    const duration = pace === "practice" ? 3200 : 2100;
     clearTimer();
     timerRef.current = window.setInterval(() => {
-      p += 2.15;
+      const p = Math.min(100, (performance.now() - started) / duration * 100);
       setProgress(p);
       if (p >= 100) {
         clearTimer();
@@ -88,14 +90,14 @@ export default function FiveStonesGame() {
       setMessage("Toss the main stone first.");
       return;
     }
-    if (selectedThisThrow.includes(id)) return;
+    if (stones.find((stone) => stone.id === id)?.collected || selectedThisThrow.includes(id)) return;
     if (selectedThisThrow.length >= target) {
       setMessage(`This throw needs exactly ${target} stone${target > 1 ? "s" : ""}.`);
       return;
     }
 
     setSelectedThisThrow((current) => [...current, id]);
-    setMessage("Good. Catch the falling stone before it lands.");
+    setMessage(selectedThisThrow.length + 1 === target ? "Ready! Catch on the way down." : `Collect ${target - selectedThisThrow.length - 1} more, then catch.`);
   };
 
   const catchStone = () => {
@@ -104,6 +106,10 @@ export default function FiveStonesGame() {
       return;
     }
 
+    if (progress < 50) {
+      setMessage("Wait until the stone starts falling to catch it.");
+      return;
+    }
     clearTimer();
 
     if (selectedThisThrow.length !== target) {
@@ -154,6 +160,19 @@ export default function FiveStonesGame() {
     }
   };
 
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.repeat || (event.target instanceof HTMLElement && event.target.matches("input, select, textarea"))) return;
+      if (["1", "2", "3", "4"].includes(event.key)) { event.preventDefault(); collectStone(Number(event.key) - 1); }
+      if (event.code === "Space" && !(event.target instanceof HTMLButtonElement)) {
+        event.preventDefault();
+        if (inAir) catchStone(); else toss();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
+
   const tossY = inAir
     ? 72 - Math.sin((Math.min(progress, 100) / 100) * Math.PI) * 58
     : 72;
@@ -179,11 +198,17 @@ export default function FiveStonesGame() {
           <div><span>Clean catches</span><strong>{successes}</strong></div>
         </div>
 
-        <div className="panel-card compact">
+        <div className="panel-card compact" role="status" aria-live="polite">
           <span className="status-dot" />
           <p>{message}</p>
         </div>
 
+        <label className="pace-control">Pace
+          <select value={pace} disabled={inAir} onChange={(event) => setPace(event.target.value)}>
+            <option value="practice">Practice - generous timing</option>
+            <option value="challenge">Challenge - faster toss</option>
+          </select>
+        </label>
         <button className="primary-button" onClick={toss} disabled={inAir || complete}>
           {complete ? "Sequence complete" : inAir ? "Stone in air..." : "Toss stone"}
         </button>
@@ -192,13 +217,18 @@ export default function FiveStonesGame() {
       </aside>
 
       <div className="play-column">
-        <div className="five-stones-board">
+        <div className="round-cue">
+          <strong>{complete ? "All four stages mastered!" : inAir ? `${selectedThisThrow.length} / ${target} collected / ${progress < 50 ? "Rising" : "Catch now"}` : `Stage ${stage} / Collect ${target} per toss`}</strong>
+          <progress aria-label="Toss progress" max={100} value={progress} />
+        </div>
+        <div className="five-stones-board" tabIndex={0} aria-label="Five stones play area">
           <div className="floor-label">FIVE STONES</div>
 
           <button
             className={`air-stone ${inAir ? "active" : ""}`}
             style={{ top: `${tossY}%` }}
             onClick={catchStone}
+            disabled={!inAir}
             aria-label="Catch airborne stone"
           >
             <span />
@@ -215,13 +245,13 @@ export default function FiveStonesGame() {
               disabled={stone.collected}
               aria-label={`Ground stone ${index + 1}`}
             >
-              <span />
+              <span><b>{index + 1}</b></span>
             </button>
           ))}
         </div>
 
         <p className="control-hint">
-          Toss, tap the required ground stones, then tap the airborne stone to catch it.
+          Keyboard: 1-4 to collect; Space to toss or catch when the board is focused. Toss, tap the required ground stones, then tap the airborne stone to catch it.
         </p>
       </div>
     </section>

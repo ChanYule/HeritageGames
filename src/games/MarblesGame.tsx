@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { randomMarblePositions, shotVelocity } from "./mechanics";
+
 type Marble = {
   id: number;
   x: number;
@@ -19,13 +21,12 @@ const RING = { x: WIDTH / 2, y: HEIGHT / 2, radius: 175 };
 function createMarbles(): Marble[] {
   const targets: Marble[] = [];
   const colors = ["#d96f46", "#2f7282", "#d6a23d", "#7c6355", "#67864a", "#bd5c72"];
-  for (let i = 0; i < 7; i++) {
-    const angle = (Math.PI * 2 * i) / 7;
-    const radius = i === 0 ? 0 : 78;
+  const positions = randomMarblePositions();
+  for (let i = 0; i < positions.length; i++) {
     targets.push({
       id: i,
-      x: RING.x + Math.cos(angle) * radius,
-      y: RING.y + Math.sin(angle) * radius,
+      x: RING.x + positions[i].x,
+      y: RING.y + positions[i].y,
       vx: 0,
       vy: 0,
       radius: 18,
@@ -52,13 +53,18 @@ function createMarbles(): Marble[] {
 
 export default function MarblesGame() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const marblesRef = useRef<Marble[]>(createMarbles());
+  const [initialMarbles] = useState(createMarbles);
+  const marblesRef = useRef<Marble[]>(initialMarbles);
   const draggingRef = useRef(false);
+  const movingRef = useRef(false);
   const pointerRef = useRef({ x: 0, y: 0 });
   const animationRef = useRef<number | null>(null);
 
   const [score, setScore] = useState(0);
   const [shots, setShots] = useState(0);
+  const [scoringShots, setScoringShots] = useState(0);
+  const [aim, setAim] = useState(-90);
+  const [power, setPower] = useState(65);
   const [captured, setCaptured] = useState(0);
   const [message, setMessage] = useState("Drag the white shooter backwards, then release.");
   const [moving, setMoving] = useState(false);
@@ -67,9 +73,12 @@ export default function MarblesGame() {
     marblesRef.current = createMarbles();
     setScore(0);
     setShots(0);
+    setScoringShots(0);
+    draggingRef.current = false;
     setCaptured(0);
     setMessage("Drag the white shooter backwards, then release.");
     setMoving(false);
+    movingRef.current = false;
   };
 
   const getCanvasPoint = (event: PointerEvent | React.PointerEvent<HTMLCanvasElement>) => {
@@ -183,17 +192,17 @@ export default function MarblesGame() {
       });
     };
 
-    const update = () => {
+    const update = (dt: number) => {
       const marbles = marblesRef.current;
       let anyMoving = false;
 
       marbles.forEach((m) => {
         if (m.captured) return;
 
-        m.x += m.vx;
-        m.y += m.vy;
-        m.vx *= 0.985;
-        m.vy *= 0.985;
+        m.x += m.vx * dt;
+        m.y += m.vy * dt;
+        m.vx *= Math.pow(0.985, dt);
+        m.vy *= Math.pow(0.985, dt);
 
         if (Math.abs(m.vx) < 0.02) m.vx = 0;
         if (Math.abs(m.vy) < 0.02) m.vy = 0;
@@ -256,7 +265,8 @@ export default function MarblesGame() {
         }
       }
 
-      if (!anyMoving && moving) {
+      if (!anyMoving && movingRef.current) {
+        movingRef.current = false;
         let newlyCaptured = 0;
         marbles.forEach((m) => {
           if (!m.target || m.captured) return;
@@ -268,6 +278,7 @@ export default function MarblesGame() {
         });
 
         if (newlyCaptured > 0) {
+          setScoringShots((value) => value + 1);
           const bonus = newlyCaptured > 1 ? newlyCaptured * 50 : 0;
           setCaptured((value) => value + newlyCaptured);
           setScore((value) => value + newlyCaptured * 100 + bonus);
@@ -283,20 +294,31 @@ export default function MarblesGame() {
         }
 
         setMoving(false);
+    movingRef.current = false;
       }
 
-      draw();
-      animationRef.current = requestAnimationFrame(update);
     };
 
-    animationRef.current = requestAnimationFrame(update);
+    let previous = performance.now();
+    let accumulator = 0;
+    const frame = (time: number) => {
+      accumulator += Math.min(time - previous, 50);
+      previous = time;
+      while (accumulator >= 1000 / 60) {
+        update(1);
+        accumulator -= 1000 / 60;
+      }
+      draw();
+      animationRef.current = requestAnimationFrame(frame);
+    };
+    animationRef.current = requestAnimationFrame(frame);
     return () => {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
   }, [moving]);
 
   const onPointerDown = (event: React.PointerEvent<HTMLCanvasElement>) => {
-    if (moving) return;
+    if (movingRef.current || captured >= 7 || !event.isPrimary) return;
     const point = getCanvasPoint(event);
     const shooter = marblesRef.current.find((m) => !m.target);
     if (!shooter) return;
@@ -327,16 +349,30 @@ export default function MarblesGame() {
       return;
     }
 
-    const scale = 0.09;
-    shooter.vx = dx * scale;
-    shooter.vy = dy * scale;
+    const velocity = shotVelocity(dx, dy);
+    shooter.vx = velocity.x;
+    shooter.vy = velocity.y;
     setShots((value) => value + 1);
     setMoving(true);
+    movingRef.current = true;
+    setMessage("Shot in motion...");
+  };
+
+  const shootWithControls = () => {
+    if (movingRef.current || captured >= 7) return;
+    const shooter = marblesRef.current.find((m) => !m.target)!;
+    const radians = aim * Math.PI / 180;
+    shooter.vx = Math.cos(radians) * power / 100 * 16.2;
+    shooter.vy = Math.sin(radians) * power / 100 * 16.2;
+    draggingRef.current = false;
+    movingRef.current = true;
+    setMoving(true);
+    setShots((value) => value + 1);
     setMessage("Shot in motion...");
   };
 
   const complete = captured >= 7;
-  const accuracy = useMemo(() => (shots === 0 ? 0 : Math.round((captured / shots) * 100)), [captured, shots]);
+  const accuracy = useMemo(() => (shots === 0 ? 0 : Math.round((scoringShots / shots) * 100)), [scoringShots, shots]);
 
   return (
     <section className="game-layout">
@@ -355,11 +391,11 @@ export default function MarblesGame() {
           <div><span>Captured</span><strong>{captured}/7</strong></div>
           <div><span>Accuracy</span><strong>{accuracy}%</strong></div>
         </div>
-        <div className="panel-card compact">
+        <div className="panel-card compact" role="status" aria-live="polite">
           <span className="status-dot" />
           <p>{complete ? "Round complete. Great control." : message}</p>
         </div>
-        <button className="secondary-button" onClick={reset}>Restart round</button>
+        <button className="secondary-button" onClick={reset}>New random round</button>
       </aside>
 
       <div className="play-column">
@@ -371,10 +407,16 @@ export default function MarblesGame() {
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
-            onPointerCancel={onPointerUp}
+            onPointerCancel={() => { draggingRef.current = false; }}
+            aria-label="Marbles ring. Drag the white marble to shoot, or use the aim and power controls below."
           />
         </div>
-        <p className="control-hint">Mouse or touch: drag backwards from the white marble, then release.</p>
+        <div className="shot-controls">
+          <label>Aim <strong>{aim} degrees</strong><input aria-label="Aim" type="range" min="-180" max="180" value={aim} onChange={(event) => setAim(Number(event.target.value))} /></label>
+          <label>Power <strong>{power}%</strong><input aria-label="Power" type="range" min="15" max="100" value={power} onChange={(event) => setPower(Number(event.target.value))} /></label>
+          <button className="primary-button" disabled={moving || complete} onClick={shootWithControls}>{moving ? "Rolling..." : "Shoot"}</button>
+        </div>
+        <p className="control-hint">Aim -90 degrees points up; 0 degrees points right. Mouse or touch: drag backwards from the white marble, then release.</p>
       </div>
     </section>
   );

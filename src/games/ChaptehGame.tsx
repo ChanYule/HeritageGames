@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
+import { canKick } from "./mechanics";
+
 type Chapteh = {
   x: number;
   y: number;
@@ -16,12 +18,18 @@ export default function ChaptehGame() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const chaptehRef = useRef<Chapteh>({ x: WIDTH / 2, y: 160, vx: 1.2, vy: 0, radius: 22 });
   const runningRef = useRef(false);
+  const rallyRef = useRef(0);
   const animationRef = useRef<number | null>(null);
   const lastTimeRef = useRef(performance.now());
 
   const [running, setRunning] = useState(false);
   const [rally, setRally] = useState(0);
-  const [best, setBest] = useState(0);
+  const [best, setBest] = useState(() => {
+    try { return Math.max(0, Number(localStorage.getItem("heritage-chapteh-best")) || 0); } catch { return 0; }
+  });
+  useEffect(() => {
+    try { localStorage.setItem("heritage-chapteh-best", String(best)); } catch { /* Play remains available without storage. */ }
+  }, [best]);
   const [leftKicks, setLeftKicks] = useState(0);
   const [rightKicks, setRightKicks] = useState(0);
   const [message, setMessage] = useState("Start a rally, then use A / D or tap the left / right side.");
@@ -32,6 +40,7 @@ export default function ChaptehGame() {
 
   const start = () => {
     resetBall();
+    rallyRef.current = 0;
     setRally(0);
     setLeftKicks(0);
     setRightKicks(0);
@@ -50,7 +59,7 @@ export default function ChaptehGame() {
   const kick = (side: "left" | "right") => {
     if (!runningRef.current) return;
     const c = chaptehRef.current;
-    const inKickZone = c.y > GROUND - 130 && c.y < GROUND - 8;
+    const inKickZone = canKick(c.y, c.vy, GROUND);
     const onCorrectHalf =
       side === "left" ? c.x < WIDTH / 2 + 55 : c.x > WIDTH / 2 - 55;
 
@@ -63,11 +72,9 @@ export default function ChaptehGame() {
     c.vy = -11.1;
     c.vx += (side === "left" ? 1.35 : -1.35) - centerOffset * 0.5;
 
-    setRally((value) => {
-      const next = value + 1;
-      setBest((bestValue) => Math.max(bestValue, next));
-      return next;
-    });
+    rallyRef.current += 1;
+    setRally(rallyRef.current);
+    setBest((value) => Math.max(value, rallyRef.current));
 
     if (side === "left") setLeftKicks((value) => value + 1);
     else setRightKicks((value) => value + 1);
@@ -77,6 +84,8 @@ export default function ChaptehGame() {
 
   useEffect(() => {
     const keyHandler = (event: KeyboardEvent) => {
+      if (event.repeat || (event.target instanceof HTMLElement && event.target.matches("input, textarea, select"))) return;
+      if (["a", "d", "arrowleft", "arrowright"].includes(event.key.toLowerCase())) event.preventDefault();
       if (event.key.toLowerCase() === "a" || event.key === "ArrowLeft") kick("left");
       if (event.key.toLowerCase() === "d" || event.key === "ArrowRight") kick("right");
     };
@@ -116,7 +125,12 @@ export default function ChaptehGame() {
       ctx.fillStyle = "rgba(134,83,71,0.14)";
       ctx.fillRect(WIDTH / 2, GROUND - 118, WIDTH / 2, 118);
 
-      ctx.fillStyle = "#625749";
+      const ready = runningRef.current && canKick(c.y, c.vy, GROUND);
+      ctx.fillStyle = ready ? "#315941" : "#625749";
+      ctx.font = "700 22px system-ui";
+      ctx.textAlign = "center";
+      ctx.fillText(ready ? "KICK NOW" : runningRef.current ? "Wait for the drop" : "Ready for a rally?", WIDTH / 2, 42);
+      ctx.textAlign = "left";
       ctx.font = "600 15px system-ui";
       ctx.fillText("LEFT FOOT", 26, GROUND - 24);
       ctx.fillText("RIGHT FOOT", WIDTH - 130, GROUND - 24);
@@ -164,7 +178,7 @@ export default function ChaptehGame() {
         c.vy += 0.34 * dt;
         c.x += c.vx * dt;
         c.y += c.vy * dt;
-        c.vx *= 0.998;
+        c.vx *= Math.pow(0.998, dt);
 
         if (c.x < 28) {
           c.x = 28;
@@ -177,7 +191,7 @@ export default function ChaptehGame() {
 
         if (c.y >= GROUND - 2) {
           c.y = GROUND - 2;
-          stop(rally);
+          stop(rallyRef.current);
         }
       }
 
@@ -189,7 +203,7 @@ export default function ChaptehGame() {
     return () => {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
-  }, [rally]);
+  }, []);
 
   const handleCanvasTap = (event: React.PointerEvent<HTMLCanvasElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -211,7 +225,7 @@ export default function ChaptehGame() {
           <div><span>Left kicks</span><strong>{leftKicks}</strong></div>
           <div><span>Right kicks</span><strong>{rightKicks}</strong></div>
         </div>
-        <div className="panel-card compact">
+        <div className="panel-card compact" role="status" aria-live="polite">
           <span className="status-dot" />
           <p>{message}</p>
         </div>
@@ -227,7 +241,12 @@ export default function ChaptehGame() {
             width={WIDTH}
             height={HEIGHT}
             onPointerDown={handleCanvasTap}
+            aria-label="Chapteh court. Kick as the falling chapteh enters the shaded zone."
           />
+        </div>
+        <div className="foot-controls">
+          <button className="secondary-button" disabled={!running} onClick={() => kick("left")}>Left foot <kbd>A / Left</kbd></button>
+          <button className="secondary-button" disabled={!running} onClick={() => kick("right")}>Right foot <kbd>D / Right</kbd></button>
         </div>
         <p className="control-hint">Keyboard: A / Left Arrow and D / Right Arrow. Touch: tap the matching half.</p>
       </div>
