@@ -1,0 +1,1 @@
+{"root":["./src/App.tsx","./src/main.tsx","./src/types.ts","./src/components/GameShell.tsx","./src/games/ChaptehGame.tsx","./src/games/FiveStonesGame.tsx","./src/games/MarblesGame.tsx","./src/games/PickUpSticksGame.tsx"],"errors":true,"version":"5.8.3"}
