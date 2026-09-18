@@ -182,7 +182,7 @@ export default function FiveStonesGame() {
   const sequenceLabel = sequence.join(" + ");
 
   return (
-    <section className="game-layout">
+    <section className="game-layout five-stones-layout">
       <aside className="game-panel">
         <InstructionSteps
           title="Toss, collect, then catch"
@@ -197,10 +197,10 @@ export default function FiveStonesGame() {
         />
 
         <div className="stat-grid">
-          <div><span>Score</span><strong>{score}</strong></div>
+          <div><span>Score</span><strong key={score} className="stat-value-pop">{score}</strong></div>
           <div><span>Stage</span><strong>{stage}/4</strong></div>
           <div><span>Throws</span><strong>{throws}</strong></div>
-          <div><span>Clean catches</span><strong>{successes}</strong></div>
+          <div><span>Clean catches</span><strong key={successes} className="stat-value-pop">{successes}</strong></div>
         </div>
 
         <div className="panel-card compact" role="status" aria-live="polite">
@@ -230,7 +230,13 @@ export default function FiveStonesGame() {
           <strong>{complete ? "All four stages mastered!" : inAir ? `${selectedThisThrow.length} / ${target} collected / ${progress < 50 ? "Rising" : "Catch now"}` : `Stage ${stage} / Collect ${target} per toss`}</strong>
           <progress aria-label="Toss progress" max={100} value={progress} />
         </div>
-        <div className="five-stones-board active-play-frame" tabIndex={0} aria-label="Five stones play area">
+        <div className="mobile-game-toolbar mobile-five-stones-toolbar" aria-label="Mobile Five Stones controls">
+          <button className="mobile-game-control" onClick={toss} disabled={inAir || complete}>
+            {complete ? "Complete" : inAir ? "Stone in air" : "Toss stone"}
+          </button>
+          <button className="mobile-game-control secondary" onClick={reset}>Restart</button>
+        </div>
+        <div className={`five-stones-board active-play-frame ${inAir ? "is-tossing" : ""} ${inAir && progress >= 50 ? "catch-window" : ""} ${complete ? "is-complete" : ""}`} tabIndex={0} aria-label="Five stones play area">
           <div className="floor-label">FIVE STONES</div>
 
           <button

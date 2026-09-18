@@ -24,11 +24,15 @@ const WIDTH = 900;
 const HEIGHT = 560;
 const RING = { x: WIDTH / 2, y: HEIGHT / 2, radius: 175 };
 const PLAYER_COLORS = ["#2d6d79", "#a84f3e"] as const;
+const PLAYER_DETAILS = [
+  { base: "#2d6d79", glow: "#d5f0ec", accent: "#9ee3d3" },
+  { base: "#a84f3e", glow: "#ffe4d6", accent: "#efb08f" },
+] as const;
 const TURN_SECONDS = 30;
 
 function createMarbles(difficulty: Difficulty): Marble[] {
   const targets: Marble[] = [];
-  const colors = ["#d96f46", "#2f7282", "#d6a23d", "#7c6355", "#67864a", "#bd5c72"];
+  const colors = ["#d96f46", "#2f7282", "#d6a23d", "#7c6355", "#67864a", "#bd5c72", "#8f78c8", "#3f8c72"];
   const positions = randomMarblePositions(Math.random, difficulty);
 
   for (let i = 0; i < positions.length; i++) {
@@ -97,8 +101,6 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
   const [scores, setScores] = useState<[number, number]>([0, 0]);
   const [captures, setCaptures] = useState<[number, number]>([0, 0]);
   const [shots, setShots] = useState<[number, number]>([0, 0]);
-  const [aim, setAim] = useState(-90);
-  const [power, setPower] = useState(65);
   const [message, setMessage] = useState("Player 1 starts. Drag the shooter backwards and release.");
   const [moving, setMoving] = useState(false);
   const [gameOver, setGameOver] = useState(false);
@@ -195,6 +197,31 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    const drawShooterDetails = (marble: Marble) => {
+      const detail = PLAYER_DETAILS[activePlayerRef.current];
+      ctx.shadowColor = "transparent";
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = detail.glow;
+      ctx.beginPath();
+      ctx.arc(marble.x, marble.y, marble.radius + 5, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = detail.accent;
+      if (activePlayerRef.current === 0) {
+        ctx.beginPath();
+        ctx.arc(marble.x, marble.y, marble.radius * 0.58, Math.PI * 0.2, Math.PI * 1.75);
+        ctx.stroke();
+      } else {
+        ctx.beginPath();
+        ctx.moveTo(marble.x - marble.radius * 0.48, marble.y - marble.radius * 0.48);
+        ctx.lineTo(marble.x + marble.radius * 0.48, marble.y + marble.radius * 0.48);
+        ctx.moveTo(marble.x + marble.radius * 0.48, marble.y - marble.radius * 0.48);
+        ctx.lineTo(marble.x - marble.radius * 0.48, marble.y + marble.radius * 0.48);
+        ctx.stroke();
+      }
+    };
+
     const draw = () => {
       ctx.clearRect(0, 0, WIDTH, HEIGHT);
 
@@ -226,7 +253,7 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
       ctx.stroke();
 
       ctx.fillStyle = "rgba(255,250,240,0.88)";
-      ctx.fillRect(18, 18, 208, 46);
+      ctx.fillRect(18, 18, 220, 46);
       ctx.fillStyle = PLAYER_COLORS[activePlayerRef.current];
       ctx.font = "800 17px system-ui";
       ctx.fillText(gameOverRef.current ? "ROUND COMPLETE" : `PLAYER ${activePlayerRef.current + 1} TURN`, 32, 47);
@@ -264,6 +291,19 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
 
       marbles.forEach((marble) => {
         if (marble.captured) return;
+        const speed = Math.hypot(marble.vx, marble.vy);
+        if (speed > 0.8) {
+          ctx.save();
+          ctx.globalAlpha = Math.min(0.28, speed / 45);
+          ctx.strokeStyle = marble.target ? marble.color : PLAYER_COLORS[activePlayerRef.current];
+          ctx.lineWidth = Math.max(3, marble.radius * 0.55);
+          ctx.lineCap = "round";
+          ctx.beginPath();
+          ctx.moveTo(marble.x - marble.vx * 2.4, marble.y - marble.vy * 2.4);
+          ctx.lineTo(marble.x, marble.y);
+          ctx.stroke();
+          ctx.restore();
+        }
         ctx.save();
         ctx.shadowColor = "rgba(0,0,0,0.25)";
         ctx.shadowBlur = 8;
@@ -286,12 +326,7 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
         ctx.fill();
 
         if (!marble.target) {
-          ctx.shadowColor = "transparent";
-          ctx.strokeStyle = "#fffaf0";
-          ctx.lineWidth = 4;
-          ctx.beginPath();
-          ctx.arc(marble.x, marble.y, marble.radius + 5, 0, Math.PI * 2);
-          ctx.stroke();
+          drawShooterDetails(marble);
         }
 
         ctx.shadowColor = "transparent";
@@ -307,54 +342,53 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
     const finishTurn = () => {
       movingRef.current = false;
       setMoving(false);
-      const currentPlayer = activePlayerRef.current;
-      let newlyCaptured = 0;
 
+      let capturedThisTurn = 0;
       marblesRef.current.forEach((marble) => {
         if (!marble.target || marble.captured) return;
         const distance = Math.hypot(marble.x - RING.x, marble.y - RING.y);
         if (distance - marble.radius > RING.radius) {
           marble.captured = true;
-          newlyCaptured += 1;
+          capturedThisTurn += 1;
         }
       });
 
-      if (newlyCaptured > 0) {
-        const bonus = newlyCaptured > 1 ? newlyCaptured * 50 : 0;
-        const gained = newlyCaptured * 100 + bonus;
-        const nextScores: [number, number] = [...scoresRef.current] as [number, number];
+      if (capturedThisTurn > 0) {
+        const player = activePlayerRef.current;
         const nextCaptures: [number, number] = [...capturesRef.current] as [number, number];
-        nextScores[currentPlayer] += gained;
-        nextCaptures[currentPlayer] += newlyCaptured;
-        scoresRef.current = nextScores;
+        const nextScores: [number, number] = [...scoresRef.current] as [number, number];
+        nextCaptures[player] += capturedThisTurn;
+        nextScores[player] += capturedThisTurn * 100 + (capturedThisTurn > 1 ? capturedThisTurn * 50 : 0);
         capturesRef.current = nextCaptures;
-        totalCapturedRef.current += newlyCaptured;
-        setScores(nextScores);
+        scoresRef.current = nextScores;
+        totalCapturedRef.current += capturedThisTurn;
         setCaptures(nextCaptures);
-      }
-
-      const shooter = marblesRef.current.find((marble) => !marble.target);
-      if (shooter) {
-        shooter.x = Math.min(Math.max(shooter.x, 60), WIDTH - 60);
-        shooter.y = Math.min(Math.max(shooter.y, 60), HEIGHT - 60);
+        setScores(nextScores);
+        setMessage(
+          capturedThisTurn > 1
+            ? `Player ${player + 1} captures ${capturedThisTurn} marbles and earns a combo bonus.`
+            : `Player ${player + 1} captures 1 marble.`,
+        );
+      } else {
+        setMessage(`No capture this turn. Pass to Player ${activePlayerRef.current === 0 ? 2 : 1}.`);
       }
 
       if (totalCapturedRef.current >= targetCount) {
         gameOverRef.current = true;
         setGameOver(true);
-        const [p1, p2] = scoresRef.current;
-        if (p1 === p2) setMessage(`Tie game. Both players finish on ${p1} points.`);
-        else setMessage(`Player ${p1 > p2 ? 1 : 2} wins with ${Math.max(p1, p2)} points.`);
+        const [firstScore, secondScore] = scoresRef.current;
+        if (firstScore === secondScore) {
+          setMessage(`All marbles are out. It's a draw at ${firstScore} points each.`);
+        } else {
+          const winner = firstScore > secondScore ? 1 : 2;
+          setMessage(`All marbles are out. Player ${winner} wins the match.`);
+        }
         return;
       }
 
-      const nextPlayer = (currentPlayer === 0 ? 1 : 0) as Player;
-      syncPlayer(nextPlayer);
-      setMessage(
-        newlyCaptured > 0
-          ? `Player ${currentPlayer + 1} captured ${newlyCaptured}. Pass to Player ${nextPlayer + 1}.`
-          : `No marble captured. Pass to Player ${nextPlayer + 1}.`,
-      );
+      const next = (activePlayerRef.current === 0 ? 1 : 0) as Player;
+      syncPlayer(next);
+      setTimeLeft(TURN_SECONDS);
     };
 
     const update = (dt: number) => {
@@ -473,7 +507,8 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
     const shooter = marblesRef.current.find((marble) => !marble.target);
     if (!shooter) return;
 
-    if (Math.hypot(point.x - shooter.x, point.y - shooter.y) <= shooter.radius + 20) {
+    const touchPadding = event.pointerType === "touch" ? 58 : 20;
+    if (Math.hypot(point.x - shooter.x, point.y - shooter.y) <= shooter.radius + touchPadding) {
       draggingRef.current = true;
       pointerRef.current = point;
       event.currentTarget.setPointerCapture(event.pointerId);
@@ -504,11 +539,6 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
     takeShot(velocity.x, velocity.y);
   };
 
-  const shootWithControls = () => {
-    const radians = (aim * Math.PI) / 180;
-    takeShot(Math.cos(radians) * (power / 100) * 16.2, Math.sin(radians) * (power / 100) * 16.2);
-  };
-
   const totalCaptured = captures[0] + captures[1];
   const remaining = targetCount - totalCaptured;
   const shotDetails: [string, string] = [
@@ -517,19 +547,19 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
   ];
 
   return (
-    <section className="game-layout multiplayer-layout">
+    <section className="game-layout multiplayer-layout marbles-layout">
       <aside className="game-panel">
         <InstructionSteps
           title="Knock marbles out of the ring"
           objective="Take turns using one shooter marble. A target scores only after it fully crosses the ring line."
           steps={[
             "Player 1 takes the first shot. Press the coloured shooter marble.",
-            "Drag backwards to set direction and power, then release. You may also use the aim and power controls.",
+            "Drag backwards to set direction and power, then release.",
             "You have 30 seconds to take your shot when the timer is on. Press Pause at any time to freeze the turn and keep the remaining seconds.",
             "The countdown also holds automatically while marbles are rolling. Captured marbles add points to the player who took the shot.",
             "After the shot, or if time reaches 0, pass the device to the other player. Keep alternating until every target leaves the ring.",
           ]}
-          tip="A short controlled shot often works better than maximum power. Multi-captures earn bonus points."
+          tip="Blue swirl marble = Player 1. Red cross marble = Player 2. Controlled shots often work better than maximum power."
         />
 
         <PlayerScoreboard
@@ -582,6 +612,25 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
           </div>
         </div>
 
+        <div className="mobile-game-toolbar" aria-label="Mobile turn controls">
+          <button
+            type="button"
+            className="mobile-game-control"
+            disabled={!timerEnabled || gameOver}
+            onClick={() => togglePause(!paused)}
+          >
+            {paused ? "Resume" : "Pause"}
+          </button>
+          <button
+            type="button"
+            className="mobile-game-control secondary"
+            disabled={gameOver}
+            onClick={() => toggleTimer(!timerEnabled)}
+          >
+            Timer {timerEnabled ? "on" : "off"}
+          </button>
+        </div>
+
         <div className={`canvas-frame active-play-frame pauseable-play-area ${paused ? "is-paused" : ""}`} style={{ borderColor: PLAYER_COLORS[activePlayer] }}>
           <canvas
             ref={canvasRef}
@@ -596,24 +645,8 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
           {paused ? <div className="game-paused-overlay" role="status"><strong>Paused</strong><span>Player {activePlayer + 1} keeps this turn</span></div> : null}
         </div>
 
-        <div className="shot-controls control-deck">
-          <label>
-            <span>Aim</span>
-            <strong>{aim}°</strong>
-            <input aria-label="Aim" type="range" min="-180" max="180" value={aim} disabled={paused || gameOver} onChange={(event) => setAim(Number(event.target.value))} />
-          </label>
-          <label>
-            <span>Power</span>
-            <strong>{power}%</strong>
-            <input aria-label="Power" type="range" min="15" max="100" value={power} disabled={paused || gameOver} onChange={(event) => setPower(Number(event.target.value))} />
-          </label>
-          <button className="primary-button" disabled={moving || gameOver || paused} onClick={shootWithControls}>
-            {paused ? "Game paused" : moving ? "Marbles rolling..." : `Player ${activePlayer + 1}: Shoot`}
-          </button>
-        </div>
-
         <p className="control-hint">
-          Direct control: drag backwards from the coloured shooter. Aim control: -90° points upward and 0° points right.
+          Drag backwards from the coloured shooter marble, then release. Blue swirl marble is Player 1 and red cross marble is Player 2.
         </p>
       </div>
     </section>

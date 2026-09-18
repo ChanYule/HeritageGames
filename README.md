@@ -110,3 +110,65 @@ The current version also includes:
 - Improved button, game-board and control interactions
 - Responsive mobile layouts
 - Reduced-motion support for accessibility
+
+## UI polish update
+
+This version includes a full interaction and visual refresh:
+
+- Sticky glass-style navigation and game header
+- Collapsible in-game instructions
+- Animated score and timer changes
+- Stronger active-player states
+- Improved responsive game panels and play areas
+- Marbles motion streaks and distinct player shooters
+- Pick-Up Sticks collection and hint effects
+- Five Stones toss and catch-window feedback
+- Chapteh kick particles and rally feedback
+- Reduced-motion support for accessibility
+
+## Chapteh local versus mode
+
+Player 1 controls the left half with A / Left Arrow. Player 2 controls the right half with D / Right Arrow. Each kick sends the chapteh across to the other player. If it lands on your side, the opponent scores. First to 7 points wins.
+
+## Chapteh rally streak
+
+The two-player Chapteh mode now includes a live rally streak counter. Every successful kick increases the streak. The display celebrates longer exchanges at 4, 8 and 12 successful kicks, and resets to 0 immediately when a rally ends because a player misses or the chapteh goes out.
+
+## Premium UI layer
+
+This version adds:
+
+- Framer Motion for page, card, score, timer and panel transitions.
+- Lucide React for a consistent icon system.
+- Glass-like shared surfaces, improved spacing, depth and responsive states.
+- Motion respects the user's reduced-motion preference through CSS fallbacks.
+
+## Featured game carousel
+
+The home page includes a featured-game carousel for all four games. Use the previous/next buttons, the game tabs below the carousel, or focus the carousel and press the Left/Right Arrow keys. Each slide includes game mode, difficulty, skill, controls, player count, and a direct Play now action.
+
+## Mobile and tablet support
+
+The interface includes responsive layouts for phones, portrait tablets, and landscape tablets.
+
+- Featured carousel supports touch swipe, arrow buttons, dots, and keyboard arrows.
+- Marbles has a larger touch hit area for the shooter on touch screens.
+- Marbles and Pick-Up Sticks expose mobile pause and timer controls beside the play area.
+- Five Stones exposes mobile Toss and Restart controls beside the board.
+- Chapteh keeps large left and right kick controls near the bottom of the screen on phones.
+- Game boards, score panels, timers, instructions, difficulty controls, and cards reflow based on screen width.
+
+## Professional public-facing UI
+
+The interface uses a restrained design system intended for broad public use:
+
+- Clear typographic hierarchy and consistent spacing
+- Responsive phone, tablet and desktop layouts
+- Touch, mouse and keyboard support
+- Visible keyboard focus states
+- Reduced-motion and higher-contrast preference support
+- Large touch targets and readable game status information
+- Consistent navigation, cards, controls and game shells
+- No account or sign-in requirement
+
+The home page also includes an accessibility and device-support section so visitors understand how the collection is intended to be used.

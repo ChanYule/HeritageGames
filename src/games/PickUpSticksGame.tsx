@@ -300,7 +300,7 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
   ];
 
   return (
-    <section className="game-layout multiplayer-layout">
+    <section className="game-layout multiplayer-layout sticks-layout">
       <aside className="game-panel">
         <InstructionSteps
           title="Lift the top sticks without a mistake"
@@ -368,14 +368,33 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
           </div>
         </div>
 
+        <div className="mobile-game-toolbar" aria-label="Mobile turn controls">
+          <button
+            type="button"
+            className="mobile-game-control"
+            disabled={!timerEnabled || gameOver}
+            onClick={() => togglePause(!paused)}
+          >
+            {paused ? "Resume" : "Pause"}
+          </button>
+          <button
+            type="button"
+            className="mobile-game-control secondary"
+            disabled={gameOver}
+            onClick={() => toggleTimer(!timerEnabled)}
+          >
+            Timer {timerEnabled ? "on" : "off"}
+          </button>
+        </div>
+
         <div className={`sticks-board active-play-frame pauseable-play-area player-border-${activePlayer + 1} ${paused ? "is-paused" : ""}`} ref={boardRef}>
           <div className="floor-label">PICK-UP STICKS</div>
           {paused ? <div className="game-paused-overlay" role="status"><strong>Paused</strong><span>Player {activePlayer + 1} keeps this turn</span></div> : null}
-          {activeSticks.map((stick) => (
+          {sticks.map((stick) => (
             <div
               key={stick.id}
               data-stick-id={stick.id}
-              className={`stick ${hint === stick.id ? "hinted" : ""}`}
+              className={`stick ${stick.removed ? "removed" : ""} ${hint === stick.id ? "hinted" : ""}`}
               style={{
                 left: `${stick.x}%`,
                 top: `${stick.y}%`,
@@ -399,7 +418,7 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
                 }
               }}
               role="button"
-              tabIndex={paused ? -1 : 0}
+              tabIndex={paused || stick.removed ? -1 : 0}
               aria-disabled={paused}
               aria-label={`Stick worth ${stick.points} points`}
             />
