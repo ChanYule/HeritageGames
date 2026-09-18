@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import InstructionSteps from "../components/InstructionSteps";
+
 type Stone = {
   id: number;
   x: number;
@@ -182,14 +184,17 @@ export default function FiveStonesGame() {
   return (
     <section className="game-layout">
       <aside className="game-panel">
-        <div className="panel-card">
-          <p className="eyebrow">How to play</p>
-          <h2>Toss, collect, catch</h2>
-          <p>
-            Stage {stage} pattern: {sequenceLabel}. This throw requires {complete ? 0 : target} stone
-            {!complete && target !== 1 ? "s" : ""}.
-          </p>
-        </div>
+        <InstructionSteps
+          title="Toss, collect, then catch"
+          objective={`Complete four stages. The current Stage ${stage} pattern is ${sequenceLabel}.`}
+          steps={[
+            "Press Toss Stone to throw the main stone into the air.",
+            `While it is airborne, collect exactly ${complete ? 0 : target} ground stone${!complete && target !== 1 ? "s" : ""} for this throw.`,
+            "Wait until the airborne stone starts falling, then tap it to catch.",
+            "A successful catch moves you to the next throw. Finish every pattern to clear all four stages.",
+          ]}
+          tip="Practice mode gives you more time. The progress bar changes from Rising to Catch now when it is time to catch."
+        />
 
         <div className="stat-grid">
           <div><span>Score</span><strong>{score}</strong></div>
@@ -217,11 +222,15 @@ export default function FiveStonesGame() {
       </aside>
 
       <div className="play-column">
+        <div className="play-status-bar">
+          <div><strong>{complete ? "Sequence complete" : `Stage ${stage} · Step ${Math.min(step + 1, sequence.length)}/${sequence.length}`}</strong></div>
+          <span>{complete ? "All stages cleared" : `Collect ${target} then catch`}</span>
+        </div>
         <div className="round-cue">
           <strong>{complete ? "All four stages mastered!" : inAir ? `${selectedThisThrow.length} / ${target} collected / ${progress < 50 ? "Rising" : "Catch now"}` : `Stage ${stage} / Collect ${target} per toss`}</strong>
           <progress aria-label="Toss progress" max={100} value={progress} />
         </div>
-        <div className="five-stones-board" tabIndex={0} aria-label="Five stones play area">
+        <div className="five-stones-board active-play-frame" tabIndex={0} aria-label="Five stones play area">
           <div className="floor-label">FIVE STONES</div>
 
           <button

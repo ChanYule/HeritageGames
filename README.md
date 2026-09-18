@@ -2,10 +2,10 @@
 
 A browser-based collection of four playable heritage games:
 
-- Marbles
-- Pick-Up Sticks
-- Five Stones
-- Chapteh
+- Marbles, local 2-player
+- Pick-Up Sticks, local 2-player
+- Five Stones, single-player
+- Chapteh, local 2-player
 
 ## Run locally
 
@@ -23,19 +23,42 @@ npm run build
 npm run preview
 ```
 
+## Multiplayer rules
+
+### Marbles
+Player 1 and Player 2 alternate after every shot on the same board. Drag backwards from the coloured shooter and release, or use the Aim and Power controls. A target scores after it fully leaves the ring. Multi-captures earn bonus points. The higher score wins when the ring is empty.
+
+### Pick-Up Sticks
+Both players share one pile. A clean pickup scores the stick value and lets the same player continue. Choosing a blocked stick counts as a mistake and passes the turn. The higher score wins after the final stick is removed.
+
+### Chapteh
+The match has three rounds. Player 1 takes one rally, then Player 2 takes one rally. Each successful kick adds to that player's match total. After both players complete all three rounds, the higher total wins.
+
+## Five Stones
+Five Stones stays single-player. Choose Practice or Challenge pacing. Toss the main stone, collect the required ground stones, then catch the airborne stone while it is falling. Complete the patterns 1+1+1+1, 2+2, 3+1, and 4.
+
 ## Controls
 
 ### Marbles
-Every round starts with seven randomly placed, non-overlapping targets inside the ring. Use New random round to reshuffle. Drag backwards from the white shooter marble and release. For keyboard play, use the Aim and Power sliders, then Shoot. Aim -90 degrees points up and 0 degrees points right.
+- Mouse or touch: press the coloured shooter, drag backwards, release.
+- Alternative controls: set Aim and Power, then press Shoot.
 
 ### Pick-Up Sticks
-Drag an exposed stick away from the pile to collect it. Use Show a free stick for a hint. Keyboard: Tab to a stick and press Enter or Space to lift it. New random pile reshuffles positions, angles, lengths and colour order while keeping the same total points.
+- Mouse or touch: drag an exposed stick completely away from the pile.
+- Keyboard: Tab to a stick, then press Enter or Space.
+- Use Show a free stick for a hint.
 
 ### Five Stones
-Choose Practice or Challenge pacing. Press Toss, collect the required ground stones, then catch while the airborne stone is falling. Keyboard: focus the board, use Space to toss/catch and 1-4 to collect.
+- Press Toss Stone.
+- Tap the required ground stones.
+- Tap the airborne stone after it starts falling.
+- Keyboard: 1-4 to collect and Space to toss or catch.
 
 ### Chapteh
-Press A / Left Arrow for the left foot and D / Right Arrow for the right foot. On touch screens, tap the left or right side of the play area or use the foot buttons. Kick only while falling in the shaded zone. Your best rally is saved on this browser when storage is available.
+- Left foot: A or Left Arrow.
+- Right foot: D or Right Arrow.
+- Touch: tap the left or right side of the court.
+- Kick only while the chapteh is falling inside the shaded kick zone.
 
 ## Technology
 
@@ -45,7 +68,7 @@ Press A / Left Arrow for the left foot and D / Right Arrow for the right foot. O
 - HTML5 Canvas
 - Pointer Events
 
-No backend is required.
+No backend is required for local multiplayer.
 
 ## Gameplay checks
 
@@ -53,4 +76,37 @@ No backend is required.
 npm test
 ```
 
-Checks cover shot power limits, stick overlap geometry, and Chapteh kick timing.
+Checks cover shot power limits, stick overlap geometry, Chapteh kick timing, and marble layouts.
+
+
+## Turn timer
+
+Marbles and Pick-Up Sticks use a 30-second local multiplayer turn timer by default. Players can switch the timer off from the game panel.
+
+- Marbles: the countdown runs while the active player is aiming and pauses while the marbles are moving. If it reaches 0 before a shot, the turn passes to the other player.
+- Pick-Up Sticks: the countdown covers the full turn. Successful pickups let the same player continue with the remaining time. If it reaches 0, the turn passes automatically.
+
+
+## Pause / Resume
+
+Marbles and Pick-Up Sticks include a Pause turn button when the 30-second turn timer is enabled. Pausing freezes the countdown and blocks gameplay input. Resuming continues with the same active player and the exact remaining time. Turning the timer off clears the paused state.
+
+### Paused score indicator
+
+When Marbles or Pick-Up Sticks is paused, the shared scoreboard clearly shows which player paused the game. The active player's card also shows a paused badge and a short reminder that Resume continues the same turn.
+
+## UI and interaction polish
+
+The current version also includes:
+
+- Clear top navigation and improved homepage flow
+- Collection highlights and local multiplayer labels
+- Four-step Choose → Learn → Play → Pass guide
+- Animated game-card entrances and hover feedback
+- Smoother home-to-game transitions
+- Sticky desktop game controls for easier play
+- Stronger active-player and turn-state visuals
+- Timer urgency animation and polished pause feedback
+- Improved button, game-board and control interactions
+- Responsive mobile layouts
+- Reduced-motion support for accessibility

@@ -1,3 +1,11 @@
+export type Difficulty = "easy" | "medium" | "difficult";
+
+export const difficultySettings = {
+  easy: { label: "Easy", marbles: 5, marbleRadius: 20, sticks: 10, stickSpread: 46, stickLength: 28 },
+  medium: { label: "Medium", marbles: 7, marbleRadius: 18, sticks: 18, stickSpread: 36, stickLength: 38 },
+  difficult: { label: "Difficult", marbles: 10, marbleRadius: 14, sticks: 28, stickSpread: 20, stickLength: 38 },
+} as const;
+
 export type Point = { x: number; y: number };
 
 export function shotVelocity(dx: number, dy: number) {
@@ -23,7 +31,7 @@ export function canKick(y: number, vy: number, ground: number) {
 }
 
 // Jittered, shuffled positions keep every target inside the ring and separated.
-export function randomMarblePositions(random = Math.random): Point[] {
+export function randomMarblePositions(random = Math.random, difficulty: Difficulty = "medium"): Point[] {
   const positions: Point[] = [];
   for (let row = -2; row <= 2; row++) {
     for (let column = -2; column <= 2; column++) {
@@ -37,7 +45,7 @@ export function randomMarblePositions(random = Math.random): Point[] {
     [positions[i], positions[j]] = [positions[j], positions[i]];
   }
   const angle = random() * Math.PI * 2;
-  return positions.slice(0, 7).map(({ x, y }) => ({
+  return positions.slice(0, difficultySettings[difficulty].marbles).map(({ x, y }) => ({
     x: x * Math.cos(angle) - y * Math.sin(angle),
     y: x * Math.sin(angle) + y * Math.cos(angle),
   }));
