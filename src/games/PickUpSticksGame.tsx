@@ -1,3 +1,4 @@
+import GamePlayArea from "../components/GamePlayArea";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import DifficultyPicker from "../components/DifficultyPicker";
@@ -354,7 +355,11 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
         </div>
       </aside>
 
-      <div className="play-column">
+      <GamePlayArea>
+        <div className="fullscreen-only-controls">
+          <button className="secondary-button" disabled={gameOver || paused} onClick={findHint}>Show a free stick</button>
+          <button className="secondary-button" onClick={reset}>New match</button>
+        </div>
         <div className="play-status-bar">
           <div>
             <span className={`player-dot player-dot-${activePlayer + 1}`} />
@@ -437,7 +442,7 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
         <p className="control-hint">
           Mouse or touch: drag a top stick away. Keyboard: Tab to a stick, then Enter or Space to collect it.
         </p>
-      </div>
+      </GamePlayArea>
     </section>
   );
 }

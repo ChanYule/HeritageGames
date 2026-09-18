@@ -1,3 +1,4 @@
+import GamePlayArea from "../components/GamePlayArea";
 import { useEffect, useRef, useState } from "react";
 
 import DifficultyPicker from "../components/DifficultyPicker";
@@ -598,7 +599,10 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
         <button className="secondary-button" onClick={reset}>Start new match</button>
       </aside>
 
-      <div className="play-column">
+      <GamePlayArea>
+        <div className="fullscreen-only-controls">
+          <button className="secondary-button" onClick={reset}>New match</button>
+        </div>
         <div className="play-status-bar">
           <div>
             <span className={`player-dot player-dot-${activePlayer + 1}`} />
@@ -648,7 +652,7 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
         <p className="control-hint">
           Drag backwards from the coloured shooter marble, then release. Blue swirl marble is Player 1 and red cross marble is Player 2.
         </p>
-      </div>
+      </GamePlayArea>
     </section>
   );
 }

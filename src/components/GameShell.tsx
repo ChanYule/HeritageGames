@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { GameFullscreenContext } from "./GamePlayArea";
 import { motion } from "framer-motion";
 import { ChevronLeft, Info, Maximize2, Minimize2, MonitorSmartphone, ShieldCheck } from "lucide-react";
 
@@ -10,7 +11,7 @@ type Props = {
 };
 
 export default function GameShell({ title, subtitle, onBack, children }: Props) {
-  const pageRef = useRef<HTMLElement | null>(null);
+  const playAreaRef = useRef<HTMLDivElement | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [pseudoFullscreen, setPseudoFullscreen] = useState(false);
   const [nativeFullscreenSupported, setNativeFullscreenSupported] = useState(true);
@@ -25,7 +26,7 @@ export default function GameShell({ title, subtitle, onBack, children }: Props) 
     setNativeFullscreenSupported(supported);
 
     const handleFullscreenChange = () => {
-      setIsFullscreen(document.fullscreenElement === pageRef.current);
+      setIsFullscreen(document.fullscreenElement === playAreaRef.current);
     };
 
     document.addEventListener("fullscreenchange", handleFullscreenChange);
@@ -51,8 +52,8 @@ export default function GameShell({ title, subtitle, onBack, children }: Props) 
   const fullscreenActive = isFullscreen || pseudoFullscreen;
 
   const toggleFullscreen = async () => {
-    const page = pageRef.current;
-    if (!page) return;
+    const playArea = playAreaRef.current;
+    if (!playArea) return;
 
     if (pseudoFullscreen) {
       setPseudoFullscreen(false);
@@ -65,11 +66,11 @@ export default function GameShell({ title, subtitle, onBack, children }: Props) 
     }
 
     try {
-      if (document.fullscreenElement === page) {
+      if (document.fullscreenElement === playArea) {
         await document.exitFullscreen();
       } else {
         if (document.fullscreenElement) await document.exitFullscreen();
-        await page.requestFullscreen({ navigationUI: "hide" });
+        await playArea.requestFullscreen({ navigationUI: "hide" });
       }
     } catch {
       setNativeFullscreenSupported(false);
@@ -79,8 +80,7 @@ export default function GameShell({ title, subtitle, onBack, children }: Props) 
 
   return (
     <motion.main
-      ref={pageRef}
-      className={`game-page premium-page professional-page ${fullscreenActive ? "is-fullscreen" : ""} ${pseudoFullscreen ? "is-pseudo-fullscreen" : ""}`}
+      className="game-page premium-page professional-page"
       initial={{ opacity: 0, x: 18 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -18 }}
@@ -158,7 +158,9 @@ export default function GameShell({ title, subtitle, onBack, children }: Props) 
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.08, duration: 0.36 }}
       >
-        {children}
+        <GameFullscreenContext.Provider value={{ playAreaRef, fullscreenActive, pseudoFullscreen, toggleFullscreen }}>
+          {children}
+        </GameFullscreenContext.Provider>
       </motion.div>
     </motion.main>
   );

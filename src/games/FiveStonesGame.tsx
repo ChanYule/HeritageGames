@@ -1,3 +1,4 @@
+import GamePlayArea from "../components/GamePlayArea";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import InstructionSteps from "../components/InstructionSteps";
@@ -221,7 +222,7 @@ export default function FiveStonesGame() {
         <button className="secondary-button" onClick={reset}>Restart</button>
       </aside>
 
-      <div className="play-column">
+      <GamePlayArea>
         <div className="play-status-bar">
           <div><strong>{complete ? "Sequence complete" : `Stage ${stage} · Step ${Math.min(step + 1, sequence.length)}/${sequence.length}`}</strong></div>
           <span>{complete ? "All stages cleared" : `Collect ${target} then catch`}</span>
@@ -268,7 +269,7 @@ export default function FiveStonesGame() {
         <p className="control-hint">
           Keyboard: 1-4 to collect; Space to toss or catch when the board is focused. Toss, tap the required ground stones, then tap the airborne stone to catch it.
         </p>
-      </div>
+      </GamePlayArea>
     </section>
   );
 }

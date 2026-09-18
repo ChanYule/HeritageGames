@@ -1,3 +1,4 @@
+import GamePlayArea from "../components/GamePlayArea";
 import { useEffect, useRef, useState } from "react";
 
 import InstructionSteps from "../components/InstructionSteps";
@@ -535,7 +536,13 @@ export default function ChaptehGame() {
         <button className="secondary-button" onClick={resetMatch}>Restart match</button>
       </aside>
 
-      <div className="play-column">
+      <GamePlayArea>
+        <div className="fullscreen-only-controls">
+          <button className="primary-button" onClick={startRally} disabled={running || gameOver}>
+            {gameOver ? "Match complete" : running ? "Rally in progress" : `Start rally ? Player ${server + 1} serve`}
+          </button>
+          <button className="secondary-button" onClick={resetMatch}>Restart match</button>
+        </div>
         <div className="chapteh-side-header" aria-label="Player sides">
           <div className={`chapteh-side-card player-one ${expectedPlayer === 0 && running ? "is-next" : ""}`}>
             <span>Player 1</span>
@@ -656,7 +663,7 @@ export default function ChaptehGame() {
         <p className="control-hint">
           Both players play at the same time on one device. Player 1 stays on the left, Player 2 stays on the right, and each successful kick must send the chapteh to the other player.
         </p>
-      </div>
+      </GamePlayArea>
     </section>
   );
 }
