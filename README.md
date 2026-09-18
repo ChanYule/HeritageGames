@@ -172,3 +172,8 @@ The interface uses a restrained design system intended for broad public use:
 - No account or sign-in requirement
 
 The home page also includes an accessibility and device-support section so visitors understand how the collection is intended to be used.
+
+
+## Mobile fullscreen hint
+
+A compact touch-device hint appears below the game header before fullscreen is active. It explains how to enter fullscreen, return with the Exit fullscreen control, and notes that some mobile browsers expose their own exit gesture or control. Desktop layouts are unchanged.

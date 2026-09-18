@@ -178,15 +178,21 @@ function Home({ onPlay }: { onPlay: (key: GameKey) => void }) {
           <motion.div variants={fadeUp} className="hero-title-wrap">
             <span className="hero-title-overline">VOID DECK EDITION</span>
             <h1>
-              Singapore heritage games.
-              <span>Designed for everyone.</span>
+              <span className="hero-headline-main">Singapore heritage games.</span>
+              <span className="hero-headline-accent">Designed for everyone.</span>
             </h1>
           </motion.div>
 
           <motion.p variants={fadeUp} className="hero-text hero-text-redesign">
-            A refined digital collection of familiar games, built for phones, tablets, and desktops.
-            Clear controls, local multiplayer, and thoughtful feedback make each game easy to learn and enjoyable to share.
+            A polished digital collection of familiar games for families, classrooms, community spaces, and casual play.
+            Built for phones, tablets, and desktops, each game is easy to start, simple to understand, and fun to share on one screen.
           </motion.p>
+
+          <motion.div variants={fadeUp} className="hero-value-row" aria-label="Collection benefits">
+            <span><Users2 size={15} /> Local multiplayer</span>
+            <span><MonitorSmartphone size={15} /> Responsive on every device</span>
+            <span><Accessibility size={15} /> Clear and accessible design</span>
+          </motion.div>
 
           <motion.div variants={fadeUp} className="hero-premium-cta-panel">
             <div className="hero-primary-actions">
@@ -238,7 +244,7 @@ function Home({ onPlay }: { onPlay: (key: GameKey) => void }) {
           <div className="hero-showcase-head">
             <div>
               <span className="hero-showcase-label">FEATURED EXPERIENCE</span>
-              <strong>Play together on one device.</strong>
+              <strong>Start with a same-device favourite.</strong>
             </div>
             <span className="hero-live-pill"><span /> Local play</span>
           </div>
@@ -268,7 +274,12 @@ function Home({ onPlay }: { onPlay: (key: GameKey) => void }) {
             <div className="hero-feature-copy">
               <span className="feature-tag"><Users2 size={13} /> 2 players · local</span>
               <h2>Chapteh Versus</h2>
-              <p>Own one side each. Kick across the centre and build the longest rally.</p>
+              <p>Own one side each, trade kicks across the centre, and build the longest rally together.</p>
+              <div className="hero-feature-meta" aria-hidden="true">
+                <span>Fast rounds</span>
+                <span>Touch + keyboard</span>
+                <span>Shared screen</span>
+              </div>
               <span className="feature-link">Play featured game <ArrowUpRight size={17} /></span>
             </div>
           </motion.button>
