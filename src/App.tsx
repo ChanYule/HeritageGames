@@ -75,11 +75,6 @@ const gameCardDetails: Record<GameKey, { skill: string; control: string; modeLab
   chapteh: { skill: "Reflexes", control: "Keys + touch", modeLabel: "Local versus" },
 };
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
-  visible: { opacity: 1, y: 0 },
-};
-
 function Home({ onPlay }: { onPlay: (key: GameKey) => void }) {
   const [featuredIndex, setFeaturedIndex] = useState(0);
   const [carouselDirection, setCarouselDirection] = useState(1);
@@ -140,189 +135,64 @@ function Home({ onPlay }: { onPlay: (key: GameKey) => void }) {
         </div>
       </motion.nav>
 
-      <section className="hero premium-hero hero-redesign" id="top">
-        <div className="hero-ambient" aria-hidden="true">
-          <motion.div
-            className="hero-ambient-ring hero-ambient-ring-one"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 34, repeat: Infinity, ease: "linear" }}
-          />
-          <motion.div
-            className="hero-ambient-ring hero-ambient-ring-two"
-            animate={{ rotate: -360 }}
-            transition={{ duration: 46, repeat: Infinity, ease: "linear" }}
-          />
-          <motion.div
-            className="hero-ambient-glow hero-ambient-glow-one"
-            animate={{ x: [0, 36, -12, 0], y: [0, -22, 18, 0], scale: [1, 1.08, 0.96, 1] }}
-            transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-          />
-          <motion.div
-            className="hero-ambient-glow hero-ambient-glow-two"
-            animate={{ x: [0, -28, 16, 0], y: [0, 18, -20, 0], scale: [1, 0.95, 1.1, 1] }}
-            transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-          />
-          <div className="hero-ambient-grid" />
+      <section className="collection-hero" id="top" aria-labelledby="collection-title">
+        <div className="collection-intro">
+          <span className="collection-eyebrow"><span /> MADE OF SINGAPORE MEMORIES</span>
+          <h1 id="collection-title">Old-school games.<br /><em>New ways to play.</em></h1>
+          <p className="collection-description">A little nostalgia. A little friendly competition. Rediscover Singapore?s favourite childhood games, wherever you are.</p>
+          <div className="collection-actions">
+            <button className="collection-primary" onClick={() => onPlay("chapteh")}>
+              Let?s play Chapteh <ArrowUpRight size={19} />
+            </button>
+            <a className="collection-browse" href="#games">Explore the games <ArrowDown size={17} /></a>
+          </div>
+          <p className="collection-reassurance"><ShieldCheck size={16} /> Free to play. No downloads or sign-ups.</p>
+          <div className="collection-facts">
+            <div><strong>04</strong><span>Classic games</span></div>
+            <div><Users2 size={22} /><span>Solo or with a friend</span></div>
+            <div><MonitorSmartphone size={22} /><span>Any screen, anytime</span></div>
+          </div>
         </div>
 
-        <motion.div
-          className="hero-copy hero-copy-redesign"
-          initial="hidden"
-          animate="visible"
-          variants={{ visible: { transition: { staggerChildren: 0.09 } } }}
-        >
-          <motion.div variants={fadeUp} className="premium-kicker hero-kicker-redesign">
-            <Sparkles size={15} /> Digital heritage collection · Singapore
-          </motion.div>
-
-          <motion.div variants={fadeUp} className="hero-title-wrap">
-            <span className="hero-title-overline">VOID DECK EDITION</span>
-            <h1>
-              <span className="hero-headline-main">Singapore heritage games.</span>
-              <span className="hero-headline-accent">Designed for everyone.</span>
-            </h1>
-          </motion.div>
-
-          <motion.p variants={fadeUp} className="hero-text hero-text-redesign">
-            A polished digital collection of familiar games for families, classrooms, community spaces, and casual play.
-            Built for phones, tablets, and desktops, each game is easy to start, simple to understand, and fun to share on one screen.
-          </motion.p>
-
-          <motion.div variants={fadeUp} className="hero-value-row" aria-label="Collection benefits">
-            <span><Users2 size={15} /> Local multiplayer</span>
-            <span><MonitorSmartphone size={15} /> Responsive on every device</span>
-            <span><Accessibility size={15} /> Clear and accessible design</span>
-          </motion.div>
-
-          <motion.div variants={fadeUp} className="hero-premium-cta-panel">
-            <div className="hero-primary-actions">
-              <motion.button
-                type="button"
-                className="hero-cta-main"
-                onClick={() => onPlay("marbles")}
-                whileHover={{ y: -3, scale: 1.015 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <span className="hero-cta-icon"><CircleDot size={20} /></span>
-                <span>
-                  <small>Featured experience</small>
-                  <strong>Play Marbles</strong>
-                </span>
-                <ArrowUpRight size={19} />
-              </motion.button>
-
-              <motion.a
-                href="#games"
-                className="hero-cta-secondary"
-                whileHover={{ y: -2 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                Browse all games <ArrowDown size={17} />
-              </motion.a>
+        <div className="collection-feature">
+          <div className="collection-feature-heading"><span>IN THE SPOTLIGHT</span><span className="collection-issue">01 / 04</span></div>
+          <button className="collection-game" onClick={() => onPlay("chapteh")} aria-label="Play Chapteh Versus, 2 players on one device">
+            <div className="collection-court" aria-hidden="true">
+              <span className="collection-court-label">THE VOID DECK CLASSIC</span>
+              <span className="collection-court-line" />
+              <svg className="collection-shuttle" viewBox="0 0 280 270" fill="none">
+                <ellipse cx="145" cy="244" rx="51" ry="9" fill="#122f30" opacity=".25" />
+                <g transform="rotate(18 140 160)">
+                  <path d="M140 205C106 166 52 110 66 58C109 66 138 140 140 205Z" fill="#E4A56B" />
+                  <path d="M140 205C113 138 102 52 129 20C159 56 158 149 140 205Z" fill="#F9EDD0" />
+                  <path d="M140 205C152 141 173 62 217 51C230 103 181 166 140 205Z" fill="#E9C974" />
+                  <path d="M140 205L72 72M140 205L130 35M140 205L211 65" stroke="#315B57" strokeOpacity=".45" strokeWidth="2" />
+                  <path d="M139 194L110 122M143 188L174 110" stroke="#FFF7E2" strokeWidth="3" />
+                  <rect x="120" y="188" width="41" height="17" rx="5" fill="#C55C41" />
+                  <ellipse cx="140" cy="209" rx="27" ry="12" fill="#EDB16C" />
+                  <path d="M113 207V215C113 231 167 231 167 215V207C167 223 113 223 113 207Z" fill="#C55C41" />
+                  <ellipse cx="140" cy="215" rx="27" ry="11" stroke="#F5CB91" strokeWidth="2" />
+                </g>
+                <path d="M52 196C22 160 23 125 38 104M226 172C247 147 251 127 244 109" stroke="#E6E9CD" strokeOpacity=".6" strokeWidth="2" strokeLinecap="round" strokeDasharray="5 8" />
+                <path d="M228 35V49M221 42H235M49 143V153M44 148H54" stroke="#F2D697" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+              <span className="collection-player collection-player-one">P1</span>
+              <span className="collection-court-caption">Keep the good times up.</span>
+              <span className="collection-player collection-player-two">P2</span>
             </div>
-
-            <div className="hero-trust-row" aria-label="Collection features">
-              <span><Users2 size={15} /> Same-device multiplayer</span>
-              <span><MonitorSmartphone size={15} /> Mobile, tablet, desktop</span>
-              <span><ShieldCheck size={15} /> No sign-in required</span>
+            <div className="collection-game-info">
+              <span className="collection-game-mode"><Users2 size={14} /> 2 players ? One device</span>
+              <div className="collection-game-title"><h2>Chapteh Versus</h2><span className="collection-play-arrow"><ArrowUpRight size={23} /></span></div>
+              <p>Trade kicks. Find your rhythm. Keep the rally alive.</p>
+              <div className="collection-game-tags"><span>Easy to learn</span><span>Touch + keyboard</span></div>
             </div>
-          </motion.div>
-
-          <motion.div variants={fadeUp} className="hero-stats premium-stats hero-stats-redesign" aria-label="Collection highlights">
-            <div><strong>4</strong><span>Playable games</span></div>
-            <div><strong>3</strong><span>Local multiplayer</span></div>
-            <div><strong>1</strong><span>Shared heritage collection</span></div>
-          </motion.div>
-        </motion.div>
-
-        <motion.div
-          className="hero-showcase"
-          initial={{ opacity: 0, x: 36, scale: 0.97 }}
-          animate={{ opacity: 1, x: 0, scale: 1 }}
-          transition={{ duration: 0.72, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <div className="hero-showcase-head">
-            <div>
-              <span className="hero-showcase-label">FEATURED EXPERIENCE</span>
-              <strong>Start with a same-device favourite.</strong>
-            </div>
-            <span className="hero-live-pill"><span /> Local play</span>
+          </button>
+          <div className="collection-more">
+            <span>MORE TO PLAY</span>
+            <button onClick={() => onPlay("marbles")}><CircleDot size={18} /> Marbles <ArrowUpRight size={15} /></button>
+            <button onClick={() => onPlay("pick-up-sticks")}><Hand size={18} /> Pick-Up Sticks <ArrowUpRight size={15} /></button>
           </div>
-
-          <motion.button
-            type="button"
-            className="hero-feature-card hero-feature-primary"
-            onClick={() => onPlay("chapteh")}
-            whileHover={{ y: -5, rotateX: 1.5, rotateY: -1.5 }}
-            whileTap={{ scale: 0.985 }}
-          >
-            <div className="hero-feature-art chapteh-feature-art" aria-hidden="true">
-              <motion.span
-                className="feature-chapteh"
-                animate={{ y: [0, -24, 0], x: [-8, 12, -8], rotate: [-5, 8, -5] }}
-                transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
-              >✦</motion.span>
-              <span className="feature-side feature-side-left">P1</span>
-              <span className="feature-midline" />
-              <span className="feature-side feature-side-right">P2</span>
-              <motion.span
-                className="feature-direction"
-                animate={{ x: [-16, 16, -16], opacity: [0.55, 1, 0.55] }}
-                transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-              >↔</motion.span>
-            </div>
-            <div className="hero-feature-copy">
-              <span className="feature-tag"><Users2 size={13} /> 2 players · local</span>
-              <h2>Chapteh Versus</h2>
-              <p>Own one side each, trade kicks across the centre, and build the longest rally together.</p>
-              <div className="hero-feature-meta" aria-hidden="true">
-                <span>Fast rounds</span>
-                <span>Touch + keyboard</span>
-                <span>Shared screen</span>
-              </div>
-              <span className="feature-link">Play featured game <ArrowUpRight size={17} /></span>
-            </div>
-          </motion.button>
-
-          <div className="hero-feature-grid">
-            <motion.button
-              type="button"
-              className="hero-mini-feature"
-              onClick={() => onPlay("marbles")}
-              whileHover={{ y: -4 }}
-              whileTap={{ scale: 0.985 }}
-            >
-              <span className="mini-feature-icon mini-feature-blue"><CircleDot size={24} /></span>
-              <span>
-                <small>Precision</small>
-                <strong>Marbles</strong>
-              </span>
-              <ArrowUpRight size={17} />
-            </motion.button>
-
-            <motion.button
-              type="button"
-              className="hero-mini-feature"
-              onClick={() => onPlay("pick-up-sticks")}
-              whileHover={{ y: -4 }}
-              whileTap={{ scale: 0.985 }}
-            >
-              <span className="mini-feature-icon mini-feature-green"><Hand size={24} /></span>
-              <span>
-                <small>Control</small>
-                <strong>Pick-Up Sticks</strong>
-              </span>
-              <ArrowUpRight size={17} />
-            </motion.button>
-          </div>
-
-          <div className="hero-showcase-footer">
-            <div className="hero-avatar-stack" aria-hidden="true">
-              <span>P1</span><span>P2</span>
-            </div>
-            <p><strong>Designed for one screen.</strong> No setup, accounts, or online lobby.</p>
-          </div>
-        </motion.div>
+        </div>
       </section>
 
       <motion.section

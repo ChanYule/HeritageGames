@@ -1,0 +1,82 @@
+/* Collection landing page. Kept separate from the game canvas styles. */
+.home-page.professional-page { width: min(1200px, calc(100% - 64px)); }
+.home-page .premium-orb { display: none; }
+.home-page .site-nav.premium-nav { position: relative; top: 0; margin-top: 0; padding: 22px 0; border: 0; border-bottom: 1px solid #dedfd6; border-radius: 0; background: transparent; box-shadow: none; backdrop-filter: none; }
+.home-page .brand-symbol { background: #285a50; border-radius: 50%; }
+.home-page .nav-cta { background: #285a50; color: white; border-color: #285a50; }
+.collection-hero { display: grid; grid-template-columns: 1.06fr 1fr; align-items: center; gap: clamp(40px, 6vw, 88px); padding: 64px 0 54px; }
+.collection-intro { min-width: 0; }
+.collection-eyebrow { display: inline-flex; align-items: center; gap: 9px; color: #526c58; font-size: 10px; font-weight: 800; letter-spacing: .15em; }
+.collection-eyebrow > span { width: 7px; height: 7px; border-radius: 50%; background: #66855b; }
+.collection-intro h1 { margin: 24px 0; color: #283a32; font-size: clamp(42px, 4.65vw, 66px); font-weight: 750; line-height: 1.08; letter-spacing: -.055em; }
+.collection-intro h1 em { color: #54725d; font-family: Georgia, serif; font-weight: 400; letter-spacing: -.05em; }
+.collection-description { max-width: 430px; margin: 0; color: #646a61; font-size: 17px; line-height: 1.8; }
+.collection-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 22px; margin-top: 30px; }
+.collection-primary, .collection-browse { display: inline-flex; align-items: center; justify-content: center; gap: 12px; min-height: 50px; font-size: 13px; font-weight: 700; text-decoration: none; }
+.collection-primary { padding: 0 20px; border: 1px solid #285a50; border-radius: 8px; color: #fff; background: #285a50; cursor: pointer; box-shadow: 0 5px 12px #285a5015; transition: background .2s, transform .2s; }
+.collection-primary:hover { background: #1e463e; transform: translateY(-2px); }
+.collection-browse { color: #38483d; }
+.collection-browse:hover { text-decoration: underline; text-underline-offset: 5px; }
+.collection-reassurance { display: flex; align-items: center; gap: 7px; margin: 16px 0 0; color: #70756c; font-size: 11px; }
+.collection-facts { display: grid; grid-template-columns: .75fr 1.1fr 1.1fr; gap: 18px; border-top: 1px solid #dcdfd5; margin-top: 38px; padding-top: 23px; }
+.collection-facts > div { display: flex; flex-direction: column; gap: 9px; align-items: flex-start; color: #47634e; }
+.collection-facts strong { font-size: 22px; line-height: 1; font-weight: 600; }
+.collection-facts span { color: #73776e; font-size: 11px; }
+.collection-feature { min-width: 0; }
+.collection-feature-heading { display: flex; justify-content: space-between; margin-bottom: 13px; color: #687164; font-size: 10px; font-weight: 750; letter-spacing: .14em; }
+.collection-issue { color: #7a8074; font-variant-numeric: tabular-nums; }
+.collection-game { width: 100%; padding: 0; display: block; overflow: hidden; text-align: left; border: 1px solid #d8dfd2; border-radius: 16px; background: #fffef9; cursor: pointer; box-shadow: 0 16px 35px #344a3310; transition: box-shadow .2s, transform .2s; }
+.collection-game:hover { transform: translateY(-3px); box-shadow: 0 20px 38px #344a3320; }
+.collection-court { position: relative; height: 266px; overflow: hidden; isolation: isolate; background: radial-gradient(ellipse at 50% 25%, #658675, transparent 75%), #345e53; }
+.collection-court::before { content: ""; position: absolute; inset: 17px; border: 1px solid #ffffff26; border-radius: 8px; }
+.collection-court::after { content: ""; position: absolute; width: 200px; height: 200px; border: 1px solid #ffffff20; border-radius: 50%; top: 32px; left: calc(50% - 100px); z-index: -1; }
+.collection-court-label { position: absolute; top: 31px; left: 31px; color: #e8efdc; font-size: 8px; letter-spacing: .19em; }
+.collection-court-line { position: absolute; top: 18px; bottom: 18px; left: 50%; border-left: 1px dashed #ffffff25; z-index: -1; }
+.collection-shuttle { position: absolute; width: 252px; height: 244px; top: 8px; left: calc(50% - 126px); filter: drop-shadow(0 10px 7px #15392c20); }
+.collection-player { position: absolute; bottom: 28px; width: 31px; height: 31px; display: grid; place-items: center; border: 1px solid #ffffff4d; border-radius: 50%; color: #edf2df; font-size: 9px; font-weight: 700; }
+.collection-player-one { left: 30px; }
+.collection-player-two { right: 30px; background: #e7c67a; color: #354c3c; border-color: #e7c67a; }
+.collection-court-caption { position: absolute; bottom: 35px; left: 70px; right: 70px; text-align: center; color: #e2e9d4; font-size: 9px; letter-spacing: .06em; }
+.collection-game-info { padding: 23px 26px; }
+.collection-game-mode { display: flex; align-items: center; gap: 7px; color: #5a735e; font-size: 10px; font-weight: 650; }
+.collection-game-title { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; }
+.collection-game-title h2 { margin: 0; color: #29392f; font-size: 29px; line-height: 1.2; letter-spacing: -.04em; }
+.collection-play-arrow { display: grid; place-items: center; width: 38px; height: 38px; flex-shrink: 0; border-radius: 50%; background: #eaf0e3; color: #365c43; }
+.collection-game-info p { margin: 9px 0 17px; color: #73776b; font-size: 12px; line-height: 1.6; }
+.collection-game-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.collection-game-tags span { padding: 5px 9px; border-radius: 4px; background: #f0f2e9; color: #66725d; font-size: 9px; }
+.collection-more { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding-top: 17px; }
+.collection-more > span { color: #737c6c; font-size: 8px; font-weight: 750; letter-spacing: .1em; }
+.collection-more button { display: flex; align-items: center; gap: 7px; min-height: 38px; padding: 0 10px; border: 1px solid #dbe0d3; border-radius: 6px; background: #fffef9; color: #485d49; font-size: 10px; font-weight: 650; cursor: pointer; }
+.collection-more button:hover { background: #eaf0e3; border-color: #8da383; }
+.home-page .heritage-note.premium-note { margin-top: 0; background: #eef1e7; border-color: #dce3d3; border-radius: 10px; box-shadow: none; }
+.home-page :is(#games, #how-it-works, #experience, #about) { scroll-margin-top: 24px; }
+@media (max-width: 1000px) {
+  .collection-hero { gap: 32px; }
+  .collection-intro h1 { font-size: 46px; }
+  .collection-description { font-size: 15px; }
+  .collection-actions { gap: 10px 20px; }
+  .collection-facts { gap: 10px; }
+  .collection-game-info { padding: 20px; }
+  .collection-more { gap: 8px; }
+  .collection-more > span { width: 100%; }
+}
+@media (max-width: 760px) {
+  .home-page.professional-page { width: calc(100% - 36px); }
+  .home-page .site-nav.premium-nav { min-height: 74px; padding: 15px 0; }
+  .home-page .nav-links { display: none; }
+  .collection-hero { grid-template-columns: 1fr; gap: 36px; padding: 40px 0 32px; }
+  .collection-intro h1 { font-size: clamp(37px, 8.3vw, 56px); margin: 21px 0; }
+  .collection-description { max-width: 500px; }
+  .collection-actions { margin-top: 23px; }
+  .collection-facts { margin-top: 27px; padding-top: 20px; }
+  .collection-facts span { font-size: 10px; }
+  .collection-feature { width: 100%; max-width: 540px; justify-self: center; }
+  .collection-more > span { width: auto; }
+  .collection-court { height: 250px; }
+  .collection-shuttle { top: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .collection-primary, .collection-game { transition: none; }
+  .collection-primary:hover, .collection-game:hover { transform: none; }
+}
