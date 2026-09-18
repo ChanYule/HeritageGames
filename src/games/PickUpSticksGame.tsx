@@ -1,5 +1,6 @@
 import GamePlayArea from "../components/GamePlayArea";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Pause, Play, Timer, TimerOff } from "lucide-react";
 
 import DifficultyPicker from "../components/DifficultyPicker";
 import InstructionSteps from "../components/InstructionSteps";
@@ -380,7 +381,8 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
             disabled={!timerEnabled || gameOver}
             onClick={() => togglePause(!paused)}
           >
-            {paused ? "Resume" : "Pause"}
+            {paused ? <Play size={15} aria-hidden="true" /> : <Pause size={15} aria-hidden="true" />}
+            <span>{paused ? "Resume" : "Pause"}</span>
           </button>
           <button
             type="button"
@@ -388,7 +390,8 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
             disabled={gameOver}
             onClick={() => toggleTimer(!timerEnabled)}
           >
-            Timer {timerEnabled ? "on" : "off"}
+            {timerEnabled ? <Timer size={15} aria-hidden="true" /> : <TimerOff size={15} aria-hidden="true" />}
+            <span>Timer {timerEnabled ? "on" : "off"}</span>
           </button>
         </div>
 

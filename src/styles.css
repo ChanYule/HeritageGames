@@ -10210,6 +10210,66 @@ select:focus-visible,
   margin-bottom: 12px;
 }
 .game-play-area.is-fullscreen .fullscreen-only-controls > button { flex: 1; }
+.game-play-area.is-fullscreen .play-status-bar {
+  min-height: 64px;
+  margin-bottom: 0;
+  padding: 13px 16px;
+  border: 1px solid #deddd6;
+  border-bottom: 0;
+  border-radius: 16px 16px 0 0;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(32, 31, 28, 0.06);
+}
+.game-play-area.is-fullscreen .mobile-game-toolbar {
+  justify-content: flex-start;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border: 1px solid #deddd6;
+  border-top-color: #efeee9;
+  border-radius: 0 0 16px 16px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(32, 31, 28, 0.06);
+}
+.game-play-area.is-fullscreen .mobile-game-control {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 14px;
+  border: 1px solid #d8d8d1;
+  border-radius: 9px;
+  color: #343632;
+  background: #f7f7f3;
+  box-shadow: none;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 760;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+.game-play-area.is-fullscreen .mobile-game-control:first-child {
+  color: #fff;
+  border-color: #315e4f;
+  background: #315e4f;
+}
+.game-play-area.is-fullscreen .mobile-game-control:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: #9ca29a;
+  background: #eeefe9;
+}
+.game-play-area.is-fullscreen .mobile-game-control:first-child:hover:not(:disabled) {
+  border-color: #284f43;
+  background: #284f43;
+}
+.game-play-area.is-fullscreen .mobile-game-control:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+.game-play-area.is-fullscreen .player-dot {
+  box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 12%, transparent);
+}
 .game-play-area.is-pseudo-fullscreen {
   position: fixed;
   inset: 0;
