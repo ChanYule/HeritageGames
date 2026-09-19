@@ -4,7 +4,7 @@ import { test } from "node:test";
 import ts from "typescript";
 const source = readFileSync(new URL("../src/games/mechanics.ts", import.meta.url), "utf8");
 const { outputText } = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext } });
-const { shotVelocity, segmentsOverlap, canKick, randomMarblePositions, difficultySettings } = await import(`data:text/javascript;base64,${Buffer.from(outputText).toString("base64")}`);
+const { shotVelocity, segmentsOverlap, canKick, chaptehPaceLevel, chaptehFlightTuning, randomMarblePositions, difficultySettings } = await import(`data:text/javascript;base64,${Buffer.from(outputText).toString("base64")}`);
 const p = (x, y) => ({ x, y });
 
 test("marble power caps long drags while preserving direction", () => {
@@ -26,6 +26,15 @@ test("chapteh accepts one falling kick and rejects rising or out-of-zone kicks",
   assert.equal(canKick(420, -11.1, 502), false);
   assert.equal(canKick(200, 5, 502), false);
   assert.equal(canKick(500, 5, 502), false);
+});
+
+test("chapteh pace rises with rallies and match progress, then caps safely", () => {
+  assert.equal(chaptehPaceLevel(0, 0), 0);
+  assert.equal(chaptehPaceLevel(4, 0), 1);
+  assert.equal(chaptehPaceLevel(8, 3), 3);
+  assert.equal(chaptehPaceLevel(100, 100), 5);
+  assert.ok(chaptehFlightTuning(5).horizontalSpeed > chaptehFlightTuning(0).horizontalSpeed);
+  assert.ok(chaptehFlightTuning(5).gravity > chaptehFlightTuning(0).gravity);
 });
 
 for (const difficulty of ["easy", "medium", "difficult"]) {

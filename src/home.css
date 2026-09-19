@@ -144,3 +144,35 @@
   .collection-game:hover .collection-play-arrow,
   .collection-facts > div:hover { transform: none; }
 }
+
+/* Final home-page composition: restrained spacing and a dependable sticky nav. */
+.home-page .site-nav.premium-nav {
+  position: sticky;
+  top: 10px;
+  z-index: 100;
+  margin-top: 10px;
+  padding: 11px 14px;
+  border: 1px solid rgba(216,219,210,.92);
+  border-radius: 16px;
+  background: rgba(255,254,249,.92);
+  box-shadow: 0 10px 28px rgba(39,48,40,.08);
+  backdrop-filter: blur(16px);
+}
+
+.home-page .section-block { margin-block: clamp(64px, 9vw, 112px); }
+.home-page .featured-carousel-section { margin-top: clamp(58px, 8vw, 96px); }
+.home-page .section-heading { align-items: end; }
+.home-page .section-heading > p { max-width: 48ch; }
+.home-page .premium-game-grid { align-items: stretch; }
+.home-page .premium-game-card { height: 100%; }
+
+@media (max-width: 760px) {
+  .home-page .site-nav.premium-nav {
+    top: 6px;
+    min-height: 62px;
+    padding: 9px 10px;
+  }
+
+  .home-page .section-block { margin-block: 58px; }
+  .home-page .section-heading { align-items: start; }
+}

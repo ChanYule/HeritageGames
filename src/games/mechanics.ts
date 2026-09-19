@@ -30,6 +30,20 @@ export function canKick(y: number, vy: number, ground: number) {
   return vy > 0 && y > ground - 130 && y < ground - 8;
 }
 
+export function chaptehPaceLevel(rally: number, totalPoints: number) {
+  const rallySteps = Math.floor(Math.max(0, rally) / 4);
+  const matchSteps = Math.floor(Math.max(0, totalPoints) / 3);
+  return Math.min(5, rallySteps + matchSteps);
+}
+
+export function chaptehFlightTuning(level: number) {
+  const safeLevel = Math.max(0, Math.min(5, level));
+  return {
+    horizontalSpeed: 4.8 + safeLevel * 0.32,
+    gravity: 0.34 + safeLevel * 0.027,
+  };
+}
+
 // Random non-overlapping positions keep every target comfortably inside the ring.
 export function randomMarblePositions(random = Math.random, difficulty: Difficulty = "medium"): Point[] {
   const settings = difficultySettings[difficulty];

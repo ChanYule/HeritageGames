@@ -12,9 +12,14 @@ type Props = {
 
 export default function GameShell({ title, subtitle, onBack, children }: Props) {
   const playAreaRef = useRef<HTMLDivElement | null>(null);
+  const titleRef = useRef<HTMLHeadingElement | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [pseudoFullscreen, setPseudoFullscreen] = useState(false);
   const [nativeFullscreenSupported, setNativeFullscreenSupported] = useState(true);
+
+  useEffect(() => {
+    titleRef.current?.focus({ preventScroll: true });
+  }, []);
 
   useEffect(() => {
     const supported = Boolean(
@@ -101,6 +106,8 @@ export default function GameShell({ title, subtitle, onBack, children }: Props) 
         <div className="game-title-block">
           <p className="eyebrow">Now playing</p>
           <motion.h1
+            ref={titleRef}
+            tabIndex={-1}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.07 }}

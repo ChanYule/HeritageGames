@@ -41,9 +41,19 @@ export default function FiveStonesGame() {
   const [celebration, setCelebration] = useState<string | null>(null);
 
   const sequence = stageSequences[stage - 1];
-  const target = sequence[step];
+  const target = sequence[step] ?? 0;
   const remaining = useMemo(() => stones.filter((s) => !s.collected).length, [stones]);
   const complete = stage === 4 && step >= sequence.length;
+  const actionPhase = complete
+    ? "complete"
+    : !inAir
+      ? "toss"
+      : selectedThisThrow.length < target
+        ? "collect"
+        : progress < 50
+          ? "wait"
+          : "catch";
+  const catchReady = inAir && progress >= 50 && selectedThisThrow.length === target;
 
   const clearTimer = () => {
     if (timerRef.current !== null) window.clearInterval(timerRef.current);
@@ -243,6 +253,11 @@ export default function FiveStonesGame() {
           <div><strong>{complete ? "Sequence complete" : `Stage ${stage} · Step ${Math.min(step + 1, sequence.length)}/${sequence.length}`}</strong></div>
           <span>{complete ? "All stages cleared" : `Collect ${target} then catch`}</span>
         </div>
+        <ol className="five-stones-phase-strip" aria-label={`Current action: ${actionPhase}`}>
+          <li className={actionPhase === "toss" ? "is-current" : inAir || complete ? "is-done" : ""}><span>1</span> Toss</li>
+          <li className={actionPhase === "collect" || actionPhase === "wait" ? "is-current" : actionPhase === "catch" || complete ? "is-done" : ""}><span>2</span> Collect</li>
+          <li className={actionPhase === "catch" ? "is-current" : complete ? "is-done" : ""}><span>3</span> Catch</li>
+        </ol>
         <div className="round-cue">
           <strong>{complete ? "All four stages mastered!" : inAir ? `${selectedThisThrow.length} / ${target} collected / ${progress < 50 ? "Rising" : "Catch now"}` : `Stage ${stage} / Collect ${target} per toss`}</strong>
           <progress aria-label="Toss progress" max={100} value={progress} />
@@ -250,6 +265,9 @@ export default function FiveStonesGame() {
         <div className="mobile-game-toolbar mobile-five-stones-toolbar" aria-label="Mobile Five Stones controls">
           <button className="mobile-game-control" onClick={toss} disabled={inAir || complete}>
             {complete ? "Complete" : inAir ? "Stone in air" : "Toss stone"}
+          </button>
+          <button className="mobile-game-control catch-control" onClick={catchStone} disabled={!catchReady}>
+            {progress < 50 ? "Wait to catch" : selectedThisThrow.length !== target ? `Collect ${target - selectedThisThrow.length} more` : "Catch now"}
           </button>
           <button className="mobile-game-control secondary" onClick={reset}>Restart</button>
         </div>
@@ -265,7 +283,7 @@ export default function FiveStonesGame() {
             className={`air-stone ${inAir ? "active" : ""}`}
             style={{ top: `${tossY}%` }}
             onClick={catchStone}
-            disabled={!inAir}
+            disabled={!catchReady}
             aria-label="Catch airborne stone"
           >
             <span />
@@ -279,7 +297,7 @@ export default function FiveStonesGame() {
               } bag-${index + 1}`}
               style={{ left: `${stone.x}%`, top: `${stone.y}%` }}
               onClick={() => collectStone(stone.id)}
-              disabled={stone.collected}
+              disabled={stone.collected || !inAir || selectedThisThrow.length >= target}
               aria-label={`Ground stone ${index + 1}`}
             >
               <span><b>{index + 1}</b></span>

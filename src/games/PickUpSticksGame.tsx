@@ -74,6 +74,7 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
   const activePlayerRef = useRef<Player>(0);
   const pausedRef = useRef(false);
   const pointPopupTimerRef = useRef<number | null>(null);
+  const feedbackTimerRef = useRef<number | null>(null);
 
   const [hint, setHint] = useState<number | null>(null);
   const [sticks, setSticks] = useState<Stick[]>(() => createSticks(difficulty));
@@ -89,12 +90,20 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
   const [timeLeft, setTimeLeft] = useState(TURN_SECONDS);
   const [paused, setPaused] = useState(false);
   const [pointPopup, setPointPopup] = useState<{ id: number; points: number; x: number; y: number } | null>(null);
+  const [feedbackTone, setFeedbackTone] = useState<"success" | "mistake" | null>(null);
 
   const activeSticks = useMemo(() => sticks.filter((stick) => !stick.removed), [sticks]);
 
   useEffect(() => () => {
     if (pointPopupTimerRef.current !== null) window.clearTimeout(pointPopupTimerRef.current);
+    if (feedbackTimerRef.current !== null) window.clearTimeout(feedbackTimerRef.current);
   }, []);
+
+  const showFeedback = (tone: "success" | "mistake") => {
+    if (feedbackTimerRef.current !== null) window.clearTimeout(feedbackTimerRef.current);
+    setFeedbackTone(tone);
+    feedbackTimerRef.current = window.setTimeout(() => setFeedbackTone(null), 900);
+  };
 
   const setPlayer = (player: Player) => {
     activePlayerRef.current = player;
@@ -120,6 +129,7 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
     setTimeLeft(TURN_SECONDS);
     setMessage("Player 1 starts. Pick a stick that sits on top of the pile.");
     setPointPopup(null);
+    setFeedbackTone(null);
   };
 
   const resetDraggedStickVisual = () => {
@@ -188,8 +198,7 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
 
   const isBlocked = (stick: Stick) => {
     const board = boardRef.current;
-    const rect = board ? { width: board.clientWidth, height: board.clientHeight } : null;
-    if (!rect) return true;
+    const rect = { width: board?.clientWidth || 900, height: board?.clientHeight || 520 };
 
     const segment = (item: Stick) => {
       const angle = (item.angle * Math.PI) / 180;
@@ -230,6 +239,7 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
     setHint(null);
     setPlayer(next);
     setMessage(`${reason} Pass to Player ${next + 1}.`);
+    showFeedback("mistake");
   };
 
   const collect = (stick: Stick) => {
@@ -247,6 +257,7 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
     if (pointPopupTimerRef.current !== null) window.clearTimeout(pointPopupTimerRef.current);
     setPointPopup({ id: Date.now(), points: stick.points, x: stick.x, y: stick.y });
     pointPopupTimerRef.current = window.setTimeout(() => setPointPopup(null), 1100);
+    showFeedback("success");
     setHint(null);
     setStreak((value) => value + 1);
     setSticks((items) => items.map((item) => item.id === stick.id ? { ...item, removed: true } : item));
@@ -289,10 +300,17 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
     const distance = Math.hypot(event.clientX - origin.x, event.clientY - origin.y);
     event.currentTarget.style.transform = `translate(-50%, -50%) rotate(${stick.angle}deg)`;
 
-    if (distance > Math.min(90, (boardRef.current?.clientWidth ?? 600) * 0.15)) {
+    const board = boardRef.current;
+    const boardSize = Math.min(board?.clientWidth ?? 600, board?.clientHeight ?? 420);
+    const threshold = event.pointerType === "touch"
+      ? Math.max(44, Math.min(72, boardSize * 0.12))
+      : Math.max(36, Math.min(64, boardSize * 0.1));
+
+    if (distance > threshold) {
       collect(stick);
     } else {
       setMessage("Move the stick farther away. This does not count as a mistake.");
+      showFeedback("mistake");
     }
 
     setDragging(null);
@@ -407,14 +425,15 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
           </button>
         </div>
 
-        <div className={`sticks-board active-play-frame pauseable-play-area player-border-${activePlayer + 1} ${paused ? "is-paused" : ""}`} ref={boardRef}>
+        <div className={`sticks-board active-play-frame pauseable-play-area player-border-${activePlayer + 1} ${paused ? "is-paused" : ""} ${feedbackTone ? `feedback-${feedbackTone}` : ""}`} ref={boardRef}>
           <div className="floor-label">PICK-UP STICKS</div>
           {paused ? <div className="game-paused-overlay" role="status"><strong>Paused</strong><span>Player {activePlayer + 1} keeps this turn</span></div> : null}
-          {sticks.map((stick) => (
-            <div
+          {sticks.map((stick) => {
+            const selectable = !stick.removed && !isBlocked(stick);
+            return <div
               key={stick.id}
               data-stick-id={stick.id}
-              className={`stick ${stick.removed ? "removed" : ""} ${hint === stick.id ? "hinted" : ""}`}
+              className={`stick ${stick.removed ? "removed" : ""} ${selectable ? "is-selectable" : "is-blocked"} ${hint === stick.id ? "hinted" : ""}`}
               style={{
                 left: `${stick.x}%`,
                 top: `${stick.y}%`,
@@ -441,9 +460,9 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
               role="button"
               tabIndex={paused || stick.removed ? -1 : 0}
               aria-disabled={paused}
-              aria-label={`Stick worth ${stick.points} points`}
-            />
-          ))}
+              aria-label={`${selectable ? "Exposed" : "Trapped"} stick worth ${stick.points} points`}
+            />;
+          })}
           {pointPopup ? (
             <span
               key={pointPopup.id}

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowDown,
@@ -67,6 +67,11 @@ const games: GameDefinition[] = [
 ];
 
 const gameIcons = [CircleDot, Hand, MousePointer2, Gamepad2];
+
+function gameFromLocation(): GameKey | null {
+  const key = new URLSearchParams(window.location.search).get("game");
+  return games.some((game) => game.key === key) ? key as GameKey : null;
+}
 
 const gameCardDetails: Record<GameKey, { skill: string; control: string; modeLabel: string }> = {
   marbles: { skill: "Precision", control: "Drag + release", modeLabel: "Local versus" },
@@ -272,6 +277,8 @@ function Home({ onPlay }: { onPlay: (key: GameKey) => void }) {
             <AnimatePresence mode="wait" initial={false} custom={carouselDirection}>
               <motion.article
                 key={featuredGame.key}
+                id="featured-game-panel"
+                role="tabpanel"
                 className={`featured-carousel-card featured-carousel-${featuredGame.key}`}
                 custom={carouselDirection}
                 initial={{ opacity: 0, x: carouselDirection > 0 ? 70 : -70, scale: 0.975 }}
@@ -363,6 +370,8 @@ function Home({ onPlay }: { onPlay: (key: GameKey) => void }) {
                 role="tab"
                 aria-selected={index === featuredIndex}
                 aria-label={`Show ${game.title}`}
+                aria-controls="featured-game-panel"
+                tabIndex={index === featuredIndex ? 0 : -1}
               >
                 <span />
                 <small>{game.title}</small>
@@ -577,7 +586,19 @@ function Home({ onPlay }: { onPlay: (key: GameKey) => void }) {
 }
 
 export default function App() {
-  const [currentGame, setCurrentGame] = useState<GameKey | null>(null);
+  const [currentGame, setCurrentGame] = useState<GameKey | null>(() => gameFromLocation());
+
+  useEffect(() => {
+    const handleHistory = () => setCurrentGame(gameFromLocation());
+    window.addEventListener("popstate", handleHistory);
+    return () => window.removeEventListener("popstate", handleHistory);
+  }, []);
+
+  useEffect(() => {
+    document.title = currentGame
+      ? `${games.find((item) => item.key === currentGame)?.title ?? "Game"} · Singapore Heritage Games`
+      : "Singapore Heritage Games · Void Deck Edition";
+  }, [currentGame]);
 
   const game = useMemo(
     () => games.find((item) => item.key === currentGame) ?? null,
@@ -585,12 +606,22 @@ export default function App() {
   );
 
   const openGame = (key: GameKey) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("game", key);
+    window.history.pushState({ heritageGame: key }, "", url);
     setCurrentGame(key);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const closeGame = () => {
-    setCurrentGame(null);
+    if (window.history.state?.heritageGame) {
+      window.history.back();
+    } else {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("game");
+      window.history.replaceState({}, "", url);
+      setCurrentGame(null);
+    }
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 

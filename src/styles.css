@@ -10675,6 +10675,28 @@ body {
   box-shadow: none;
 }
 
+.marbles-play-area.is-fullscreen .canvas-frame {
+  inset: 50% auto auto 50%;
+  width: min(100vw, calc(100dvh * 900 / 560));
+  height: min(100dvh, calc(100vw * 560 / 900));
+  min-height: 0;
+  transform: translate(-50%, -50%);
+}
+
+.chapteh-play-area.is-fullscreen {
+  background:
+    linear-gradient(90deg, rgba(45,109,121,.13) 0 50%, rgba(168,79,62,.12) 50% 100%),
+    #d8d2c6;
+}
+
+.chapteh-play-area.is-fullscreen .chapteh-frame {
+  inset: 50% auto auto 50%;
+  width: min(100vw, calc(100dvh * 760 / 560));
+  height: min(100dvh, calc(100vw * 560 / 760));
+  min-height: 0;
+  transform: translate(-50%, -50%);
+}
+
 .marbles-play-area.is-fullscreen .canvas-frame canvas,
 .chapteh-play-area.is-fullscreen .chapteh-frame canvas {
   display: block;
@@ -10730,30 +10752,34 @@ body {
   border: 2px solid rgba(255,255,255,.74);
   border-radius: 24px;
   color: #fff;
+  text-shadow: 0 1px 2px rgba(28,24,20,.32);
   box-shadow: 0 18px 42px rgba(35,32,28,.2);
   backdrop-filter: blur(11px);
   pointer-events: auto;
   transform: translateY(-50%);
+  animation: none !important;
+  transition: border-color 160ms ease, background 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
 }
 
 .chapteh-play-area.is-fullscreen .versus-foot-controls .kick-button:hover:not(:disabled),
 .chapteh-play-area.is-fullscreen .versus-foot-controls .kick-button:active:not(:disabled) {
-  transform: translateY(-50%) scale(1.025);
+  transform: translateY(-50%);
 }
 
 .chapteh-play-area.is-fullscreen .versus-foot-controls .kick-left {
   left: max(18px, env(safe-area-inset-left));
-  background: linear-gradient(145deg, rgba(21,94,117,.88), rgba(21,94,117,.58));
+  background: linear-gradient(145deg, rgba(21,94,117,.96), rgba(21,94,117,.78));
 }
 
 .chapteh-play-area.is-fullscreen .versus-foot-controls .kick-right {
   right: max(18px, env(safe-area-inset-right));
-  background: linear-gradient(145deg, rgba(185,28,28,.82), rgba(168,79,62,.58));
+  background: linear-gradient(145deg, rgba(185,28,28,.92), rgba(168,79,62,.78));
 }
 
 .chapteh-play-area.is-fullscreen .versus-foot-controls .kick-button:disabled {
-  opacity: .38;
-  filter: saturate(.55);
+  opacity: .72;
+  filter: saturate(.72);
+  color: rgba(255,255,255,.96);
 }
 
 .chapteh-play-area.is-fullscreen .versus-foot-controls .kick-button.kick-ready {
@@ -10766,6 +10792,24 @@ body {
   font-size: clamp(.78rem, 1.4vw, 1rem);
   font-weight: 850;
   text-align: center;
+}
+
+.chapteh-play-area.is-fullscreen .fullscreen-only-controls > .primary-button {
+  color: #fff;
+  border-color: #234f42;
+  background: #315e4f;
+}
+
+.chapteh-play-area.is-fullscreen .fullscreen-only-controls > .primary-button:disabled {
+  color: #343632;
+  border-color: rgba(255,255,255,.76);
+  background: rgba(255,255,255,.9);
+  opacity: .82;
+}
+
+.chapteh-play-area.is-fullscreen .fullscreen-only-controls > .secondary-button {
+  color: #252824;
+  background: rgba(255,255,255,.94);
 }
 
 .chapteh-play-area.is-fullscreen .versus-foot-controls .kick-button kbd {
@@ -10784,6 +10828,43 @@ body {
   background: rgba(255,255,255,.88);
   box-shadow: 0 16px 38px rgba(38,35,29,.18);
   backdrop-filter: blur(15px);
+}
+
+.chapteh-pace-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
+  margin: 5px auto 2px;
+  padding: 4px 8px;
+  border: 1px solid rgba(47,42,36,.13);
+  border-radius: 999px;
+  color: #4d4b45;
+  background: rgba(255,255,255,.78);
+  font-size: .6rem;
+  font-weight: 850;
+  letter-spacing: .08em;
+}
+
+.chapteh-pace-badge:is(.pace-3, .pace-4, .pace-5) {
+  color: #fff;
+  border-color: rgba(255,255,255,.45);
+  background: #a84f3e;
+}
+
+.versus-foot-controls .kick-button,
+.versus-foot-controls .kick-button.kick-ready,
+.versus-foot-controls .kick-button:hover:not(:disabled),
+.versus-foot-controls .kick-button:active:not(:disabled) {
+  animation: none;
+  transform: none;
+}
+
+.chapteh-play-area.is-fullscreen .versus-foot-controls .kick-button,
+.chapteh-play-area.is-fullscreen .versus-foot-controls .kick-button.kick-ready,
+.chapteh-play-area.is-fullscreen .versus-foot-controls .kick-button:hover:not(:disabled),
+.chapteh-play-area.is-fullscreen .versus-foot-controls .kick-button:active:not(:disabled) {
+  transform: translateY(-50%);
 }
 
 @media (max-width: 760px) {
@@ -10817,7 +10898,7 @@ body {
 
   .chapteh-play-area.is-fullscreen .versus-foot-controls .kick-button:hover:not(:disabled),
   .chapteh-play-area.is-fullscreen .versus-foot-controls .kick-button:active:not(:disabled) {
-    transform: scale(1.02);
+    transform: none;
   }
 
   .chapteh-play-area.is-fullscreen .chapteh-center-rally-indicator {
@@ -10830,4 +10911,200 @@ body {
   .chapteh-play-area.is-fullscreen .versus-foot-controls .kick-button {
     transition: none;
   }
+}
+
+/* Product polish: consistent interaction patterns shared by every game. */
+.marble-shot-controls {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 15px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  background: var(--surface-card);
+  box-shadow: 0 8px 22px rgba(39,35,29,.06);
+}
+
+.marble-shot-controls legend {
+  padding: 0 6px;
+  color: var(--text-main);
+  font-size: .78rem;
+  font-weight: 850;
+}
+
+.marble-shot-controls label { display: grid; gap: 6px; }
+.marble-shot-controls label > span {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-muted);
+  font-size: .72rem;
+  font-weight: 720;
+}
+
+.marble-shot-controls input[type="range"] {
+  width: 100%;
+  min-height: 24px;
+  accent-color: var(--color-teal);
+  cursor: pointer;
+}
+
+.marble-shot-controls:disabled { opacity: .58; }
+
+.stick.is-selectable {
+  outline: 1px solid rgba(255,255,255,.48);
+  outline-offset: 2px;
+  cursor: grab;
+}
+.stick.is-selectable:active { cursor: grabbing; }
+.stick.is-selectable:hover,
+.stick.is-selectable:focus-visible {
+  outline: 3px solid rgba(255,255,255,.9);
+  outline-offset: 4px;
+  filter: brightness(1.08) saturate(1.08);
+}
+
+.stick.is-blocked:not(.removed) { cursor: not-allowed; }
+.stick.is-blocked:not(.removed):hover { filter: brightness(.94) saturate(.84); }
+
+.sticks-board.feedback-success { box-shadow: 0 0 0 5px rgba(49,94,79,.18), 0 18px 48px rgba(41,35,27,.12); }
+.sticks-board.feedback-mistake { box-shadow: 0 0 0 5px rgba(168,79,62,.17), 0 18px 48px rgba(41,35,27,.12); }
+
+.five-stones-phase-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.five-stones-phase-strip li {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 7px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 11px;
+  color: var(--text-muted);
+  background: rgba(255,255,255,.64);
+  font-size: .72rem;
+  font-weight: 780;
+}
+
+.five-stones-phase-strip li span {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border-radius: 50%;
+  background: #ebe8df;
+  font-size: .66rem;
+}
+
+.five-stones-phase-strip li.is-current {
+  color: #fff;
+  border-color: var(--color-jade);
+  background: var(--color-jade);
+  box-shadow: 0 7px 18px rgba(49,94,79,.17);
+}
+
+.five-stones-phase-strip li.is-current span { color: var(--color-jade); background: #fff; }
+.five-stones-phase-strip li.is-done { color: #315e4f; border-color: rgba(49,94,79,.28); background: #eef5f1; }
+.five-stones-phase-strip li.is-done span { color: #fff; background: #315e4f; }
+
+.five-stones-play-area.is-fullscreen .five-stones-phase-strip {
+  position: absolute;
+  top: max(76px, calc(env(safe-area-inset-top) + 66px));
+  left: 50%;
+  z-index: 96;
+  width: min(460px, calc(100vw - 32px));
+  margin: 0;
+  transform: translateX(-50%);
+}
+
+.five-stones-play-area.is-fullscreen .round-cue {
+  top: max(128px, calc(env(safe-area-inset-top) + 118px));
+}
+
+.mobile-game-control.catch-control:not(:disabled) {
+  color: #fff;
+  border-color: #a84f3e;
+  background: #a84f3e;
+}
+
+.versus-foot-controls .kick-button.kick-waiting:not(:disabled) {
+  border-color: rgba(88,82,73,.24);
+  box-shadow: none;
+  filter: saturate(.72);
+}
+
+.versus-foot-controls .kick-button.kick-ready {
+  border-color: currentColor;
+  filter: saturate(1.05);
+}
+
+.game-title-block h1:focus { outline: none; }
+
+@media (max-width: 1080px) {
+  .game-layout,
+  .multiplayer-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .game-panel {
+    position: static;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .game-panel > .instruction-card,
+  .game-panel > .difficulty-picker,
+  .game-panel > .player-scoreboard,
+  .game-panel > .turn-message {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 720px) {
+  .game-page,
+  .home-page { width: min(100% - 24px, 1240px); }
+
+  .game-panel { grid-template-columns: 1fr; }
+  .game-panel > * { grid-column: 1; }
+
+  .player-scoreboard { grid-template-columns: 1fr 1fr; }
+  .player-score { min-width: 0; }
+
+  .marble-shot-controls { padding: 12px; }
+  .five-stones-phase-strip { gap: 5px; }
+  .five-stones-phase-strip li { min-height: 44px; padding-inline: 6px; }
+
+  .mobile-game-toolbar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .player-scoreboard { grid-template-columns: 1fr; }
+  .five-stones-phase-strip li { gap: 4px; font-size: .66rem; }
+  .five-stones-phase-strip li span { width: 19px; height: 19px; }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .stick { min-height: 18px; }
+  .beanbag,
+  .air-stone { min-width: 58px; min-height: 58px; }
+  button,
+  [role="button"],
+  select { touch-action: manipulation; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sticks-board,
+  .stick,
+  .five-stones-phase-strip li { transition: none !important; }
 }

@@ -111,6 +111,8 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
   const [timeLeft, setTimeLeft] = useState(TURN_SECONDS);
   const [paused, setPaused] = useState(false);
   const [captureFeedback, setCaptureFeedback] = useState<{ id: number; text: string; player: Player } | null>(null);
+  const [keyboardAim, setKeyboardAim] = useState(-90);
+  const [keyboardPower, setKeyboardPower] = useState(55);
 
   const syncPlayer = (player: Player) => {
     activePlayerRef.current = player;
@@ -139,6 +141,8 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
     setPaused(false);
     setTimeLeft(TURN_SECONDS);
     setCaptureFeedback(null);
+    setKeyboardAim(-90);
+    setKeyboardPower(55);
     syncPlayer(0);
     setMessage("Player 1 starts. Drag the shooter backwards and release.");
   };
@@ -647,6 +651,21 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
     takeShot(velocity.x, velocity.y);
   };
 
+  const shootWithControls = () => {
+    const radians = keyboardAim * Math.PI / 180;
+    const speed = 16.2 * keyboardPower / 100;
+    takeShot(Math.cos(radians) * speed, Math.sin(radians) * speed);
+  };
+
+  const onCanvasKeyDown = (event: React.KeyboardEvent<HTMLCanvasElement>) => {
+    if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", " "].includes(event.key)) event.preventDefault();
+    if (event.key === "ArrowLeft") setKeyboardAim((value) => Math.max(-160, value - 5));
+    if (event.key === "ArrowRight") setKeyboardAim((value) => Math.min(-20, value + 5));
+    if (event.key === "ArrowUp") setKeyboardPower((value) => Math.min(100, value + 5));
+    if (event.key === "ArrowDown") setKeyboardPower((value) => Math.max(20, value - 5));
+    if (event.key === " ") shootWithControls();
+  };
+
   const totalCaptured = captures[0] + captures[1];
   const remaining = targetCount - totalCaptured;
   const shotDetails: [string, string] = [
@@ -663,6 +682,7 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
           steps={[
             "Player 1 takes the first shot. Press the coloured shooter marble.",
             "Drag backwards to set direction and power, then release.",
+            "Keyboard option: focus the board, use Left/Right to aim, Up/Down to set power, then press Space to shoot.",
             "You have 30 seconds to take your shot when the timer is on. Press Pause at any time to freeze the turn and keep the remaining seconds.",
             "The countdown also holds automatically while marbles are rolling. Captured marbles add points to the player who took the shot.",
             "After the shot, or if time reaches 0, pass the device to the other player. Keep alternating until every target leaves the ring.",
@@ -690,6 +710,19 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
           onPauseToggle={togglePause}
         />
 
+        <fieldset className="marble-shot-controls" disabled={moving || paused || gameOver}>
+          <legend>Keyboard shot controls</legend>
+          <label>
+            <span>Aim <strong>{keyboardAim}°</strong></span>
+            <input type="range" min={-160} max={-20} step={5} value={keyboardAim} onChange={(event) => setKeyboardAim(Number(event.target.value))} />
+          </label>
+          <label>
+            <span>Power <strong>{keyboardPower}%</strong></span>
+            <input type="range" min={20} max={100} step={5} value={keyboardPower} onChange={(event) => setKeyboardPower(Number(event.target.value))} />
+          </label>
+          <button type="button" className="secondary-button" onClick={shootWithControls}>Shoot marble</button>
+        </fieldset>
+
         <div className="mini-stat-row">
           <div><span>Marbles left</span><strong>{remaining}</strong></div>
           <div><span>Total shots</span><strong>{shots[0] + shots[1]}</strong></div>
@@ -708,6 +741,7 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
 
       <GamePlayArea className="marbles-play-area">
         <div className="fullscreen-only-controls">
+          <button className="primary-button" disabled={moving || paused || gameOver} onClick={shootWithControls}>Shoot · {keyboardPower}%</button>
           <button className="secondary-button" onClick={reset}>New match</button>
         </div>
         <div className="play-status-bar">
@@ -753,7 +787,9 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
             onPointerCancel={() => { draggingRef.current = false; }}
-            aria-label="Marbles ring. Drag the coloured shooter backwards and release."
+            onKeyDown={onCanvasKeyDown}
+            tabIndex={0}
+            aria-label="Marbles ring. Drag the coloured shooter backwards and release, or use arrow keys to adjust aim and power and Space to shoot."
           />
           {captureFeedback ? (
             <div key={captureFeedback.id} className={`marble-capture-feedback player-${captureFeedback.player + 1}`} role="status">
@@ -764,7 +800,7 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
         </div>
 
         <p className="control-hint">
-          Drag backwards from the coloured shooter marble, then release. Blue swirl marble is Player 1 and red cross marble is Player 2.
+          Drag backwards and release, or focus the board and use Arrow keys plus Space. Blue swirl marble is Player 1 and red cross marble is Player 2.
         </p>
       </GamePlayArea>
     </section>

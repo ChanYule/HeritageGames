@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, Lightbulb, ListChecks } from "lucide-react";
 
@@ -11,6 +11,7 @@ type Props = {
 
 export default function InstructionSteps({ title, objective, steps, tip }: Props) {
   const [open, setOpen] = useState(true);
+  const contentId = useId();
 
   return (
     <section className={`instruction-card premium-instruction-card ${open ? "is-open" : ""}`}>
@@ -19,6 +20,7 @@ export default function InstructionSteps({ title, objective, steps, tip }: Props
         className="instruction-summary premium-instruction-summary"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
+        aria-controls={contentId}
       >
         <div className="instruction-heading">
           <div className="instruction-heading-topline">
@@ -41,6 +43,7 @@ export default function InstructionSteps({ title, objective, steps, tip }: Props
       <AnimatePresence initial={false}>
         {open && (
           <motion.div
+            id={contentId}
             className="instruction-body"
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}

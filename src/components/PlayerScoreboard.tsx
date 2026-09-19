@@ -69,6 +69,8 @@ export default function PlayerScoreboard({
             animate={{ scale: isActive ? 1.015 : 1, y: isActive ? -2 : 0 }}
             transition={{ type: "spring", stiffness: 330, damping: 26 }}
             layout
+            aria-current={isActive ? "true" : undefined}
+            aria-label={`${labels[player]}, ${scores[player]} points${isActive ? ", current turn" : ""}`}
           >
             <div className="player-score-name">
               <span className="player-dot" />

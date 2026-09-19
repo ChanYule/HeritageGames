@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 
 import InstructionSteps from "../components/InstructionSteps";
 import PlayerScoreboard from "../components/PlayerScoreboard";
-import { canKick } from "./mechanics";
+import { canKick, chaptehFlightTuning, chaptehPaceLevel } from "./mechanics";
 
 type Chapteh = {
   x: number;
@@ -33,6 +33,7 @@ const GROUND = HEIGHT - 58;
 const MID = WIDTH / 2;
 const WIN_SCORE = 7;
 const PLAYER_COLORS = ["#2d6d79", "#a84f3e"] as const;
+const PACE_LABELS = ["Warm-up", "Steady", "Quick", "Fast", "Expert", "Legend"] as const;
 
 function getComboData(rally: number): ComboData {
   if (rally >= 16) {
@@ -89,6 +90,8 @@ export default function ChaptehGame() {
   const particlesRef = useRef<KickParticle[]>([]);
   const lastTimeRef = useRef(performance.now());
   const audioContextRef = useRef<AudioContext | null>(null);
+  const paceLevelRef = useRef(0);
+  const kickWindowPlayerRef = useRef<Player | null>(null);
 
   const [running, setRunning] = useState(false);
   const [expectedPlayer, setExpectedPlayer] = useState<Player>(0);
@@ -100,6 +103,8 @@ export default function ChaptehGame() {
   const [longestRally, setLongestRally] = useState(0);
   const [message, setMessage] = useState("Player 1 serves first from the left. Start the rally when both players are ready.");
   const [gameOver, setGameOver] = useState(false);
+  const [paceLevel, setPaceLevel] = useState(0);
+  const [kickWindowPlayer, setKickWindowPlayer] = useState<Player | null>(null);
 
   const combo = getComboData(rally);
 
@@ -181,6 +186,10 @@ export default function ChaptehGame() {
     setRally(0);
     setStreakCelebration("");
     setLongestRally(0);
+    paceLevelRef.current = 0;
+    setPaceLevel(0);
+    kickWindowPlayerRef.current = null;
+    setKickWindowPlayer(null);
     setNextServer(0);
     resetBallForServer(0);
     setMessage("Player 1 serves first from the left. Start the rally when both players are ready.");
@@ -194,6 +203,11 @@ export default function ChaptehGame() {
     setRally(0);
     setStreakCelebration("");
     setExpected(servingPlayer);
+    kickWindowPlayerRef.current = null;
+    setKickWindowPlayer(null);
+    const nextPace = chaptehPaceLevel(0, scoresRef.current[0] + scoresRef.current[1]);
+    paceLevelRef.current = nextPace;
+    setPaceLevel(nextPace);
     runningRef.current = true;
     setRunning(true);
     setMessage(
@@ -206,11 +220,16 @@ export default function ChaptehGame() {
     runningRef.current = false;
     setRunning(false);
     particlesRef.current = [];
+    kickWindowPlayerRef.current = null;
+    setKickWindowPlayer(null);
 
     const nextScores: [number, number] = [...scoresRef.current] as [number, number];
     nextScores[scorer] += 1;
     scoresRef.current = nextScores;
     setScores(nextScores);
+    const nextPace = chaptehPaceLevel(0, nextScores[0] + nextScores[1]);
+    paceLevelRef.current = nextPace;
+    setPaceLevel(nextPace);
 
     const finalRally = rallyRef.current;
     if (finalRally > longestRallyRef.current) {
@@ -259,7 +278,11 @@ export default function ChaptehGame() {
     }
 
     const direction = player === 0 ? 1 : -1;
-    const horizontalSpeed = 4.8 + Math.min(rallyRef.current * 0.05, 1.1);
+    const nextRally = rallyRef.current + 1;
+    const nextPace = chaptehPaceLevel(nextRally, scoresRef.current[0] + scoresRef.current[1]);
+    const { horizontalSpeed } = chaptehFlightTuning(nextPace);
+    paceLevelRef.current = nextPace;
+    setPaceLevel(nextPace);
     chapteh.vy = -10.9;
     chapteh.vx = direction * horizontalSpeed;
 
@@ -280,7 +303,6 @@ export default function ChaptehGame() {
     kicksRef.current = nextKicks;
     setKicks(nextKicks);
 
-    const nextRally = rallyRef.current + 1;
     rallyRef.current = nextRally;
     setRally(nextRally);
     playComboCue(nextRally);
@@ -371,6 +393,11 @@ export default function ChaptehGame() {
 
       const expected = expectedPlayerRef.current;
       const ready = runningRef.current && canKick(chapteh.y, chapteh.vy, GROUND) && (expected === 0 ? chapteh.x < MID : chapteh.x >= MID);
+      const readyPlayer = ready ? expected : null;
+      if (kickWindowPlayerRef.current !== readyPlayer) {
+        kickWindowPlayerRef.current = readyPlayer;
+        setKickWindowPlayer(readyPlayer);
+      }
       const expectedX = expected === 0 ? MID / 2 : MID + MID / 2;
       const zoneX = expected === 0 ? 0 : MID;
 
@@ -449,7 +476,8 @@ export default function ChaptehGame() {
 
       if (runningRef.current) {
         const chapteh = chaptehRef.current;
-        chapteh.vy += 0.34 * dt;
+        const { gravity } = chaptehFlightTuning(paceLevelRef.current);
+        chapteh.vy += gravity * dt;
         chapteh.x += chapteh.vx * dt;
         chapteh.y += chapteh.vy * dt;
         chapteh.vx *= Math.pow(0.999, dt);
@@ -622,6 +650,7 @@ export default function ChaptehGame() {
             <span className="center-rally-kicker">
               {running ? `PLAYER ${expectedPlayer + 1} NEXT` : `PLAYER ${server + 1} SERVE`}
             </span>
+            <span className={`chapteh-pace-badge pace-${paceLevel}`}>PACE · {PACE_LABELS[paceLevel]}</span>
             <div className="center-rally-direction" aria-hidden="true">
               <span className="center-rally-side center-rally-side-left">P1</span>
               <span className="center-rally-track">
@@ -643,19 +672,19 @@ export default function ChaptehGame() {
 
         <div className="foot-controls control-deck versus-foot-controls">
           <button
-            className={`kick-button kick-left ${running && expectedPlayer === 0 ? "kick-ready" : ""}`}
+            className={`kick-button kick-left ${kickWindowPlayer === 0 ? "kick-ready" : "kick-waiting"}`}
             disabled={!running || expectedPlayer !== 0}
             onClick={() => kick("left")}
           >
-            <span>Player 1 · Kick</span>
+            <span>Player 1 · {kickWindowPlayer === 0 ? "Kick now" : "Wait"}</span>
             <kbd>A / ←</kbd>
           </button>
           <button
-            className={`kick-button kick-right ${running && expectedPlayer === 1 ? "kick-ready" : ""}`}
+            className={`kick-button kick-right ${kickWindowPlayer === 1 ? "kick-ready" : "kick-waiting"}`}
             disabled={!running || expectedPlayer !== 1}
             onClick={() => kick("right")}
           >
-            <span>Player 2 · Kick</span>
+            <span>Player 2 · {kickWindowPlayer === 1 ? "Kick now" : "Wait"}</span>
             <kbd>D / →</kbd>
           </button>
         </div>
