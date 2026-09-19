@@ -539,7 +539,7 @@ export default function ChaptehGame() {
       <GamePlayArea>
         <div className="fullscreen-only-controls">
           <button className="primary-button" onClick={startRally} disabled={running || gameOver}>
-            {gameOver ? "Match complete" : running ? "Rally in progress" : `Start rally ? Player ${server + 1} serve`}
+            {gameOver ? "Match complete" : running ? "Rally in progress" : `Start rally · Player ${server + 1} serve`}
           </button>
           <button className="secondary-button" onClick={resetMatch}>Restart match</button>
         </div>

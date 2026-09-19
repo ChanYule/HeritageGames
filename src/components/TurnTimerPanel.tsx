@@ -25,6 +25,7 @@ export default function TurnTimerPanel({
   const percentage = Math.max(0, Math.min(100, (seconds / duration) * 100));
   const countdownPaused = paused || autoPaused;
   const urgent = enabled && seconds <= 10 && !countdownPaused && !gameOver;
+  const warning = enabled && seconds > 10 && seconds <= 20 && !countdownPaused && !gameOver;
   const pauseAvailable = enabled && !gameOver && Boolean(onPauseToggle);
 
   let status = "No time limit";
@@ -37,7 +38,7 @@ export default function TurnTimerPanel({
 
   return (
     <motion.div
-      className={`turn-timer-panel premium-timer-panel ${urgent ? "timer-urgent" : ""} ${!enabled ? "timer-disabled" : ""} ${paused ? "timer-manual-paused" : ""}`}
+      className={`turn-timer-panel premium-timer-panel ${warning ? "timer-warning" : ""} ${urgent ? "timer-urgent" : ""} ${!enabled ? "timer-disabled" : ""} ${paused ? "timer-manual-paused" : ""}`}
       animate={urgent ? { scale: [1, 1.012, 1] } : { scale: 1 }}
       transition={urgent ? { duration: 0.9, repeat: Infinity } : { duration: 0.2 }}
     >

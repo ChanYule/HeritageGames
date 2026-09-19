@@ -139,10 +139,10 @@ function Home({ onPlay }: { onPlay: (key: GameKey) => void }) {
         <div className="collection-intro">
           <span className="collection-eyebrow"><span /> MADE OF SINGAPORE MEMORIES</span>
           <h1 id="collection-title">Old-school games.<br /><em>New ways to play.</em></h1>
-          <p className="collection-description">A little nostalgia. A little friendly competition. Rediscover Singapore?s favourite childhood games, wherever you are.</p>
+          <p className="collection-description">A little nostalgia. A little friendly competition. Rediscover Singapore’s favourite childhood games, wherever you are.</p>
           <div className="collection-actions">
             <button className="collection-primary" onClick={() => onPlay("chapteh")}>
-              Let?s play Chapteh <ArrowUpRight size={19} />
+              Let’s play Chapteh <ArrowUpRight size={19} />
             </button>
             <a className="collection-browse" href="#games">Explore the games <ArrowDown size={17} /></a>
           </div>
@@ -181,7 +181,7 @@ function Home({ onPlay }: { onPlay: (key: GameKey) => void }) {
               <span className="collection-player collection-player-two">P2</span>
             </div>
             <div className="collection-game-info">
-              <span className="collection-game-mode"><Users2 size={14} /> 2 players ? One device</span>
+              <span className="collection-game-mode"><Users2 size={14} /> 2 players · One device</span>
               <div className="collection-game-title"><h2>Chapteh Versus</h2><span className="collection-play-arrow"><ArrowUpRight size={23} /></span></div>
               <p>Trade kicks. Find your rhythm. Keep the rally alive.</p>
               <div className="collection-game-tags"><span>Easy to learn</span><span>Touch + keyboard</span></div>
@@ -561,10 +561,16 @@ function Home({ onPlay }: { onPlay: (key: GameKey) => void }) {
           <span><strong>Heritage Games</strong><small>Digital heritage play for everyone</small></span>
         </div>
         <div className="footer-meta">
+          <span>© {new Date().getFullYear()} Singapore Heritage Games</span>
           <span>Touch · Mouse · Keyboard</span>
           <span>Mobile · Tablet · Desktop</span>
         </div>
-        <a href="#top" className="text-link">Back to top ↑</a>
+        <nav className="footer-quick-links" aria-label="Footer navigation">
+          <a href="#games">Games</a>
+          <a href="#how-it-works">How to play</a>
+          <a href="#experience">Accessibility</a>
+          <a href="#top">Back to top ↑</a>
+        </nav>
       </footer>
     </motion.main>
   );

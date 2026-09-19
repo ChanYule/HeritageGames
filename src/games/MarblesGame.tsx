@@ -98,6 +98,7 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
   const totalCapturedRef = useRef(0);
   const gameOverRef = useRef(false);
   const pausedRef = useRef(false);
+  const captureFeedbackTimerRef = useRef<number | null>(null);
 
   const [activePlayer, setActivePlayer] = useState<Player>(0);
   const [scores, setScores] = useState<[number, number]>([0, 0]);
@@ -109,6 +110,7 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
   const [timerEnabled, setTimerEnabled] = useState(true);
   const [timeLeft, setTimeLeft] = useState(TURN_SECONDS);
   const [paused, setPaused] = useState(false);
+  const [captureFeedback, setCaptureFeedback] = useState<{ id: number; text: string; player: Player } | null>(null);
 
   const syncPlayer = (player: Player) => {
     activePlayerRef.current = player;
@@ -118,6 +120,8 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
   };
 
   const reset = () => {
+    if (captureFeedbackTimerRef.current !== null) window.clearTimeout(captureFeedbackTimerRef.current);
+    captureFeedbackTimerRef.current = null;
     marblesRef.current = createMarbles(difficulty);
     draggingRef.current = false;
     movingRef.current = false;
@@ -134,6 +138,7 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
     setMoving(false);
     setPaused(false);
     setTimeLeft(TURN_SECONDS);
+    setCaptureFeedback(null);
     syncPlayer(0);
     setMessage("Player 1 starts. Drag the shooter backwards and release.");
   };
@@ -198,6 +203,11 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+    const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(WIDTH * pixelRatio);
+    canvas.height = Math.round(HEIGHT * pixelRatio);
+    canvas.style.aspectRatio = `${WIDTH} / ${HEIGHT}`;
+    ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
 
     const drawShooterDetails = (marble: Marble) => {
       const detail = PLAYER_DETAILS[activePlayerRef.current];
@@ -233,6 +243,17 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
       ctx.fillStyle = floor;
       ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
+      // Deterministic speckles give the court a concrete grit without visual noise moving per frame.
+      ctx.fillStyle = "rgba(72, 59, 45, 0.09)";
+      for (let index = 0; index < 150; index++) {
+        const x = (index * 83 + 29) % WIDTH;
+        const y = (index * 47 + 61) % HEIGHT;
+        const radius = 0.45 + (index % 3) * 0.28;
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
       ctx.strokeStyle = "rgba(87, 72, 55, 0.14)";
       ctx.lineWidth = 1;
       for (let x = 0; x < WIDTH; x += 60) {
@@ -254,11 +275,41 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
       ctx.lineWidth = 7;
       ctx.stroke();
 
-      ctx.fillStyle = "rgba(255,250,240,0.88)";
-      ctx.fillRect(18, 18, 220, 46);
+      // Chalk boundary ticks make the scoring edge readable at a glance.
+      ctx.strokeStyle = "rgba(88, 65, 45, 0.72)";
+      ctx.lineWidth = 3;
+      for (let index = 0; index < 12; index++) {
+        const angle = (index / 12) * Math.PI * 2;
+        const inner = RING.radius - 8;
+        const outer = RING.radius + 8;
+        ctx.beginPath();
+        ctx.moveTo(RING.x + Math.cos(angle) * inner, RING.y + Math.sin(angle) * inner);
+        ctx.lineTo(RING.x + Math.cos(angle) * outer, RING.y + Math.sin(angle) * outer);
+        ctx.stroke();
+      }
+
+      ctx.save();
+      ctx.fillStyle = "rgba(255, 255, 255, 0.94)";
+      ctx.shadowColor = "rgba(30, 27, 24, 0.1)";
+      ctx.shadowBlur = 8;
+      ctx.shadowOffsetY = 2;
+      ctx.beginPath();
+      if (typeof ctx.roundRect === "function") {
+        ctx.roundRect(16, 16, 210, 42, 10);
+      } else {
+        ctx.rect(16, 16, 210, 42);
+      }
+      ctx.fill();
+      ctx.shadowColor = "transparent";
+
       ctx.fillStyle = PLAYER_COLORS[activePlayerRef.current];
-      ctx.font = "800 17px system-ui";
-      ctx.fillText(gameOverRef.current ? "ROUND COMPLETE" : `PLAYER ${activePlayerRef.current + 1} TURN`, 32, 47);
+      ctx.beginPath();
+      ctx.arc(32, 37, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.font = "800 13px 'Plus Jakarta Sans', system-ui, sans-serif";
+      ctx.fillText(gameOverRef.current ? "ROUND COMPLETE" : `PLAYER ${activePlayerRef.current + 1} TURN`, 46, 42);
+      ctx.restore();
 
       const marbles = marblesRef.current;
 
@@ -274,6 +325,8 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
           const endY = shooter.y + Math.sin(angle) * length;
 
           ctx.setLineDash([10, 8]);
+          ctx.save();
+          ctx.setLineDash([8, 6]);
           ctx.strokeStyle = PLAYER_COLORS[activePlayerRef.current];
           ctx.lineWidth = 4;
           ctx.beginPath();
@@ -282,12 +335,55 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
           ctx.stroke();
           ctx.setLineDash([]);
 
+          // Arrow head pointing to endX, endY
+          const headLen = 12;
+          ctx.fillStyle = PLAYER_COLORS[activePlayerRef.current];
+          ctx.beginPath();
+          ctx.moveTo(endX, endY);
+          ctx.lineTo(
+            endX - headLen * Math.cos(angle - Math.PI / 6),
+            endY - headLen * Math.sin(angle - Math.PI / 6)
+          );
+          ctx.lineTo(
+            endX - headLen * Math.cos(angle + Math.PI / 6),
+            endY - headLen * Math.sin(angle + Math.PI / 6)
+          );
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.strokeStyle = "rgba(255,255,255,.9)";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(endX, endY, 11, 0, Math.PI * 2);
+          ctx.moveTo(endX - 16, endY);
+          ctx.lineTo(endX + 16, endY);
+          ctx.moveTo(endX, endY - 16);
+          ctx.lineTo(endX, endY + 16);
+          ctx.stroke();
+
           ctx.strokeStyle = "rgba(94,70,56,0.35)";
           ctx.lineWidth = 2;
           ctx.beginPath();
           ctx.moveTo(shooter.x, shooter.y);
           ctx.lineTo(pointer.x, pointer.y);
           ctx.stroke();
+
+          // Power readout chip
+          const powerPercent = Math.round((length / 170) * 100);
+          ctx.fillStyle = "rgba(25, 22, 19, 0.88)";
+          const pillX = shooter.x + 24;
+          const pillY = shooter.y - 14;
+          ctx.beginPath();
+          if (typeof ctx.roundRect === "function") {
+            ctx.roundRect(pillX, pillY, 78, 24, 6);
+          } else {
+            ctx.rect(pillX, pillY, 78, 24);
+          }
+          ctx.fill();
+          ctx.fillStyle = "#ffffff";
+          ctx.font = "800 11px 'Plus Jakarta Sans', system-ui, sans-serif";
+          ctx.fillText(`POWER ${powerPercent}%`, pillX + 8, pillY + 16);
+          ctx.restore();
         }
       }
 
@@ -366,6 +462,15 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
         totalCapturedRef.current += capturedThisTurn;
         setCaptures(nextCaptures);
         setScores(nextScores);
+        if (captureFeedbackTimerRef.current !== null) window.clearTimeout(captureFeedbackTimerRef.current);
+        setCaptureFeedback({
+          id: Date.now(),
+          player,
+          text: capturedThisTurn > 1
+            ? `+${capturedThisTurn * 100 + capturedThisTurn * 50} COMBO · ${capturedThisTurn} MARBLES`
+            : "+100 · MARBLE CAPTURED",
+        });
+        captureFeedbackTimerRef.current = window.setTimeout(() => setCaptureFeedback(null), 1600);
         setMessage(
           capturedThisTurn > 1
             ? `Player ${player + 1} captures ${capturedThisTurn} marbles and earns a combo bonus.`
@@ -483,6 +588,7 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
     animationRef.current = requestAnimationFrame(frame);
     return () => {
       if (animationRef.current) cancelAnimationFrame(animationRef.current);
+      if (captureFeedbackTimerRef.current !== null) window.clearTimeout(captureFeedbackTimerRef.current);
     };
   }, [targetCount]);
 
@@ -649,6 +755,11 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
             onPointerCancel={() => { draggingRef.current = false; }}
             aria-label="Marbles ring. Drag the coloured shooter backwards and release."
           />
+          {captureFeedback ? (
+            <div key={captureFeedback.id} className={`marble-capture-feedback player-${captureFeedback.player + 1}`} role="status">
+              {captureFeedback.text}
+            </div>
+          ) : null}
           {paused ? <div className="game-paused-overlay" role="status"><strong>Paused</strong><span>Player {activePlayer + 1} keeps this turn</span></div> : null}
         </div>
 

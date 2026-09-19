@@ -37,6 +37,8 @@ export default function FiveStonesGame() {
   const [selectedThisThrow, setSelectedThisThrow] = useState<number[]>([]);
   const [pace, setPace] = useState("practice");
   const timerRef = useRef<number | null>(null);
+  const celebrationTimerRef = useRef<number | null>(null);
+  const [celebration, setCelebration] = useState<string | null>(null);
 
   const sequence = stageSequences[stage - 1];
   const target = sequence[step];
@@ -50,6 +52,8 @@ export default function FiveStonesGame() {
 
   const reset = () => {
     clearTimer();
+    if (celebrationTimerRef.current !== null) window.clearTimeout(celebrationTimerRef.current);
+    celebrationTimerRef.current = null;
     setStones(baseStones.map((s) => ({ ...s, collected: false })));
     setStage(1);
     setStep(0);
@@ -60,9 +64,19 @@ export default function FiveStonesGame() {
     setProgress(0);
     setSelectedThisThrow([]);
     setMessage("Press Toss, collect the right number, then catch.");
+    setCelebration(null);
   };
 
-  useEffect(() => () => clearTimer(), []);
+  useEffect(() => () => {
+    clearTimer();
+    if (celebrationTimerRef.current !== null) window.clearTimeout(celebrationTimerRef.current);
+  }, []);
+
+  const celebrate = (text: string) => {
+    if (celebrationTimerRef.current !== null) window.clearTimeout(celebrationTimerRef.current);
+    setCelebration(text);
+    celebrationTimerRef.current = window.setTimeout(() => setCelebration(null), 1800);
+  };
 
   const toss = () => {
     if (inAir || complete) return;
@@ -150,9 +164,11 @@ export default function FiveStonesGame() {
         setMessage(
           `Stage ${stage} complete. Stage ${nextStage}: collect ${nextTarget} stone${nextTarget > 1 ? "s" : ""} on the first throw.`
         );
+        celebrate(`Stage ${stage} complete!`);
       } else {
         setStep(nextStep);
         setMessage("All four stages complete. Excellent timing.");
+        celebrate("All stages mastered!");
       }
     } else {
       setStep(nextStep);
@@ -239,6 +255,11 @@ export default function FiveStonesGame() {
         </div>
         <div className={`five-stones-board active-play-frame ${inAir ? "is-tossing" : ""} ${inAir && progress >= 50 ? "catch-window" : ""} ${complete ? "is-complete" : ""}`} tabIndex={0} aria-label="Five stones play area">
           <div className="floor-label">FIVE STONES</div>
+          <div className={`five-stones-catch-cue ${inAir ? "is-visible" : ""} ${progress >= 50 ? "is-ready" : ""}`} aria-live="polite">
+            <span>{progress >= 50 ? "CATCH NOW!" : "RISING"}</span>
+            <i style={{ width: `${Math.min(100, progress)}%` }} />
+          </div>
+          {celebration ? <div className="five-stones-celebration" role="status">✦ {celebration} ✦</div> : null}
 
           <button
             className={`air-stone ${inAir ? "active" : ""}`}

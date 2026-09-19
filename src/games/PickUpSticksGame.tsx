@@ -73,6 +73,7 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
   const mistakeRef = useRef<[number, number]>([0, 0]);
   const activePlayerRef = useRef<Player>(0);
   const pausedRef = useRef(false);
+  const pointPopupTimerRef = useRef<number | null>(null);
 
   const [hint, setHint] = useState<number | null>(null);
   const [sticks, setSticks] = useState<Stick[]>(() => createSticks(difficulty));
@@ -87,8 +88,13 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
   const [timerEnabled, setTimerEnabled] = useState(true);
   const [timeLeft, setTimeLeft] = useState(TURN_SECONDS);
   const [paused, setPaused] = useState(false);
+  const [pointPopup, setPointPopup] = useState<{ id: number; points: number; x: number; y: number } | null>(null);
 
   const activeSticks = useMemo(() => sticks.filter((stick) => !stick.removed), [sticks]);
+
+  useEffect(() => () => {
+    if (pointPopupTimerRef.current !== null) window.clearTimeout(pointPopupTimerRef.current);
+  }, []);
 
   const setPlayer = (player: Player) => {
     activePlayerRef.current = player;
@@ -96,6 +102,8 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
   };
 
   const reset = () => {
+    if (pointPopupTimerRef.current !== null) window.clearTimeout(pointPopupTimerRef.current);
+    pointPopupTimerRef.current = null;
     setSticks(createSticks(difficulty));
     setHint(null);
     scoreRef.current = [0, 0];
@@ -111,6 +119,7 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
     setPaused(false);
     setTimeLeft(TURN_SECONDS);
     setMessage("Player 1 starts. Pick a stick that sits on top of the pile.");
+    setPointPopup(null);
   };
 
   const resetDraggedStickVisual = () => {
@@ -235,6 +244,9 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
     nextScores[current] += stick.points;
     scoreRef.current = nextScores;
     setScores(nextScores);
+    if (pointPopupTimerRef.current !== null) window.clearTimeout(pointPopupTimerRef.current);
+    setPointPopup({ id: Date.now(), points: stick.points, x: stick.x, y: stick.y });
+    pointPopupTimerRef.current = window.setTimeout(() => setPointPopup(null), 1100);
     setHint(null);
     setStreak((value) => value + 1);
     setSticks((items) => items.map((item) => item.id === stick.id ? { ...item, removed: true } : item));
@@ -407,9 +419,10 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
                 left: `${stick.x}%`,
                 top: `${stick.y}%`,
                 width: `${stick.length}%`,
-                background: stick.color,
+                backgroundColor: stick.color,
                 transform: `translate(-50%, -50%) rotate(${stick.angle}deg)`,
                 zIndex: stick.id + 1,
+                boxShadow: `0 ${1 + stick.id * 0.13}px ${3 + stick.id * 0.34}px rgba(35, 27, 20, ${0.16 + stick.id * 0.002})`,
               }}
               onPointerDown={(event) => startDrag(event, stick)}
               onPointerMove={(event) => moveDrag(event, stick)}
@@ -431,6 +444,16 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
               aria-label={`Stick worth ${stick.points} points`}
             />
           ))}
+          {pointPopup ? (
+            <span
+              key={pointPopup.id}
+              className="stick-point-popup"
+              style={{ left: `${pointPopup.x}%`, top: `${pointPopup.y}%` }}
+              role="status"
+            >
+              +{pointPopup.points} pts
+            </span>
+          ) : null}
         </div>
 
         <div className="score-key-bar">

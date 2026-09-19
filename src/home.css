@@ -80,3 +80,67 @@
   .collection-primary, .collection-game { transition: none; }
   .collection-primary:hover, .collection-game:hover { transform: none; }
 }
+
+/* Homepage interactions share the global Void Deck tokens. */
+.collection-game {
+  position: relative;
+  transition: transform 260ms cubic-bezier(.2,.8,.2,1), box-shadow 220ms ease;
+}
+
+.collection-game:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 24px 48px rgba(32, 33, 30, 0.13), 0 0 0 1px color-mix(in srgb, var(--color-jade) 20%, transparent);
+}
+
+.collection-play-arrow {
+  box-shadow: 0 2px 8px rgba(32, 33, 30, 0.08);
+  transition: transform 260ms cubic-bezier(.2,.8,.2,1), background 180ms ease, color 180ms ease;
+}
+
+.collection-game:hover .collection-play-arrow {
+  color: #fff;
+  background: var(--color-jade);
+  transform: scale(1.1) rotate(4deg);
+}
+
+.collection-primary {
+  position: relative;
+  overflow: hidden;
+}
+
+.collection-primary::after {
+  content: "";
+  position: absolute;
+  inset: -70%;
+  background: linear-gradient(60deg, transparent 35%, rgba(255,255,255,.2) 50%, transparent 65%);
+  transform: translateX(-75%);
+  transition: transform 520ms ease;
+}
+
+.collection-primary:hover::after { transform: translateX(75%); }
+
+.collection-facts > div {
+  padding: 10px 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface-card) 78%, transparent);
+  transition: background 180ms ease, transform 180ms ease;
+}
+
+.collection-facts > div:hover {
+  background: var(--surface-card-hover);
+  transform: translateY(-2px);
+}
+
+.home-page :is(#games, #how-it-works, #experience, #about) { scroll-margin-top: 80px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .collection-game,
+  .collection-play-arrow,
+  .collection-primary::after,
+  .collection-facts > div { transition: none; }
+
+  .collection-game:hover,
+  .collection-game:hover .collection-play-arrow,
+  .collection-facts > div:hover { transform: none; }
+}
