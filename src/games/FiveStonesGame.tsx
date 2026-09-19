@@ -238,7 +238,7 @@ export default function FiveStonesGame() {
         <button className="secondary-button" onClick={reset}>Restart</button>
       </aside>
 
-      <GamePlayArea>
+      <GamePlayArea className="five-stones-play-area">
         <div className="play-status-bar">
           <div><strong>{complete ? "Sequence complete" : `Stage ${stage} · Step ${Math.min(step + 1, sequence.length)}/${sequence.length}`}</strong></div>
           <span>{complete ? "All stages cleared" : `Collect ${target} then catch`}</span>

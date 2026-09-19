@@ -8,7 +8,7 @@ export const GameFullscreenContext = createContext<{
   toggleFullscreen: () => Promise<void>;
 } | null>(null);
 
-export default function GamePlayArea({ children }: { children: ReactNode }) {
+export default function GamePlayArea({ children, className = "" }: { children: ReactNode; className?: string }) {
   const fullscreen = useContext(GameFullscreenContext);
   const exitRef = useRef<HTMLButtonElement>(null);
   const active = fullscreen?.fullscreenActive ?? false;
@@ -47,7 +47,7 @@ export default function GamePlayArea({ children }: { children: ReactNode }) {
   }, [pseudo, playAreaRef]);
 
   return (
-    <div ref={playAreaRef} className={`play-column game-play-area${active ? " is-fullscreen" : ""}${pseudo ? " is-pseudo-fullscreen" : ""}`}>
+    <div ref={playAreaRef} className={`play-column game-play-area ${className}${active ? " is-fullscreen" : ""}${pseudo ? " is-pseudo-fullscreen" : ""}`.trim()}>
       {active && (
         <div className="game-fullscreen-toolbar">
           <button ref={exitRef} type="button" className="game-fullscreen-button" onClick={fullscreen?.toggleFullscreen}>

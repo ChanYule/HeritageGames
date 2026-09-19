@@ -706,7 +706,7 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
         <button className="secondary-button" onClick={reset}>Start new match</button>
       </aside>
 
-      <GamePlayArea>
+      <GamePlayArea className="marbles-play-area">
         <div className="fullscreen-only-controls">
           <button className="secondary-button" onClick={reset}>New match</button>
         </div>

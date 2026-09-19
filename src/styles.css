@@ -10566,3 +10566,268 @@ body {
   .five-stones-catch-cue.is-ready,
   .five-stones-celebration { animation: none; }
 }
+
+/* Immersive fullscreen: the play surface becomes the viewport. */
+.game-play-area.is-fullscreen {
+  position: relative;
+  isolation: isolate;
+  width: 100vw;
+  height: 100dvh;
+  min-height: 100dvh;
+  padding: 0;
+  overflow: hidden;
+  background: #d6d0c4;
+}
+
+.game-play-area.is-fullscreen > * {
+  max-width: none;
+}
+
+.game-play-area.is-fullscreen .game-fullscreen-toolbar {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
+  z-index: 120;
+  width: auto;
+  padding: 0;
+}
+
+.game-play-area.is-fullscreen .game-fullscreen-toolbar .game-fullscreen-button {
+  min-height: 42px;
+  border-color: rgba(255,255,255,.72);
+  background: rgba(255,255,255,.88);
+  box-shadow: 0 10px 28px rgba(34,32,28,.17);
+  backdrop-filter: blur(14px);
+}
+
+.game-play-area.is-fullscreen .fullscreen-only-controls {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  left: max(12px, env(safe-area-inset-left));
+  z-index: 110;
+  display: flex;
+  width: auto;
+  max-width: min(52vw, 430px);
+  margin: 0;
+}
+
+.game-play-area.is-fullscreen .fullscreen-only-controls > button {
+  min-height: 42px;
+  padding: 8px 14px;
+  border-color: rgba(255,255,255,.72);
+  background: rgba(255,255,255,.9);
+  box-shadow: 0 10px 28px rgba(34,32,28,.14);
+  backdrop-filter: blur(14px);
+}
+
+.game-play-area.is-fullscreen .play-status-bar {
+  position: absolute;
+  top: max(14px, env(safe-area-inset-top));
+  left: 50%;
+  z-index: 100;
+  width: min(460px, calc(100vw - 390px));
+  min-height: 50px;
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid rgba(255,255,255,.76);
+  border-radius: 15px;
+  background: rgba(255,255,255,.86);
+  box-shadow: 0 12px 32px rgba(38,35,29,.16);
+  backdrop-filter: blur(16px);
+  transform: translateX(-50%);
+}
+
+.game-play-area.is-fullscreen .mobile-game-toolbar {
+  position: absolute;
+  right: 50%;
+  bottom: max(14px, env(safe-area-inset-bottom));
+  z-index: 105;
+  justify-content: center;
+  width: auto;
+  margin: 0;
+  padding: 7px;
+  border: 1px solid rgba(255,255,255,.68);
+  border-radius: 13px;
+  background: rgba(255,255,255,.86);
+  box-shadow: 0 12px 30px rgba(35,32,28,.17);
+  backdrop-filter: blur(14px);
+  transform: translateX(50%);
+}
+
+.game-play-area.is-fullscreen .control-hint,
+.game-play-area.is-fullscreen .score-key-bar {
+  display: none;
+}
+
+.marbles-play-area.is-fullscreen .canvas-frame,
+.chapteh-play-area.is-fullscreen .chapteh-frame,
+.sticks-play-area.is-fullscreen .sticks-board,
+.five-stones-play-area.is-fullscreen .five-stones-board {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100vw;
+  height: 100dvh;
+  min-height: 100dvh;
+  margin: 0;
+  border: 0 !important;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.marbles-play-area.is-fullscreen .canvas-frame canvas,
+.chapteh-play-area.is-fullscreen .chapteh-frame canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+.five-stones-play-area.is-fullscreen .round-cue {
+  position: absolute;
+  top: max(78px, calc(env(safe-area-inset-top) + 70px));
+  left: 50%;
+  z-index: 90;
+  width: min(520px, calc(100vw - 32px));
+  margin: 0;
+  background: rgba(255,255,255,.84);
+  backdrop-filter: blur(14px);
+  transform: translateX(-50%);
+}
+
+/* Chapteh keeps the court clear and turns each side into a large kick control. */
+.chapteh-play-area.is-fullscreen .chapteh-side-header,
+.chapteh-play-area.is-fullscreen .chapteh-streak-counter,
+.chapteh-play-area.is-fullscreen .chapteh-combo-meter {
+  display: none;
+}
+
+.chapteh-play-area.is-fullscreen .versus-foot-controls {
+  position: absolute;
+  inset: 0;
+  z-index: 70;
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  pointer-events: none;
+}
+
+.chapteh-play-area.is-fullscreen .versus-foot-controls .kick-button {
+  position: absolute;
+  top: 50%;
+  display: grid;
+  width: clamp(106px, 16vw, 190px);
+  height: clamp(150px, 42vh, 330px);
+  min-height: 0;
+  place-content: center;
+  gap: 10px;
+  padding: 16px;
+  border: 2px solid rgba(255,255,255,.74);
+  border-radius: 24px;
+  color: #fff;
+  box-shadow: 0 18px 42px rgba(35,32,28,.2);
+  backdrop-filter: blur(11px);
+  pointer-events: auto;
+  transform: translateY(-50%);
+}
+
+.chapteh-play-area.is-fullscreen .versus-foot-controls .kick-button:hover:not(:disabled),
+.chapteh-play-area.is-fullscreen .versus-foot-controls .kick-button:active:not(:disabled) {
+  transform: translateY(-50%) scale(1.025);
+}
+
+.chapteh-play-area.is-fullscreen .versus-foot-controls .kick-left {
+  left: max(18px, env(safe-area-inset-left));
+  background: linear-gradient(145deg, rgba(21,94,117,.88), rgba(21,94,117,.58));
+}
+
+.chapteh-play-area.is-fullscreen .versus-foot-controls .kick-right {
+  right: max(18px, env(safe-area-inset-right));
+  background: linear-gradient(145deg, rgba(185,28,28,.82), rgba(168,79,62,.58));
+}
+
+.chapteh-play-area.is-fullscreen .versus-foot-controls .kick-button:disabled {
+  opacity: .38;
+  filter: saturate(.55);
+}
+
+.chapteh-play-area.is-fullscreen .versus-foot-controls .kick-button.kick-ready {
+  opacity: 1;
+  filter: none;
+  box-shadow: 0 0 0 7px rgba(255,255,255,.13), 0 22px 48px rgba(31,31,27,.25);
+}
+
+.chapteh-play-area.is-fullscreen .versus-foot-controls .kick-button span {
+  font-size: clamp(.78rem, 1.4vw, 1rem);
+  font-weight: 850;
+  text-align: center;
+}
+
+.chapteh-play-area.is-fullscreen .versus-foot-controls .kick-button kbd {
+  justify-self: center;
+  padding: 7px 10px;
+  border-color: rgba(255,255,255,.45);
+  color: inherit;
+  background: rgba(255,255,255,.16);
+}
+
+.chapteh-play-area.is-fullscreen .chapteh-center-rally-indicator {
+  top: 19%;
+  z-index: 55;
+  width: min(360px, calc(100vw - 260px));
+  border-color: rgba(255,255,255,.8);
+  background: rgba(255,255,255,.88);
+  box-shadow: 0 16px 38px rgba(38,35,29,.18);
+  backdrop-filter: blur(15px);
+}
+
+@media (max-width: 760px) {
+  .game-play-area.is-fullscreen .play-status-bar {
+    top: max(68px, calc(env(safe-area-inset-top) + 58px));
+    width: calc(100vw - 24px);
+  }
+
+  .game-play-area.is-fullscreen .fullscreen-only-controls {
+    max-width: calc(100vw - 150px);
+  }
+
+  .game-play-area.is-fullscreen .fullscreen-only-controls > button {
+    min-width: 0;
+    padding-inline: 10px;
+    font-size: .72rem;
+  }
+
+  .chapteh-play-area.is-fullscreen .fullscreen-only-controls {
+    top: auto;
+    bottom: max(12px, env(safe-area-inset-bottom));
+  }
+
+  .chapteh-play-area.is-fullscreen .versus-foot-controls .kick-button {
+    top: auto;
+    bottom: max(74px, calc(env(safe-area-inset-bottom) + 62px));
+    width: min(42vw, 180px);
+    height: 112px;
+    transform: none;
+  }
+
+  .chapteh-play-area.is-fullscreen .versus-foot-controls .kick-button:hover:not(:disabled),
+  .chapteh-play-area.is-fullscreen .versus-foot-controls .kick-button:active:not(:disabled) {
+    transform: scale(1.02);
+  }
+
+  .chapteh-play-area.is-fullscreen .chapteh-center-rally-indicator {
+    top: 18%;
+    width: min(330px, calc(100vw - 24px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chapteh-play-area.is-fullscreen .versus-foot-controls .kick-button {
+    transition: none;
+  }
+}

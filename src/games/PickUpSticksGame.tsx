@@ -368,7 +368,7 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
         </div>
       </aside>
 
-      <GamePlayArea>
+      <GamePlayArea className="sticks-play-area">
         <div className="fullscreen-only-controls">
           <button className="secondary-button" disabled={gameOver || paused} onClick={findHint}>Show a free stick</button>
           <button className="secondary-button" onClick={reset}>New match</button>
