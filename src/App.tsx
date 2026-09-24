@@ -14,6 +14,7 @@ import {
   MousePointer2,
   ShieldCheck,
   Sparkles,
+  Trophy,
   Users2,
 } from "lucide-react";
 import type { GameDefinition, GameKey } from "./types";
@@ -22,6 +23,7 @@ import MarblesGame from "./games/MarblesGame";
 import PickUpSticksGame from "./games/PickUpSticksGame";
 import FiveStonesGame from "./games/FiveStonesGame";
 import ChaptehGame from "./games/ChaptehGame";
+import Competition from "./components/Competition";
 
 const games: GameDefinition[] = [
   {
@@ -80,7 +82,7 @@ const gameCardDetails: Record<GameKey, { skill: string; control: string; modeLab
   chapteh: { skill: "Reflexes", control: "Keys + touch", modeLabel: "Local versus" },
 };
 
-function Home({ onPlay }: { onPlay: (key: GameKey) => void }) {
+function Home({ onPlay, onCompetition }: { onPlay: (key: GameKey) => void; onCompetition: () => void }) {
   const [featuredIndex, setFeaturedIndex] = useState(0);
   const [carouselDirection, setCarouselDirection] = useState(1);
   const carouselTouchStartX = useRef<number | null>(null);
@@ -146,6 +148,9 @@ function Home({ onPlay }: { onPlay: (key: GameKey) => void }) {
           <h1 id="collection-title">Old-school games.<br /><em>New ways to play.</em></h1>
           <p className="collection-description">A little nostalgia. A little friendly competition. Rediscover Singapore’s favourite childhood games, wherever you are.</p>
           <div className="collection-actions">
+            <button className="collection-primary competition-home-cta" onClick={onCompetition}>
+              Start a competition <Trophy size={19} />
+            </button>
             <button className="collection-primary" onClick={() => onPlay("chapteh")}>
               Let’s play Chapteh <ArrowUpRight size={19} />
             </button>
@@ -587,18 +592,24 @@ function Home({ onPlay }: { onPlay: (key: GameKey) => void }) {
 
 export default function App() {
   const [currentGame, setCurrentGame] = useState<GameKey | null>(() => gameFromLocation());
+  const [competitionOpen, setCompetitionOpen] = useState(() => new URLSearchParams(window.location.search).get("mode") === "competition");
 
   useEffect(() => {
-    const handleHistory = () => setCurrentGame(gameFromLocation());
+    const handleHistory = () => {
+      setCurrentGame(gameFromLocation());
+      setCompetitionOpen(new URLSearchParams(window.location.search).get("mode") === "competition");
+    };
     window.addEventListener("popstate", handleHistory);
     return () => window.removeEventListener("popstate", handleHistory);
   }, []);
 
   useEffect(() => {
-    document.title = currentGame
+    document.title = competitionOpen
+      ? "Heritage Games Competition · Singapore Heritage Games"
+      : currentGame
       ? `${games.find((item) => item.key === currentGame)?.title ?? "Game"} · Singapore Heritage Games`
       : "Singapore Heritage Games · Void Deck Edition";
-  }, [currentGame]);
+  }, [competitionOpen, currentGame]);
 
   const game = useMemo(
     () => games.find((item) => item.key === currentGame) ?? null,
@@ -608,6 +619,7 @@ export default function App() {
   const openGame = (key: GameKey) => {
     const url = new URL(window.location.href);
     url.searchParams.set("game", key);
+    url.searchParams.delete("mode");
     window.history.pushState({ heritageGame: key }, "", url);
     setCurrentGame(key);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -625,10 +637,30 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const openCompetition = () => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("game");
+    url.searchParams.set("mode", "competition");
+    window.history.pushState({ heritageCompetition: true }, "", url);
+    setCurrentGame(null);
+    setCompetitionOpen(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const closeCompetition = () => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("mode");
+    window.history.pushState({}, "", url);
+    setCompetitionOpen(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <AnimatePresence mode="wait" initial={false}>
-      {!currentGame || !game ? (
-        <Home key="home" onPlay={openGame} />
+      {competitionOpen ? (
+        <Competition key="competition" onExit={closeCompetition} />
+      ) : !currentGame || !game ? (
+        <Home key="home" onPlay={openGame} onCompetition={openCompetition} />
       ) : (
         <GameShell key={currentGame} title={game.title} subtitle={game.subtitle} onBack={closeGame}>
           {{

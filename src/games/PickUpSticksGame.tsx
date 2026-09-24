@@ -7,6 +7,7 @@ import InstructionSteps from "../components/InstructionSteps";
 import PlayerScoreboard from "../components/PlayerScoreboard";
 import TurnTimerPanel from "../components/TurnTimerPanel";
 import { difficultySettings, type Difficulty, segmentsOverlap } from "./mechanics";
+import type { CompetitionGameProps } from "../types";
 
 type Stick = {
   id: number;
@@ -22,6 +23,7 @@ type Stick = {
 type Player = 0 | 1;
 
 const TURN_SECONDS = 30;
+const COMPETITION_TURN_SECONDS = 45;
 
 const palette = [
   { color: "#d55f4b", points: 10 },
@@ -51,7 +53,7 @@ function createSticks(difficulty: Difficulty): Stick[] {
   }));
 }
 
-export default function PickUpSticksGame() {
+export default function PickUpSticksGame({ playerNames, competitionMode = false, onComplete }: CompetitionGameProps = {}) {
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
   const settings = difficultySettings[difficulty];
 
@@ -62,12 +64,14 @@ export default function PickUpSticksGame() {
         onChange={setDifficulty}
         description={`${settings.sticks} sticks. A clean pickup lets the same player continue. Touching a blocked stick ends the turn.`}
       />
-      <SticksRound key={difficulty} difficulty={difficulty} />
+      <SticksRound key={difficulty} difficulty={difficulty} playerNames={playerNames} competitionMode={competitionMode} onComplete={onComplete} />
     </>
   );
 }
 
-function SticksRound({ difficulty }: { difficulty: Difficulty }) {
+function SticksRound({ difficulty, playerNames, competitionMode = false, onComplete }: { difficulty: Difficulty } & CompetitionGameProps) {
+  const turnSeconds = competitionMode ? COMPETITION_TURN_SECONDS : TURN_SECONDS;
+  const playerLabel = (player: Player) => playerNames?.[player] ?? `Player ${player + 1}`;
   const boardRef = useRef<HTMLDivElement>(null);
   const scoreRef = useRef<[number, number]>([0, 0]);
   const mistakeRef = useRef<[number, number]>([0, 0]);
@@ -75,6 +79,7 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
   const pausedRef = useRef(false);
   const pointPopupTimerRef = useRef<number | null>(null);
   const feedbackTimerRef = useRef<number | null>(null);
+  const reportedRef = useRef(false);
 
   const [hint, setHint] = useState<number | null>(null);
   const [sticks, setSticks] = useState<Stick[]>(() => createSticks(difficulty));
@@ -84,15 +89,21 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
   const [streak, setStreak] = useState(0);
   const [dragging, setDragging] = useState<number | null>(null);
   const [origin, setOrigin] = useState<{ x: number; y: number } | null>(null);
-  const [message, setMessage] = useState("Player 1 starts. Pick a stick that sits on top of the pile.");
+  const [message, setMessage] = useState(() => `${playerLabel(0)} starts. Pick a stick that sits on top of the pile.`);
   const [gameOver, setGameOver] = useState(false);
   const [timerEnabled, setTimerEnabled] = useState(true);
-  const [timeLeft, setTimeLeft] = useState(TURN_SECONDS);
+  const [timeLeft, setTimeLeft] = useState(turnSeconds);
   const [paused, setPaused] = useState(false);
   const [pointPopup, setPointPopup] = useState<{ id: number; points: number; x: number; y: number } | null>(null);
   const [feedbackTone, setFeedbackTone] = useState<"success" | "mistake" | null>(null);
 
   const activeSticks = useMemo(() => sticks.filter((stick) => !stick.removed), [sticks]);
+
+  useEffect(() => {
+    if (!gameOver || reportedRef.current || !onComplete) return;
+    reportedRef.current = true;
+    onComplete({ scores });
+  }, [gameOver, onComplete, scores]);
 
   useEffect(() => () => {
     if (pointPopupTimerRef.current !== null) window.clearTimeout(pointPopupTimerRef.current);
@@ -124,10 +135,11 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
     setDragging(null);
     setOrigin(null);
     setGameOver(false);
+    reportedRef.current = false;
     pausedRef.current = false;
     setPaused(false);
-    setTimeLeft(TURN_SECONDS);
-    setMessage("Player 1 starts. Pick a stick that sits on top of the pile.");
+    setTimeLeft(turnSeconds);
+    setMessage(`${playerLabel(0)} starts. Pick a stick that sits on top of the pile.`);
     setPointPopup(null);
     setFeedbackTone(null);
   };
@@ -151,12 +163,12 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
     setHint(null);
     setStreak(0);
     setPlayer(next);
-    setTimeLeft(TURN_SECONDS);
-    setMessage(`Player ${current + 1} ran out of time. Pass to Player ${next + 1}.`);
+    setTimeLeft(turnSeconds);
+    setMessage(`${playerLabel(current)} ran out of time. Pass to ${playerLabel(next)}.`);
   };
 
   useEffect(() => {
-    setTimeLeft(TURN_SECONDS);
+    setTimeLeft(turnSeconds);
   }, [activePlayer]);
 
   useEffect(() => {
@@ -171,7 +183,7 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
 
   const toggleTimer = (enabled: boolean) => {
     setTimerEnabled(enabled);
-    setTimeLeft(TURN_SECONDS);
+    setTimeLeft(turnSeconds);
     if (!enabled) {
       pausedRef.current = false;
       setPaused(false);
@@ -191,8 +203,8 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
     setPaused(nextPaused);
     setMessage(
       nextPaused
-        ? `Game paused. Player ${activePlayerRef.current + 1} keeps the turn with ${timeLeft} seconds remaining.`
-        : `Player ${activePlayerRef.current + 1} resumes with ${timeLeft} seconds remaining.`,
+        ? `Game paused. ${playerLabel(activePlayerRef.current)} keeps the turn with ${timeLeft} seconds remaining.`
+        : `${playerLabel(activePlayerRef.current)} resumes with ${timeLeft} seconds remaining.`,
     );
   };
 
@@ -224,7 +236,7 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
     if (finalScores[0] === finalScores[1]) {
       setMessage(`Tie game. Both players scored ${finalScores[0]} points.`);
     } else {
-      setMessage(`Player ${finalScores[0] > finalScores[1] ? 1 : 2} wins with ${Math.max(...finalScores)} points.`);
+      setMessage(`${playerLabel(finalScores[0] > finalScores[1] ? 0 : 1)} wins with ${Math.max(...finalScores)} points.`);
     }
   };
 
@@ -238,7 +250,7 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
     setStreak(0);
     setHint(null);
     setPlayer(next);
-    setMessage(`${reason} Pass to Player ${next + 1}.`);
+    setMessage(`${reason} Pass to ${playerLabel(next)}.`);
     showFeedback("mistake");
   };
 
@@ -269,8 +281,8 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
 
     setMessage(
       stick.points === 50
-        ? `Player ${current + 1}: purple stick, +50 points. You keep the turn.`
-        : `Clean pickup, +${stick.points}. Player ${current + 1} keeps the turn.`,
+        ? `${playerLabel(current)}: purple stick, +50 points. You keep the turn.`
+        : `Clean pickup, +${stick.points}. ${playerLabel(current)} keeps the turn.`,
     );
   };
 
@@ -284,7 +296,7 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
     setDragging(stick.id);
     setOrigin({ x: event.clientX, y: event.clientY });
     event.currentTarget.setPointerCapture(event.pointerId);
-    setMessage(`Player ${activePlayerRef.current + 1}: drag this stick completely away from the pile.`);
+    setMessage(`${playerLabel(activePlayerRef.current)}: drag this stick completely away from the pile.`);
   };
 
   const moveDrag = (event: React.PointerEvent<HTMLDivElement>, stick: Stick) => {
@@ -322,7 +334,7 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
     const exposed = activeSticks.find((stick) => !isBlocked(stick));
     if (exposed) {
       setHint(exposed.id);
-      setMessage(`Player ${activePlayer + 1}: the glowing stick is free. Drag it away.`);
+      setMessage(`${playerLabel(activePlayer)}: the glowing stick is free. Drag it away.`);
     }
   };
 
@@ -338,7 +350,7 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
           title="Lift the top sticks without a mistake"
           objective="Players share one pile. Score points by safely removing exposed sticks."
           steps={[
-            "Player 1 starts. Look for a stick that is sitting above the others.",
+            `${playerLabel(0)} starts. Look for a stick that is sitting above the others.`,
             "Drag the chosen stick completely away from the pile. Each colour has a point value.",
             "When the timer is on, each player gets 30 seconds for the whole turn. Press Pause to freeze the timer and keep the same player active.",
             "Resume continues from the same number of seconds. A clean pickup scores points and lets the same player continue using the time they have left.",
@@ -351,6 +363,7 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
         <PlayerScoreboard
           activePlayer={activePlayer}
           scores={scores}
+          labels={playerNames}
           gameOver={gameOver}
           paused={paused}
           pausedBy={paused ? activePlayer : null}
@@ -360,7 +373,7 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
         <TurnTimerPanel
           enabled={timerEnabled}
           seconds={timeLeft}
-          duration={TURN_SECONDS}
+          duration={turnSeconds}
           paused={paused}
           gameOver={gameOver}
           onToggle={toggleTimer}
@@ -375,7 +388,7 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
         <div className="turn-message" role="status" aria-live="polite">
           <span className={`player-dot player-dot-${activePlayer + 1}`} />
           <div>
-            <strong>{gameOver ? "Game finished" : `Player ${activePlayer + 1}`}</strong>
+            <strong>{gameOver ? "Game finished" : playerLabel(activePlayer)}</strong>
             <p>{message}</p>
           </div>
         </div>
@@ -394,7 +407,7 @@ function SticksRound({ difficulty }: { difficulty: Difficulty }) {
         <div className="play-status-bar">
           <div>
             <span className={`player-dot player-dot-${activePlayer + 1}`} />
-            <strong>{gameOver ? "Match complete" : `Player ${activePlayer + 1}'s turn`}</strong>
+            <strong>{gameOver ? "Match complete" : `${playerLabel(activePlayer)}'s turn`}</strong>
           </div>
           <div className="status-bar-right">
             <span>{activeSticks.length} sticks left</span>

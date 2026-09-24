@@ -7,6 +7,7 @@ import InstructionSteps from "../components/InstructionSteps";
 import PlayerScoreboard from "../components/PlayerScoreboard";
 import TurnTimerPanel from "../components/TurnTimerPanel";
 import { difficultySettings, type Difficulty, randomMarblePositions, shotVelocity } from "./mechanics";
+import type { CompetitionGameProps } from "../types";
 
 type Marble = {
   id: number;
@@ -31,6 +32,7 @@ const PLAYER_DETAILS = [
   { base: "#a84f3e", glow: "#ffe4d6", accent: "#efb08f" },
 ] as const;
 const TURN_SECONDS = 30;
+const COMPETITION_TURN_SECONDS = 45;
 
 function createMarbles(difficulty: Difficulty): Marble[] {
   const targets: Marble[] = [];
@@ -67,7 +69,7 @@ function createMarbles(difficulty: Difficulty): Marble[] {
   ];
 }
 
-export default function MarblesGame() {
+export default function MarblesGame({ playerNames, competitionMode = false, onComplete }: CompetitionGameProps = {}) {
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
   const settings = difficultySettings[difficulty];
 
@@ -76,15 +78,17 @@ export default function MarblesGame() {
       <DifficultyPicker
         value={difficulty}
         onChange={setDifficulty}
-        description={`${settings.marbles} targets. Player 1 and Player 2 alternate after every shot. Highest score wins when the ring is empty.`}
+        description={`${settings.marbles} targets. ${playerNames?.[0] ?? "Player 1"} and ${playerNames?.[1] ?? "Player 2"} alternate after every shot. Highest score wins when the ring is empty.`}
       />
-      <MarblesRound key={difficulty} difficulty={difficulty} />
+      <MarblesRound key={difficulty} difficulty={difficulty} playerNames={playerNames} competitionMode={competitionMode} onComplete={onComplete} />
     </>
   );
 }
 
-function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
+function MarblesRound({ difficulty, playerNames, competitionMode = false, onComplete }: { difficulty: Difficulty } & CompetitionGameProps) {
   const targetCount = difficultySettings[difficulty].marbles;
+  const turnSeconds = competitionMode ? COMPETITION_TURN_SECONDS : TURN_SECONDS;
+  const playerLabel = (player: Player) => playerNames?.[player] ?? `Player ${player + 1}`;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const marblesRef = useRef<Marble[]>(createMarbles(difficulty));
   const draggingRef = useRef(false);
@@ -99,20 +103,27 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
   const gameOverRef = useRef(false);
   const pausedRef = useRef(false);
   const captureFeedbackTimerRef = useRef<number | null>(null);
+  const reportedRef = useRef(false);
 
   const [activePlayer, setActivePlayer] = useState<Player>(0);
   const [scores, setScores] = useState<[number, number]>([0, 0]);
   const [captures, setCaptures] = useState<[number, number]>([0, 0]);
   const [shots, setShots] = useState<[number, number]>([0, 0]);
-  const [message, setMessage] = useState("Player 1 starts. Drag the shooter backwards and release.");
+  const [message, setMessage] = useState(() => `${playerLabel(0)} starts. Drag the shooter backwards and release.`);
   const [moving, setMoving] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [timerEnabled, setTimerEnabled] = useState(true);
-  const [timeLeft, setTimeLeft] = useState(TURN_SECONDS);
+  const [timeLeft, setTimeLeft] = useState(turnSeconds);
   const [paused, setPaused] = useState(false);
   const [captureFeedback, setCaptureFeedback] = useState<{ id: number; text: string; player: Player } | null>(null);
   const [keyboardAim, setKeyboardAim] = useState(-90);
   const [keyboardPower, setKeyboardPower] = useState(55);
+
+  useEffect(() => {
+    if (!gameOver || reportedRef.current || !onComplete) return;
+    reportedRef.current = true;
+    onComplete({ scores });
+  }, [gameOver, onComplete, scores]);
 
   const syncPlayer = (player: Player) => {
     activePlayerRef.current = player;
@@ -132,6 +143,7 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
     shotsRef.current = [0, 0];
     totalCapturedRef.current = 0;
     gameOverRef.current = false;
+    reportedRef.current = false;
     pausedRef.current = false;
     setScores([0, 0]);
     setCaptures([0, 0]);
@@ -139,12 +151,12 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
     setGameOver(false);
     setMoving(false);
     setPaused(false);
-    setTimeLeft(TURN_SECONDS);
+    setTimeLeft(turnSeconds);
     setCaptureFeedback(null);
     setKeyboardAim(-90);
     setKeyboardPower(55);
     syncPlayer(0);
-    setMessage("Player 1 starts. Drag the shooter backwards and release.");
+    setMessage(`${playerLabel(0)} starts. Drag the shooter backwards and release.`);
   };
 
   const switchTurnOnTimeout = () => {
@@ -153,12 +165,12 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
     const next = (current === 0 ? 1 : 0) as Player;
     draggingRef.current = false;
     syncPlayer(next);
-    setTimeLeft(TURN_SECONDS);
-    setMessage(`Player ${current + 1} ran out of time. Pass to Player ${next + 1}.`);
+    setTimeLeft(turnSeconds);
+    setMessage(`${playerLabel(current)} ran out of time. Pass to ${playerLabel(next)}.`);
   };
 
   useEffect(() => {
-    setTimeLeft(TURN_SECONDS);
+    setTimeLeft(turnSeconds);
   }, [activePlayer]);
 
   useEffect(() => {
@@ -173,7 +185,7 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
 
   const toggleTimer = (enabled: boolean) => {
     setTimerEnabled(enabled);
-    setTimeLeft(TURN_SECONDS);
+    setTimeLeft(turnSeconds);
     if (!enabled) {
       pausedRef.current = false;
       setPaused(false);
@@ -187,8 +199,8 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
     draggingRef.current = false;
     setMessage(
       nextPaused
-        ? `Game paused. Player ${activePlayerRef.current + 1} keeps the turn with ${timeLeft} seconds remaining.`
-        : `Player ${activePlayerRef.current + 1} resumes with ${timeLeft} seconds remaining.`,
+        ? `Game paused. ${playerLabel(activePlayerRef.current)} keeps the turn with ${timeLeft} seconds remaining.`
+        : `${playerLabel(activePlayerRef.current)} resumes with ${timeLeft} seconds remaining.`,
     );
   };
 
@@ -477,11 +489,11 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
         captureFeedbackTimerRef.current = window.setTimeout(() => setCaptureFeedback(null), 1600);
         setMessage(
           capturedThisTurn > 1
-            ? `Player ${player + 1} captures ${capturedThisTurn} marbles and earns a combo bonus.`
-            : `Player ${player + 1} captures 1 marble.`,
+            ? `${playerLabel(player)} captures ${capturedThisTurn} marbles and earns a combo bonus.`
+            : `${playerLabel(player)} captures 1 marble.`,
         );
       } else {
-        setMessage(`No capture this turn. Pass to Player ${activePlayerRef.current === 0 ? 2 : 1}.`);
+        setMessage(`No capture this turn. Pass to ${playerLabel(activePlayerRef.current === 0 ? 1 : 0)}.`);
       }
 
       if (totalCapturedRef.current >= targetCount) {
@@ -491,15 +503,15 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
         if (firstScore === secondScore) {
           setMessage(`All marbles are out. It's a draw at ${firstScore} points each.`);
         } else {
-          const winner = firstScore > secondScore ? 1 : 2;
-          setMessage(`All marbles are out. Player ${winner} wins the match.`);
+          const winner: Player = firstScore > secondScore ? 0 : 1;
+          setMessage(`All marbles are out. ${playerLabel(winner)} wins the match.`);
         }
         return;
       }
 
       const next = (activePlayerRef.current === 0 ? 1 : 0) as Player;
       syncPlayer(next);
-      setTimeLeft(TURN_SECONDS);
+      setTimeLeft(turnSeconds);
     };
 
     const update = (dt: number) => {
@@ -610,7 +622,7 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
     draggingRef.current = false;
     movingRef.current = true;
     setMoving(true);
-    setMessage(`Player ${activePlayerRef.current + 1}'s shot is rolling...`);
+    setMessage(`${playerLabel(activePlayerRef.current)}'s shot is rolling...`);
   };
 
   const onPointerDown = (event: React.PointerEvent<HTMLCanvasElement>) => {
@@ -680,19 +692,20 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
           title="Knock marbles out of the ring"
           objective="Take turns using one shooter marble. A target scores only after it fully crosses the ring line."
           steps={[
-            "Player 1 takes the first shot. Press the coloured shooter marble.",
+            `${playerLabel(0)} takes the first shot. Press the coloured shooter marble.`,
             "Drag backwards to set direction and power, then release.",
             "Keyboard option: focus the board, use Left/Right to aim, Up/Down to set power, then press Space to shoot.",
             "You have 30 seconds to take your shot when the timer is on. Press Pause at any time to freeze the turn and keep the remaining seconds.",
             "The countdown also holds automatically while marbles are rolling. Captured marbles add points to the player who took the shot.",
             "After the shot, or if time reaches 0, pass the device to the other player. Keep alternating until every target leaves the ring.",
           ]}
-          tip="Blue swirl marble = Player 1. Red cross marble = Player 2. Controlled shots often work better than maximum power."
+          tip={`Blue swirl marble = ${playerLabel(0)}. Red cross marble = ${playerLabel(1)}. Controlled shots often work better than maximum power.`}
         />
 
         <PlayerScoreboard
           activePlayer={activePlayer}
           scores={scores}
+          labels={playerNames}
           gameOver={gameOver}
           paused={paused}
           pausedBy={paused ? activePlayer : null}
@@ -702,7 +715,7 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
         <TurnTimerPanel
           enabled={timerEnabled}
           seconds={timeLeft}
-          duration={TURN_SECONDS}
+          duration={turnSeconds}
           paused={paused}
           autoPaused={moving && !paused}
           gameOver={gameOver}
@@ -731,7 +744,7 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
         <div className="turn-message" role="status" aria-live="polite">
           <span className={`player-dot player-dot-${activePlayer + 1}`} />
           <div>
-            <strong>{gameOver ? "Game finished" : `Player ${activePlayer + 1}`}</strong>
+            <strong>{gameOver ? "Game finished" : playerLabel(activePlayer)}</strong>
             <p>{message}</p>
           </div>
         </div>
@@ -747,7 +760,7 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
         <div className="play-status-bar">
           <div>
             <span className={`player-dot player-dot-${activePlayer + 1}`} />
-            <strong>{gameOver ? "Match complete" : `Player ${activePlayer + 1}'s turn`}</strong>
+            <strong>{gameOver ? "Match complete" : `${playerLabel(activePlayer)}'s turn`}</strong>
           </div>
           <div className="status-bar-right">
             <span>{remaining} target{remaining === 1 ? "" : "s"} left</span>
@@ -800,7 +813,7 @@ function MarblesRound({ difficulty }: { difficulty: Difficulty }) {
         </div>
 
         <p className="control-hint">
-          Drag backwards and release, or focus the board and use Arrow keys plus Space. Blue swirl marble is Player 1 and red cross marble is Player 2.
+          Drag backwards and release, or focus the board and use Arrow keys plus Space. Blue swirl marble is {playerLabel(0)} and red cross marble is {playerLabel(1)}.
         </p>
       </GamePlayArea>
     </section>

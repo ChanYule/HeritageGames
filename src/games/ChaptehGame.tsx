@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import InstructionSteps from "../components/InstructionSteps";
 import PlayerScoreboard from "../components/PlayerScoreboard";
 import { canKick, chaptehFlightTuning, chaptehPaceLevel } from "./mechanics";
+import type { CompetitionGameProps } from "../types";
 
 type Chapteh = {
   x: number;
@@ -75,7 +76,8 @@ function getComboData(rally: number): ComboData {
   };
 }
 
-export default function ChaptehGame() {
+export default function ChaptehGame({ playerNames, onComplete }: CompetitionGameProps = {}) {
+  const playerLabel = (player: Player) => playerNames?.[player] ?? `Player ${player + 1}`;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const chaptehRef = useRef<Chapteh>({ x: WIDTH * 0.27, y: 150, vx: 0, vy: 0, radius: 22 });
   const runningRef = useRef(false);
@@ -92,6 +94,7 @@ export default function ChaptehGame() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const paceLevelRef = useRef(0);
   const kickWindowPlayerRef = useRef<Player | null>(null);
+  const reportedRef = useRef(false);
 
   const [running, setRunning] = useState(false);
   const [expectedPlayer, setExpectedPlayer] = useState<Player>(0);
@@ -101,12 +104,18 @@ export default function ChaptehGame() {
   const [rally, setRally] = useState(0);
   const [streakCelebration, setStreakCelebration] = useState("");
   const [longestRally, setLongestRally] = useState(0);
-  const [message, setMessage] = useState("Player 1 serves first from the left. Start the rally when both players are ready.");
+  const [message, setMessage] = useState(() => `${playerLabel(0)} serves first from the left. Start the rally when both players are ready.`);
   const [gameOver, setGameOver] = useState(false);
   const [paceLevel, setPaceLevel] = useState(0);
   const [kickWindowPlayer, setKickWindowPlayer] = useState<Player | null>(null);
 
   const combo = getComboData(rally);
+
+  useEffect(() => {
+    if (!gameOver || reportedRef.current || !onComplete) return;
+    reportedRef.current = true;
+    onComplete({ scores });
+  }, [gameOver, onComplete, scores]);
 
   const setExpected = (player: Player) => {
     expectedPlayerRef.current = player;
@@ -175,6 +184,7 @@ export default function ChaptehGame() {
   const resetMatch = () => {
     runningRef.current = false;
     gameOverRef.current = false;
+    reportedRef.current = false;
     rallyRef.current = 0;
     scoresRef.current = [0, 0];
     kicksRef.current = [0, 0];
@@ -192,7 +202,7 @@ export default function ChaptehGame() {
     setKickWindowPlayer(null);
     setNextServer(0);
     resetBallForServer(0);
-    setMessage("Player 1 serves first from the left. Start the rally when both players are ready.");
+    setMessage(`${playerLabel(0)} serves first from the left. Start the rally when both players are ready.`);
   };
 
   const startRally = () => {
@@ -211,7 +221,7 @@ export default function ChaptehGame() {
     runningRef.current = true;
     setRunning(true);
     setMessage(
-      `Player ${servingPlayer + 1} serves. Let it drop into your shaded zone, then kick it across to Player ${servingPlayer === 0 ? 2 : 1}.`,
+      `${playerLabel(servingPlayer)} serves. Let it drop into your shaded zone, then kick it across to ${playerLabel(servingPlayer === 0 ? 1 : 0)}.`,
     );
   };
 
@@ -245,13 +255,13 @@ export default function ChaptehGame() {
       gameOverRef.current = true;
       setGameOver(true);
       setExpected(scorer);
-      setMessage(`Player ${scorer + 1} wins ${nextScores[0]}–${nextScores[1]}. ${reason}`);
+      setMessage(`${playerLabel(scorer)} wins ${nextScores[0]}–${nextScores[1]}. ${reason}`);
       return;
     }
 
     setNextServer(scorer);
     resetBallForServer(scorer);
-    setMessage(`Point to Player ${scorer + 1}. ${reason} Player ${scorer + 1} serves the next rally.`);
+    setMessage(`Point to ${playerLabel(scorer)}. ${reason} ${playerLabel(scorer)} serves the next rally.`);
   };
 
   const kick = (side: Side) => {
@@ -262,18 +272,18 @@ export default function ChaptehGame() {
     const expected = expectedPlayerRef.current;
 
     if (player !== expected) {
-      setMessage(`Player ${expected + 1} must make the next kick on the ${expected === 0 ? "left" : "right"} side.`);
+      setMessage(`${playerLabel(expected)} must make the next kick on the ${expected === 0 ? "left" : "right"} side.`);
       return;
     }
 
     const onOwnSide = player === 0 ? chapteh.x < MID : chapteh.x >= MID;
     if (!onOwnSide) {
-      setMessage(`Wait for the chapteh to reach Player ${player + 1}'s ${player === 0 ? "left" : "right"} side.`);
+      setMessage(`Wait for the chapteh to reach ${playerLabel(player)}'s ${player === 0 ? "left" : "right"} side.`);
       return;
     }
 
     if (!canKick(chapteh.y, chapteh.vy, GROUND)) {
-      setMessage(`Player ${player + 1}: wait until the chapteh drops into your lower kick zone.`);
+      setMessage(`${playerLabel(player)}: wait until the chapteh drops into your lower kick zone.`);
       return;
     }
 
@@ -321,9 +331,9 @@ export default function ChaptehGame() {
     setExpected(nextPlayer);
 
     if (nextRally > 0 && nextRally % 6 === 0) {
-      setMessage(`${nextRally}-kick rally. Player ${nextPlayer + 1}, get ready on the ${nextPlayer === 0 ? "left" : "right"}.`);
+      setMessage(`${nextRally}-kick rally. ${playerLabel(nextPlayer)}, get ready on the ${nextPlayer === 0 ? "left" : "right"}.`);
     } else {
-      setMessage(`Good kick. Player ${nextPlayer + 1} is next.`);
+      setMessage(`Good kick. ${playerLabel(nextPlayer)} is next.`);
     }
   };
 
@@ -409,8 +419,8 @@ export default function ChaptehGame() {
         ctx.strokeRect(zoneX + 8, GROUND - 117, MID - 16, 109);
       }
 
-      drawCourtLabel(0, "PLAYER 1 · LEFT", "A / ←  ·  tap left", MID / 2);
-      drawCourtLabel(1, "PLAYER 2 · RIGHT", "D / →  ·  tap right", MID + MID / 2);
+      drawCourtLabel(0, `${playerLabel(0).toUpperCase()} · LEFT`, "A / ←  ·  tap left", MID / 2);
+      drawCourtLabel(1, `${playerLabel(1).toUpperCase()} · RIGHT`, "D / →  ·  tap right", MID + MID / 2);
 
       ctx.textAlign = "center";
       ctx.font = "900 24px system-ui";
@@ -419,10 +429,10 @@ export default function ChaptehGame() {
         gameOverRef.current
           ? "MATCH COMPLETE"
           : !runningRef.current
-            ? `PLAYER ${serverRef.current + 1} SERVES NEXT`
+            ? `${playerLabel(serverRef.current).toUpperCase()} SERVES NEXT`
             : ready
-              ? `PLAYER ${expected + 1} · KICK NOW`
-              : `PLAYER ${expected + 1} · GET READY`,
+              ? `${playerLabel(expected).toUpperCase()} · KICK NOW`
+              : `${playerLabel(expected).toUpperCase()} · GET READY`,
         WIDTH / 2,
         40,
       );
@@ -493,14 +503,14 @@ export default function ChaptehGame() {
           .filter((particle) => particle.life > 0);
 
         if (chapteh.x < -30) {
-          finishPoint(1, "The chapteh went out past Player 1's side.");
+          finishPoint(1, `The chapteh went out past ${playerLabel(0)}'s side.`);
         } else if (chapteh.x > WIDTH + 30) {
-          finishPoint(0, "The chapteh went out past Player 2's side.");
+          finishPoint(0, `The chapteh went out past ${playerLabel(1)}'s side.`);
         } else if (chapteh.y >= GROUND - 2) {
           chapteh.y = GROUND - 2;
           const landingPlayer: Player = chapteh.x < MID ? 0 : 1;
           const scorer = (landingPlayer === 0 ? 1 : 0) as Player;
-          finishPoint(scorer, `The chapteh landed on Player ${landingPlayer + 1}'s side.`);
+          finishPoint(scorer, `The chapteh landed on ${playerLabel(landingPlayer)}'s side.`);
         }
       }
 
@@ -527,9 +537,9 @@ export default function ChaptehGame() {
       <aside className="game-panel">
         <InstructionSteps
           title="Kick it across to each other"
-          objective={`Player 1 owns the left side and Player 2 owns the right side. Keep sending the chapteh across. First to ${WIN_SCORE} points wins.`}
+          objective={`${playerLabel(0)} owns the left side and ${playerLabel(1)} owns the right side. Keep sending the chapteh across. First to ${WIN_SCORE} points wins.`}
           steps={[
-            "Player 1 controls the left half with A / Left Arrow. Player 2 controls the right half with D / Right Arrow.",
+            `${playerLabel(0)} controls the left half with A / Left Arrow. ${playerLabel(1)} controls the right half with D / Right Arrow.`,
             "The server waits for the chapteh to drop into their shaded kick zone, then kicks it across the centre line.",
             "The other player becomes the next kicker. You cannot kick twice in a row. Keep alternating for as long as possible.",
             "If the chapteh touches the floor on your side, the other player scores 1 point. Sending it out past a player also gives the opponent a point.",
@@ -541,6 +551,7 @@ export default function ChaptehGame() {
         <PlayerScoreboard
           activePlayer={expectedPlayer}
           scores={scores}
+          labels={playerNames}
           gameOver={gameOver}
           secondary={secondary}
         />
@@ -553,13 +564,13 @@ export default function ChaptehGame() {
         <div className="turn-message" role="status" aria-live="polite">
           <span className={`player-dot player-dot-${expectedPlayer + 1}`} />
           <div>
-            <strong>{gameOver ? "Match finished" : running ? `Player ${expectedPlayer + 1} kicks next` : `Player ${server + 1} serves`}</strong>
+            <strong>{gameOver ? "Match finished" : running ? `${playerLabel(expectedPlayer)} kicks next` : `${playerLabel(server)} serves`}</strong>
             <p>{message}</p>
           </div>
         </div>
 
         <button className="primary-button" disabled={running || gameOver} onClick={startRally}>
-          {gameOver ? "Match complete" : running ? "Rally in progress" : `Start rally · Player ${server + 1} serve`}
+          {gameOver ? "Match complete" : running ? "Rally in progress" : `Start rally · ${playerLabel(server)} serves`}
         </button>
         <button className="secondary-button" onClick={resetMatch}>Restart match</button>
       </aside>
@@ -567,13 +578,13 @@ export default function ChaptehGame() {
       <GamePlayArea className="chapteh-play-area">
         <div className="fullscreen-only-controls">
           <button className="primary-button" onClick={startRally} disabled={running || gameOver}>
-            {gameOver ? "Match complete" : running ? "Rally in progress" : `Start rally · Player ${server + 1} serve`}
+            {gameOver ? "Match complete" : running ? "Rally in progress" : `Start rally · ${playerLabel(server)} serves`}
           </button>
           <button className="secondary-button" onClick={resetMatch}>Restart match</button>
         </div>
         <div className="chapteh-side-header" aria-label="Player sides">
           <div className={`chapteh-side-card player-one ${expectedPlayer === 0 && running ? "is-next" : ""}`}>
-            <span>Player 1</span>
+            <span>{playerLabel(0)}</span>
             <strong>LEFT SIDE</strong>
             <small>A / ←</small>
           </div>
@@ -582,7 +593,7 @@ export default function ChaptehGame() {
             <strong key={rally} className="rally-pop">{rally}</strong>
           </div>
           <div className={`chapteh-side-card player-two ${expectedPlayer === 1 && running ? "is-next" : ""}`}>
-            <span>Player 2</span>
+            <span>{playerLabel(1)}</span>
             <strong>RIGHT SIDE</strong>
             <small>D / →</small>
           </div>
@@ -632,7 +643,7 @@ export default function ChaptehGame() {
             width={WIDTH}
             height={HEIGHT}
             onPointerDown={handleCanvasTap}
-            aria-label="Two-player chapteh court. Player 1 controls the left side and Player 2 controls the right side."
+            aria-label={`Two-player chapteh court. ${playerLabel(0)} controls the left side and ${playerLabel(1)} controls the right side.`}
           />
 
           <div
@@ -643,12 +654,12 @@ export default function ChaptehGame() {
             aria-live="polite"
             aria-label={
               running
-                ? `Player ${expectedPlayer + 1} should kick next`
-                : `Player ${server + 1} serves next`
+                ? `${playerLabel(expectedPlayer)} should kick next`
+                : `${playerLabel(server)} serves next`
             }
           >
             <span className="center-rally-kicker">
-              {running ? `PLAYER ${expectedPlayer + 1} NEXT` : `PLAYER ${server + 1} SERVE`}
+              {running ? `${playerLabel(expectedPlayer).toUpperCase()} NEXT` : `${playerLabel(server).toUpperCase()} SERVES`}
             </span>
             <span className={`chapteh-pace-badge pace-${paceLevel}`}>PACE · {PACE_LABELS[paceLevel]}</span>
             <div className="center-rally-direction" aria-hidden="true">
@@ -664,8 +675,8 @@ export default function ChaptehGame() {
             </div>
             <small>
               {running
-                ? `${expectedPlayer === 0 ? "Move left" : "Move right"} · ${expectedPlayer === 0 ? "Player 1" : "Player 2"} prepares to kick`
-                : `Waiting for Player ${server + 1} to serve`}
+                ? `${expectedPlayer === 0 ? "Move left" : "Move right"} · ${playerLabel(expectedPlayer)} prepares to kick`
+                : `Waiting for ${playerLabel(server)} to serve`}
             </small>
           </div>
         </div>
@@ -676,7 +687,7 @@ export default function ChaptehGame() {
             disabled={!running || expectedPlayer !== 0}
             onClick={() => kick("left")}
           >
-            <span>Player 1 · {kickWindowPlayer === 0 ? "Kick now" : "Wait"}</span>
+            <span>{playerLabel(0)} · {kickWindowPlayer === 0 ? "Kick now" : "Wait"}</span>
             <kbd>A / ←</kbd>
           </button>
           <button
@@ -684,13 +695,13 @@ export default function ChaptehGame() {
             disabled={!running || expectedPlayer !== 1}
             onClick={() => kick("right")}
           >
-            <span>Player 2 · {kickWindowPlayer === 1 ? "Kick now" : "Wait"}</span>
+            <span>{playerLabel(1)} · {kickWindowPlayer === 1 ? "Kick now" : "Wait"}</span>
             <kbd>D / →</kbd>
           </button>
         </div>
 
         <p className="control-hint">
-          Both players play at the same time on one device. Player 1 stays on the left, Player 2 stays on the right, and each successful kick must send the chapteh to the other player.
+          Both players play at the same time on one device. {playerLabel(0)} stays on the left, {playerLabel(1)} stays on the right, and each successful kick must send the chapteh to the other player.
         </p>
       </GamePlayArea>
     </section>

@@ -9,3 +9,13 @@ export type GameDefinition = {
   players: string;
   accent: string;
 };
+
+export type GameResult = {
+  scores: [number, number];
+};
+
+export type CompetitionGameProps = {
+  playerNames?: [string, string];
+  competitionMode?: boolean;
+  onComplete?: (result: GameResult) => void;
+};

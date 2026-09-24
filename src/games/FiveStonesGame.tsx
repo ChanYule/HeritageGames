@@ -3,6 +3,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import InstructionSteps from "../components/InstructionSteps";
 
+type Props = {
+  playerName?: string;
+  competitionMode?: boolean;
+  onComplete?: (score: number) => void;
+};
+
 type Stone = {
   id: number;
   x: number;
@@ -24,7 +30,7 @@ const stageSequences: number[][] = [
   [4],
 ];
 
-export default function FiveStonesGame() {
+export default function FiveStonesGame({ playerName, competitionMode = false, onComplete }: Props = {}) {
   const [stones, setStones] = useState<Stone[]>(baseStones);
   const [stage, setStage] = useState(1);
   const [step, setStep] = useState(0);
@@ -39,6 +45,8 @@ export default function FiveStonesGame() {
   const timerRef = useRef<number | null>(null);
   const celebrationTimerRef = useRef<number | null>(null);
   const [celebration, setCelebration] = useState<string | null>(null);
+  const [confirmFinish, setConfirmFinish] = useState(false);
+  const reportedRef = useRef(false);
 
   const sequence = stageSequences[stage - 1];
   const target = sequence[step] ?? 0;
@@ -54,6 +62,12 @@ export default function FiveStonesGame() {
           ? "wait"
           : "catch";
   const catchReady = inAir && progress >= 50 && selectedThisThrow.length === target;
+
+  useEffect(() => {
+    if (!complete || reportedRef.current || !onComplete) return;
+    reportedRef.current = true;
+    onComplete(score);
+  }, [complete, onComplete, score]);
 
   const clearTimer = () => {
     if (timerRef.current !== null) window.clearInterval(timerRef.current);
@@ -75,6 +89,17 @@ export default function FiveStonesGame() {
     setSelectedThisThrow([]);
     setMessage("Press Toss, collect the right number, then catch.");
     setCelebration(null);
+    setConfirmFinish(false);
+    reportedRef.current = false;
+  };
+
+  const finishCompetitionAttempt = () => {
+    if (!competitionMode || throws === 0 || reportedRef.current) return;
+    clearTimer();
+    setInAir(false);
+    setSelectedThisThrow([]);
+    reportedRef.current = true;
+    onComplete?.(score);
   };
 
   useEffect(() => () => {
@@ -211,6 +236,7 @@ export default function FiveStonesGame() {
   return (
     <section className="game-layout five-stones-layout">
       <aside className="game-panel">
+        {competitionMode && playerName ? <div className="competition-attempt-label"><span>Scored attempt</span><strong>{playerName}</strong></div> : null}
         <InstructionSteps
           title="Toss, collect, then catch"
           objective={`Complete four stages. The current Stage ${stage} pattern is ${sequenceLabel}.`}
@@ -236,16 +262,28 @@ export default function FiveStonesGame() {
         </div>
 
         <label className="pace-control">Pace
-          <select value={pace} disabled={inAir} onChange={(event) => setPace(event.target.value)}>
+          <select value={pace} disabled={inAir || competitionMode} onChange={(event) => setPace(event.target.value)}>
             <option value="practice">Practice - generous timing</option>
             <option value="challenge">Challenge - faster toss</option>
           </select>
         </label>
+        {competitionMode ? <p className="competition-fairness-note">Practice pace is locked so both participants receive the same timing.</p> : null}
         <button className="primary-button" onClick={toss} disabled={inAir || complete}>
           {complete ? "Sequence complete" : inAir ? "Stone in air..." : "Toss stone"}
         </button>
 
         <button className="secondary-button" onClick={reset}>Restart</button>
+        {competitionMode ? (
+          confirmFinish ? (
+            <div className="competition-finish-confirm" role="alert">
+              <strong>Record {score} points?</strong>
+              <span>This ends {playerName ?? "this player"}'s attempt.</span>
+              <div><button className="primary-button" onClick={finishCompetitionAttempt}>Yes, record score</button><button className="secondary-button" onClick={() => setConfirmFinish(false)}>Keep playing</button></div>
+            </div>
+          ) : (
+            <button className="secondary-button competition-finish-attempt" disabled={throws === 0} onClick={() => setConfirmFinish(true)}>Finish attempt and record score</button>
+          )
+        ) : null}
       </aside>
 
       <GamePlayArea className="five-stones-play-area">

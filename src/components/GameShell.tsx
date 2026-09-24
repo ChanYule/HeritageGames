@@ -7,10 +7,11 @@ type Props = {
   title: string;
   subtitle: string;
   onBack: () => void;
+  backLabel?: string;
   children: ReactNode;
 };
 
-export default function GameShell({ title, subtitle, onBack, children }: Props) {
+export default function GameShell({ title, subtitle, onBack, backLabel = "All games", children }: Props) {
   const playAreaRef = useRef<HTMLDivElement | null>(null);
   const titleRef = useRef<HTMLHeadingElement | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -96,12 +97,12 @@ export default function GameShell({ title, subtitle, onBack, children }: Props) 
         <motion.button
           className="back-button premium-back-button"
           onClick={onBack}
-          aria-label="Back to all games"
+          aria-label={`Back to ${backLabel.toLowerCase()}`}
           whileHover={{ x: -3 }}
           whileTap={{ scale: 0.97 }}
         >
           <ChevronLeft size={18} />
-          <span>All games</span>
+          <span>{backLabel}</span>
         </motion.button>
         <div className="game-title-block">
           <p className="eyebrow">Now playing</p>
