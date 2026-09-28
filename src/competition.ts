@@ -1,6 +1,6 @@
 import type { GameKey } from "./types";
 
-export type CompetitionFormat = "quick" | "league";
+export type CompetitionFormat = "four" | "quick" | "league";
 export type CompetitionStatus = "active" | "complete";
 
 export type Competitor = {
@@ -60,7 +60,7 @@ export function restoreCompetition(value: unknown): CompetitionSession | null {
   if (!value || typeof value !== "object") return null;
   const data = value as Record<string, unknown>;
   if (typeof data.id !== "string" || !data.id || typeof data.name !== "string" || data.name.length > 40
-    || (data.format !== "quick" && data.format !== "league") || typeof data.createdAt !== "string"
+    || (data.format !== "four" && data.format !== "quick" && data.format !== "league") || typeof data.createdAt !== "string"
     || !Number.isFinite(Date.parse(data.createdAt)) || !Array.isArray(data.competitors) || !Array.isArray(data.matches)) return null;
   const competitors: Competitor[] = [];
   for (const player of data.competitors) {
@@ -68,6 +68,7 @@ export function restoreCompetition(value: unknown): CompetitionSession | null {
     competitors.push({ id: player.id, name: player.name.trim() });
   }
   if (!validCompetitorNames(competitors.map((player) => player.name))) return null;
+  if (data.format === "four" && competitors.length !== 4) return null;
   const ids = new Set(competitors.map((player) => player.id));
   if (ids.size !== competitors.length || data.matches.length === 0 || data.matches.length > 28) return null;
   const matches: CompetitionMatch[] = [];
@@ -103,16 +104,24 @@ const match = (index: number, game: GameKey, a: Competitor, b: Competitor): Comp
   status: "pending",
 });
 
-export function createCompetition(name: string, names: string[], format: CompetitionFormat): CompetitionSession {
+export function createCompetition(name: string, names: string[], format: CompetitionFormat, selectedGame: GameKey | "all" = "all"): CompetitionSession {
   if (!validCompetitorNames(names)) throw new Error("Enter 2 to 8 different participant names.");
-  if (format !== "quick" && format !== "league") throw new Error("Choose a competition format.");
+  if (format !== "four" && format !== "quick" && format !== "league") throw new Error("Choose a competition format.");
+  if (format === "four" && names.length !== 4) throw new Error("Four players are needed.");
+  if (selectedGame !== "all" && !games.includes(selectedGame)) throw new Error("Choose a game.");
   const competitors = names.map((playerName, index) => ({
     id: `player-${index + 1}`,
     name: playerName.trim(),
   }));
 
   let pairs: [Competitor, Competitor][] = [];
-  if (competitors.length === 2) {
+  if (format === "four") {
+    // Disjoint opening pairs keep waiting short. Each player then changes
+    // opponent, giving everyone two matches and one first-player duty per game.
+    const roundPairs = [[0, 1], [2, 3], [1, 2], [3, 0]] as const;
+    const selectedGames = selectedGame === "all" ? games : [selectedGame];
+    pairs = selectedGames.flatMap(() => roundPairs.map(([a, b]): [Competitor, Competitor] => [competitors[a], competitors[b]]));
+  } else if (competitors.length === 2) {
     pairs = games.map((_, index) => index % 2 === 0 ? [competitors[0], competitors[1]] : [competitors[1], competitors[0]]);
   } else if (format === "quick") {
     pairs = competitors.map((player, index) => [player, competitors[(index + 1) % competitors.length]]);
@@ -141,7 +150,8 @@ export function createCompetition(name: string, names: string[], format: Competi
     name: name.trim().slice(0, 40) || "Heritage Games Cup",
     format,
     competitors,
-    matches: pairs.map(([a, b], index) => match(index, games[index % games.length], a, b)),
+    matches: pairs.map(([a, b], index) => match(index,
+      format === "four" ? selectedGame === "all" ? games[Math.floor(index / 4)] : selectedGame : games[index % games.length], a, b)),
     currentMatch: 0,
     status: "active",
     createdAt: new Date().toISOString(),

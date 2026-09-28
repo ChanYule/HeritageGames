@@ -3,7 +3,9 @@ import GamePlayArea from "../components/GamePlayArea";
 import { useEffect, useRef, useState } from "react";
 
 import InstructionSteps from "../components/InstructionSteps";
-import { advanceFiveStones, FIVE_STONES_ATTEMPT_LIMIT, FIVE_STONES_PATTERNS, FIVE_STONES_TOSS_MS, fiveStonesComplete, fiveStonesTarget, newFiveStonesRound } from "./fiveStonesRules";
+import DifficultyPicker from "../components/DifficultyPicker";
+import { advanceFiveStones, FIVE_STONES_ATTEMPT_LIMIT, FIVE_STONES_LEVEL_MS, FIVE_STONES_PATTERNS, fiveStonesComplete, fiveStonesRequiredIds, fiveStonesSelectionCorrect, fiveStonesTarget, newFiveStonesRound } from "./fiveStonesRules";
+import type { Difficulty } from "./mechanics";
 
 type Props = {
   playerName?: string;
@@ -27,13 +29,14 @@ const baseStones: Stone[] = [
 
 export default function FiveStonesGame({ playerName, competitionMode = false, onComplete }: Props = {}) {
   useLanguage();
-  const [round, setRound] = useState(newFiveStonesRound);
+  const [round, setRound] = useState(() => newFiveStonesRound(competitionMode));
   const roundRef = useRef(round);
   const { stage, step, score, throws, successes, inAir, selected: selectedThisThrow } = round;
   const stones = baseStones.map((stone) => ({ ...stone, collected: round.collected.includes(stone.id) }));
   const [progress, setProgress] = useState(0);
   const [message, setMessage] = useState(() => () => t("Press Toss, collect the right number, then catch."));
-  const [pace, setPace] = useState<"practice" | "challenge">("practice");
+  const [difficulty, setDifficulty] = useState<Difficulty>("easy");
+  const level = competitionMode ? "medium" : difficulty;
   const [paused, setPaused] = useState(false);
   const pausedRef = useRef(false);
   const clockRef = useRef({ elapsed: 0, started: 0, duration: 8000 });
@@ -45,6 +48,9 @@ export default function FiveStonesGame({ playerName, competitionMode = false, on
 
   const sequence = FIVE_STONES_PATTERNS[stage - 1];
   const target = fiveStonesTarget(round);
+  const requiredIds = fiveStonesRequiredIds(round);
+  const pickupPlan = requiredIds.map((id) => id + 1).join(", ");
+  const showPlan = level === "medium" || (level === "difficult" && !inAir);
   const complete = fiveStonesComplete(round);
   const exhausted = competitionMode && throws >= FIVE_STONES_ATTEMPT_LIMIT && !inAir;
   const finished = complete || exhausted;
@@ -79,7 +85,7 @@ export default function FiveStonesGame({ playerName, competitionMode = false, on
     clearTimer();
     if (celebrationTimerRef.current !== null) window.clearTimeout(celebrationTimerRef.current);
     celebrationTimerRef.current = null;
-    commit(newFiveStonesRound());
+    commit(newFiveStonesRound(competitionMode));
     pausedRef.current = false;
     setPaused(false);
     setProgress(0);
@@ -115,7 +121,7 @@ export default function FiveStonesGame({ playerName, competitionMode = false, on
     commit(next);
     setProgress(0);
     setMessage(() => () => t("Collect exactly {0} stone{1}, then catch.", target, target > 1 ? "s" : ""));
-    clockRef.current = { elapsed: 0, started: performance.now(), duration: FIVE_STONES_TOSS_MS[pace] };
+    clockRef.current = { elapsed: 0, started: performance.now(), duration: FIVE_STONES_LEVEL_MS[level] };
     startTimer();
   };
 
@@ -172,10 +178,13 @@ export default function FiveStonesGame({ playerName, competitionMode = false, on
       return;
     }
     if (currentProgress() >= 100) { miss(); return; }
-    const next = advanceFiveStones(roundRef.current, { type: "collect", id });
+    const next = advanceFiveStones(roundRef.current, { type: roundRef.current.selected.includes(id) ? "unselect" : "collect", id });
+    if (next === roundRef.current) return;
     commit(next);
     const needed = fiveStonesTarget(next) - next.selected.length;
-    setMessage(() => () => needed === 0 ? t("Ready! Catch on the way down.") : t("Collect {0} more, then catch.", needed));
+    setMessage(() => () => needed === 0
+      ? fiveStonesSelectionCorrect(next, level) ? t("Ready! Catch on the way down.") : t("Check the pickup plan. Tap a selected stone to change it.")
+      : t("Collect {0} more, then catch.", needed));
   };
 
   const catchStone = () => {
@@ -197,8 +206,12 @@ export default function FiveStonesGame({ playerName, competitionMode = false, on
       setMessage(() => () => t("Collect {0} more, then catch.", needed));
       return;
     }
+    if (!fiveStonesSelectionCorrect(current, level)) {
+      setMessage(() => () => t("Check the pickup plan. Tap a selected stone to change it."));
+      return;
+    }
     clearTimer();
-    const next = advanceFiveStones(current, { type: "catch", progress: exactProgress });
+    const next = advanceFiveStones(current, { type: "catch", progress: exactProgress, level });
     commit(next);
     setProgress(0);
     if (fiveStonesComplete(next)) {
@@ -242,12 +255,15 @@ export default function FiveStonesGame({ playerName, competitionMode = false, on
           objective={t("Complete four stages. The current Stage {0} pattern is {1}.", stage, sequenceLabel)}
           steps={[
             t("Press Toss Stone to throw the main stone into the air."),
-            t("While it is airborne, collect exactly {0} ground stone{1} for this throw.", complete ? 0 : target, !complete && target !== 1 ? "s" : ""),
+            level === "easy" ? t("While it is airborne, collect exactly {0} ground stone{1} for this throw.", complete ? 0 : target, !complete && target !== 1 ? "s" : "") : t("Study the numbered pickup plan, then collect those stones while the main stone is airborne."),
             t("Wait until the airborne stone starts falling, then tap it to catch."),
             t("A successful catch moves you to the next throw. Finish every pattern to clear all four stages."),
           ]}
-          tip={t("Take your time: each practice toss lasts 8 seconds. Use the large Catch now button when it lights up.")}
+          tip={level === "easy" ? t("Choose any stones. Each toss lasts 8 seconds.") : level === "medium" ? t("Follow the numbered pickup plan. It stays visible during the toss.") : t("Study the numbered pickup plan before tossing. Remember it while the stone is in the air.")}
         />
+
+        <DifficultyPicker value={level} onChange={(next) => { setDifficulty(next); reset(); }} disabled={competitionMode}
+          description={t("Easy: any stones. Medium: follow a visible plan. Difficult: remember the plan before you toss.")} />
 
         <div className="stat-grid">
           <div><span>{t("Score")}</span><strong key={score} className="stat-value-pop">{score}</strong></div>
@@ -261,12 +277,7 @@ export default function FiveStonesGame({ playerName, competitionMode = false, on
           <p>{message()}</p>
         </div>
 
-        <label className="pace-control">{t("Pace")} <select value={pace} disabled={inAir || competitionMode} onChange={(event) => setPace(event.target.value as "practice" | "challenge")}>
-            <option value="practice">{t("Practice - generous timing")}</option>
-            <option value="challenge">{t("Challenge - faster toss")}</option>
-          </select>
-        </label>
-        {competitionMode ? <p className="competition-fairness-note">{t("Each participant has up to 12 tosses at the same generous pace. Nine successful catches complete all stages.")}</p> : null}
+        {competitionMode ? <p className="competition-fairness-note">{t("Both players follow the same visible pickup plans with 12 tosses each.")}</p> : null}
         <p className="control-hint">{t("Score: 120 points per collected stone, plus up to 100 for catching promptly on the way down.")}</p>
         <button className="primary-button" onClick={toss} disabled={inAir || finished || confirmFinish}>
           {finished ? t("Sequence complete") : inAir ? t("Stone in air...") : t("Toss stone")}
@@ -277,6 +288,10 @@ export default function FiveStonesGame({ playerName, competitionMode = false, on
       </aside>
 
       <GamePlayArea className="five-stones-play-area">
+        {!complete && <div className="five-pickup-plan" role="status">
+          <strong>{level === "easy" ? t("Pick up any {0} stones", target) : showPlan ? t("Pick up stones: {0}", pickupPlan) : t("Remember your pickup plan")}</strong>
+          <span>{level === "easy" ? t("Any stones will do") : level === "medium" ? t("Tap these numbered stones before catching") : inAir ? t("The plan is hidden until this toss ends") : t("Study the numbers, then press Toss stone")}</span>
+        </div>}
         <div className="play-status-bar">
           <div><strong>{finished ? t("Attempt complete") : t("Stage {0} · Step {1}/{2}", stage, Math.min(step + 1, sequence.length), sequence.length)}</strong></div>
           <span>{complete ? t("All stages cleared") : exhausted ? t("12 tosses completed") : t("Collect {0} then catch", target)}</span>
@@ -337,8 +352,8 @@ export default function FiveStonesGame({ playerName, competitionMode = false, on
               } bag-${index + 1}`}
               style={{ left: `${stone.x}%`, top: `${stone.y}%` }}
               onClick={() => collectStone(stone.id)}
-              disabled={stone.collected || !inAir || paused || selectedThisThrow.includes(stone.id) || selectedThisThrow.length >= target}
-              aria-label={t("Ground stone {0}", index + 1)}
+              disabled={stone.collected || !inAir || paused || (!selectedThisThrow.includes(stone.id) && selectedThisThrow.length >= target)}
+              aria-label={selectedThisThrow.includes(stone.id) ? t("Undo ground stone {0}", index + 1) : t("Ground stone {0}", index + 1)}
               aria-pressed={selectedThisThrow.includes(stone.id) || stone.collected}
             >
               <span><b>{index + 1}</b></span>

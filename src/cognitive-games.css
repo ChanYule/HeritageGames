@@ -1,0 +1,98 @@
+.five-stones-layout .five-stones-play-area,
+.chapteh-versus-layout .chapteh-play-area {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  min-width: 0;
+}
+.chapteh-versus-layout .chapteh-frame { flex: 0 0 auto; width: 100%; }
+.five-stones-layout .five-stones-board { flex: 0 0 auto; }
+.five-pickup-plan {
+  display: grid;
+  gap: 4px;
+  position: sticky;
+  top: max(8px, env(safe-area-inset-top));
+  z-index: 25;
+  min-width: 0;
+  padding: 14px 18px;
+  border: 2px solid #366857;
+  border-radius: 14px;
+  color: #214638;
+  background: #eaf5ec;
+}
+.five-pickup-plan strong { font-size: clamp(1rem, 2vw, 1.3rem); }
+.five-pickup-plan span { font-size: .92rem; }
+.chapteh-versus-layout .versus-foot-controls.has-aim-options {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.chapteh-versus-layout .versus-foot-controls.has-aim-options .kick-button {
+  min-width: 0;
+  min-height: 60px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.chapteh-versus-layout .versus-foot-controls.has-aim-options .kick-far {
+  border-style: dashed;
+}
+.chapteh-versus-layout .versus-foot-controls.has-aim-options .kick-button:focus-visible {
+  outline: 3px solid #1d362d;
+  outline-offset: 3px;
+}
+.five-stones-play-area.is-fullscreen .five-pickup-plan {
+  position: sticky;
+  top: max(64px, calc(env(safe-area-inset-top) + 54px));
+  left: auto;
+  z-index: 91;
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  transform: none;
+  background: rgba(234,245,236,.94);
+}
+.chapteh-play-area.is-fullscreen .versus-foot-controls.has-aim-options .kick-button {
+  position: relative;
+  inset: auto;
+  height: auto;
+  min-height: clamp(64px, 9dvh, 96px);
+  transform: none;
+}
+@media (max-width: 760px) {
+  .chapteh-play-area.is-fullscreen .versus-foot-controls.has-aim-options .kick-button {
+    position: relative;
+    inset: auto;
+    height: auto;
+    min-height: 64px;
+    padding: 9px;
+    transform: none;
+  }
+  .five-stones-play-area.is-fullscreen .five-pickup-plan {
+    top: max(60px, calc(env(safe-area-inset-top) + 50px));
+    padding: 9px 12px;
+  }
+}
+@media (max-width: 950px) and (max-height: 599px) and (orientation: landscape) {
+  .chapteh-play-area.is-fullscreen .chapteh-frame {
+    width: min(100%, max(320px, calc(50dvh * 760 / 560)));
+    height: auto;
+    align-self: center;
+  }
+  .chapteh-play-area.is-fullscreen .versus-foot-controls.has-aim-options {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    padding: 6px;
+  }
+  .chapteh-play-area.is-fullscreen .versus-foot-controls.has-aim-options .kick-button {
+    min-height: 58px;
+    padding: 6px;
+  }
+  .chapteh-play-area.is-fullscreen .versus-foot-controls.has-aim-options kbd { display: none; }
+  .five-stones-play-area.is-fullscreen > .five-stones-board {
+    height: clamp(280px, 55dvh, 340px);
+  }
+}
+@media (max-width: 430px) and (pointer: coarse) {
+  .chapteh-play-area .versus-foot-controls.has-aim-options kbd { display: none; }
+  .chapteh-versus-layout .versus-foot-controls.has-aim-options .kick-button { min-height: 58px; }
+}

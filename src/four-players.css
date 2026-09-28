@@ -1,0 +1,60 @@
+.four-game-picker {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.four-game-picker legend { font-size: 1.2rem; font-weight: 750; margin-bottom: 14px; }
+.four-game-picker label {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 18px;
+  border: 2px solid #d3ddd5;
+  border-radius: 16px;
+  background: #fffdf7;
+  cursor: pointer;
+}
+.four-game-picker label.is-selected { border-color: #28614b; background: #edf6ef; }
+.four-game-picker label strong, .four-game-picker label span { min-width: 0; overflow-wrap: anywhere; }
+.four-game-picker input { width: 22px; height: 22px; accent-color: #28614b; grid-row: span 2; }
+.four-game-picker span { font-size: .9rem; color: #506257; }
+.four-more-options { border-bottom: 1px solid #d3ddd5; padding-bottom: 16px; }
+.four-more-options summary { cursor: pointer; padding: 14px 0; font-weight: 650; }
+.four-more-options .competition-format { margin-top: 16px; }
+.seat-1 { --seat-color: #266579; --seat-bg: #e9f5fa; }
+.seat-2 { --seat-color: #9d4938; --seat-bg: #fff0e9; }
+.seat-3 { --seat-color: #695098; --seat-bg: #f3edfc; }
+.seat-4 { --seat-color: #486527; --seat-bg: #f0f6e5; }
+.competition-player-number[class*="seat-"] { background: var(--seat-color); color: white; }
+.four-roster { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; width: 100%; margin: 16px 0; text-align: left; }
+.four-seat { display: grid; gap: 5px; align-content: start; padding: 14px; border: 2px solid #d6dcd5; border-radius: 16px; background: #fffdf8; min-width: 0; }
+.four-seat.is-playing { border-color: var(--seat-color); background: var(--seat-bg); }
+.four-seat-number { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--seat-color); color: white; font-weight: 800; }
+.four-seat strong { font-size: 1.15rem; overflow-wrap: anywhere; }
+.four-seat > span:not(.four-seat-number), .four-seat small { font-size: .9rem; color: #455249; }
+.four-seat.is-playing > span:not(.four-seat-number) { font-weight: 800; color: var(--seat-color); }
+.four-roster > p { grid-column: 1 / -1; margin: 0; padding: 12px 16px; border-radius: 12px; background: #edf2e9; color: #294536; font-weight: 650; overflow-wrap: anywhere; }
+.four-roster-playing .four-seat { grid-template-columns: 32px minmax(0, 1fr); align-items: center; gap: 2px 8px; padding: 9px 12px; }
+.four-roster-playing .four-seat-number { grid-row: span 2; }
+.four-roster-playing .four-seat strong { font-size: 1rem; }
+.four-roster-playing .four-seat small { display: none; }
+.four-roster-playing > p { padding: 8px 12px; }
+.four-practice-link { display: block; min-height: 48px; margin-top: 12px; padding: 10px 0; text-align: left; border: 0; background: transparent; color: #365849; font: inherit; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
+.four-game-picker label:focus-within { outline: 3px solid #266579; outline-offset: 3px; }
+@media (max-width: 650px) {
+  .four-roster { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .four-game-picker { grid-template-columns: 1fr; }
+  .four-seat { padding: 12px; }
+  .four-roster-playing { margin: 8px 0; }
+  .four-roster-playing .four-seat { padding: 8px; }
+  .four-roster-playing .four-seat > span:not(.four-seat-number) { font-size: .78rem; }
+}
+@media (max-width: 360px) {
+  .four-game-picker label { padding: 12px; }
+  .four-roster-playing .four-seat { grid-template-columns: 28px minmax(0, 1fr); gap: 2px 6px; }
+  .four-roster-playing .four-seat-number { width: 28px; height: 28px; }
+}

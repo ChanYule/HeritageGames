@@ -9,8 +9,62 @@ async function loadRules(name) {
   return import(`data:text/javascript;base64,${Buffer.from(outputText).toString("base64")}`);
 }
 
-const { advanceFiveStones: advance, newFiveStonesRound, fiveStonesTarget, fiveStonesComplete, FIVE_STONES_ATTEMPT_LIMIT, FIVE_STONES_TOSS_MS } = await loadRules("fiveStonesRules");
+const { advanceFiveStones: advance, newFiveStonesRound, fiveStonesTarget, fiveStonesComplete, fiveStonesRequiredIds, fiveStonesSelectionCorrect, FIVE_STONES_ATTEMPT_LIMIT, FIVE_STONES_TOSS_MS, FIVE_STONES_LEVEL_MS } = await loadRules("fiveStonesRules");
 const { canSeniorKick, CHAPTEH_GROUND, CHAPTEH_GRAVITY, chaptehReturnVelocity, chaptehTimeScale } = await loadRules("chaptehRules");
+
+test("Five Stones pickup plans demand the correct stones while allowing a wrong choice to be fixed", () => {
+  let round = advance(newFiveStonesRound(true), { type: "toss" });
+  assert.deepEqual(fiveStonesRequiredIds(round), [2]);
+  round = advance(round, { type: "collect", id: 0 });
+  assert.equal(fiveStonesSelectionCorrect(round, "medium"), false);
+  assert.equal(fiveStonesSelectionCorrect(round, "easy"), true);
+  assert.equal(advance(round, { type: "catch", progress: 65, level: "medium" }), round);
+  round = advance(round, { type: "unselect", id: 0 });
+  assert.equal(round.selected.length, 0);
+  round = advance(round, { type: "collect", id: 2 });
+  assert.equal(fiveStonesSelectionCorrect(round, "medium"), true);
+  round = advance(round, { type: "catch", progress: 65, level: "medium" });
+  assert.equal(round.successes, 1);
+  assert.deepEqual(fiveStonesRequiredIds(round), [0]);
+  assert.ok(FIVE_STONES_LEVEL_MS.easy > FIVE_STONES_LEVEL_MS.medium);
+  assert.ok(FIVE_STONES_LEVEL_MS.medium > FIVE_STONES_LEVEL_MS.difficult);
+});
+
+test("Five Stones pickup plans stay possible through all nine catches", () => {
+  let round = newFiveStonesRound();
+  for (let step = 0; step < 9; step += 1) {
+    round = advance(round, { type: "toss" });
+    const required = fiveStonesRequiredIds(round);
+    assert.equal(required.length, fiveStonesTarget(round));
+    for (const id of required) round = advance(round, { type: "collect", id });
+    round = advance(round, { type: "catch", progress: 60, level: "difficult" });
+    assert.equal(round.successes, step + 1);
+  }
+  assert.equal(fiveStonesComplete(round), true);
+});
+
+test("Five Stones reshuffles solo plans but shares one fixed competition plan", () => {
+  const fixed = newFiveStonesRound(true);
+  assert.deepEqual(newFiveStonesRound(true).plans, fixed.plans);
+  const shuffled = newFiveStonesRound(false, () => 0);
+  assert.notDeepEqual(shuffled.plans, fixed.plans);
+  for (const plan of shuffled.plans) assert.deepEqual([...plan].sort(), [0, 1, 2, 3]);
+});
+
+test("Chapteh near and far shots follow distinct, reachable paths on both sides", () => {
+  for (const player of [0, 1]) {
+    const startX = player === 0 ? 140 : 620;
+    const landing = {};
+    for (const aim of ["near", "far"]) {
+      const velocity = chaptehReturnVelocity(startX, 410, player, aim);
+      const flight = (-velocity.vy + Math.sqrt(velocity.vy ** 2 + 2 * CHAPTEH_GRAVITY * (CHAPTEH_GROUND - 85 - 410))) / CHAPTEH_GRAVITY;
+      landing[aim] = startX + velocity.vx * flight;
+      assert.ok(player === 0 ? landing[aim] > 380 && landing[aim] < 760 : landing[aim] > 0 && landing[aim] < 380);
+      assert.ok(canSeniorKick(CHAPTEH_GROUND - 85, velocity.vy + CHAPTEH_GRAVITY * flight));
+    }
+    assert.ok(Math.abs(landing.near - landing.far) > 100);
+  }
+});
 
 function collectTarget(round) {
   let next = round;

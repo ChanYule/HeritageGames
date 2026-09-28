@@ -21,9 +21,11 @@ export default function App() {
   const language = useLanguage();
   const [currentGame, setCurrentGame] = useState<GameKey | null>(() => gameFromLocation());
   const [competitionOpen, setCompetitionOpen] = useState(() => new URLSearchParams(window.location.search).get("mode") === "competition");
+  const [startInSetup, setStartInSetup] = useState(false);
 
   useEffect(() => {
     const handleHistory = () => {
+      setStartInSetup(false);
       setCurrentGame(gameFromLocation());
       setCompetitionOpen(new URLSearchParams(window.location.search).get("mode") === "competition");
     };
@@ -67,13 +69,15 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: "instant" });
   };
 
-  const openCompetition = () => {
+  const openCompetition = (selectedGame?: GameKey) => {
+    setStartInSetup(Boolean(selectedGame));
     const url = new URL(window.location.href);
     url.searchParams.delete("game");
+    if (selectedGame) url.searchParams.set("game", selectedGame);
     url.hash = "";
     url.searchParams.set("mode", "competition");
     window.history.pushState({ heritageCompetition: true }, "", url);
-    setCurrentGame(null);
+    setCurrentGame(selectedGame ?? null);
     setCompetitionOpen(true);
     window.scrollTo({ top: 0, behavior: "instant" });
   };
@@ -81,8 +85,10 @@ export default function App() {
   const closeCompetition = () => {
     const url = new URL(window.location.href);
     url.searchParams.delete("mode");
+    url.searchParams.delete("game");
     window.history.pushState({}, "", url);
     setCompetitionOpen(false);
+    setCurrentGame(null);
     window.scrollTo({ top: 0, behavior: "instant" });
   };
 
@@ -91,7 +97,7 @@ export default function App() {
     <DisplaySettings />
     <AnimatePresence mode="wait" initial={false}>
       {competitionOpen ? (
-        <Competition key="competition" onExit={closeCompetition} />
+        <Competition key="competition" onExit={closeCompetition} initialGame={currentGame ?? undefined} startInSetup={startInSetup} />
       ) : !currentGame || !game ? (
         <Home key="home" onPlay={openGame} onCompetition={openCompetition} />
       ) : (

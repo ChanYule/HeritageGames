@@ -8,9 +8,11 @@ export function canSeniorKick(y: number, vy: number) {
 
 // Aim every return into the other player's zone, including very early/late kicks.
 // Constant horizontal speed from the old kick position could sail off the court.
-export function chaptehReturnVelocity(x: number, y: number, player: 0 | 1) {
+export type ChaptehAim = "centre" | "near" | "far";
+export function chaptehReturnVelocity(x: number, y: number, player: 0 | 1, aim: ChaptehAim = "centre") {
   const vy = -10.9;
-  const targetX = 760 * (player === 0 ? 0.73 : 0.27);
+  const targetFraction = aim === "near" ? 0.62 : aim === "far" ? 0.84 : 0.73;
+  const targetX = 760 * (player === 0 ? targetFraction : 1 - targetFraction);
   const targetY = CHAPTEH_GROUND - 85;
   const flightFrames = (-vy + Math.sqrt(vy * vy + 2 * CHAPTEH_GRAVITY * (targetY - y))) / CHAPTEH_GRAVITY;
   return { vx: (targetX - x) / flightFrames, vy };

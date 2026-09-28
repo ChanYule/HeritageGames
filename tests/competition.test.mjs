@@ -8,6 +8,52 @@ source = source.replace('import type { GameKey } from "./types";\n', "");
 const { outputText } = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } });
 const competition = await import(`data:text/javascript;base64,${Buffer.from(outputText).toString("base64")}`);
 
+test("four-player sessions give equal play and first turns in every selected game", () => {
+  for (const game of ["marbles", "pick-up-sticks", "five-stones", "chapteh", "all"]) {
+    const cup = competition.createCompetition("Four friends", ["A", "B", "C", "D"], "four", game);
+    assert.equal(cup.matches.length, game === "all" ? 16 : 4);
+    for (const selected of new Set(cup.matches.map(match => match.game))) {
+      if (game !== "all") assert.equal(selected, game);
+      const matches = cup.matches.filter(match => match.game === selected);
+      assert.equal(matches.length, 4);
+      assert.equal(new Set(matches.slice(0, 2).flatMap(match => match.playerIds)).size, 4);
+      for (const player of cup.competitors) {
+        assert.equal(matches.filter(match => match.playerIds.includes(player.id)).length, 2);
+        assert.equal(matches.filter(match => match.playerIds[0] === player.id).length, 1);
+        const opponents = matches.filter(match => match.playerIds.includes(player.id)).flatMap(match => match.playerIds.filter(id => id !== player.id));
+        assert.equal(new Set(opponents).size, 2);
+      }
+    }
+  }
+});
+
+test("four-player results survive reload and complete without eliminating anyone", () => {
+  let cup = competition.createCompetition("Friends", ["Mary", "Ahmad", "小明", "Devi"], "four", "all");
+  for (let i = 0; i < 16; i += 1) {
+    const expected = cup.matches[i].id;
+    cup = competition.recordMatchResult(cup, [10, 10], expected);
+    assert.equal(competition.recordMatchResult(cup, [99, 0], expected), cup);
+    cup = competition.restoreCompetition(JSON.parse(JSON.stringify(cup)));
+    assert.ok(cup);
+  }
+  assert.equal(cup.status, "complete");
+  assert.deepEqual(competition.competitionStandings(cup).map(player => [player.played, player.points, player.rank]), Array.from({ length: 4 }, () => [8, 8, 1]));
+});
+
+test("four-player Five Stones retains the first attempt during handover", () => {
+  const cup = competition.createCompetition("Friends", ["A", "B", "C", "D"], "four", "five-stones");
+  cup.draft = { matchId: cup.matches[0].id, firstSoloScore: 25 };
+  const restored = competition.restoreCompetition(JSON.parse(JSON.stringify(cup)));
+  assert.deepEqual(restored.draft, cup.draft);
+});
+
+test("four-player sessions reject incorrect group sizes and unknown games", () => {
+  assert.throws(() => competition.createCompetition("Friends", ["A", "B"], "four"));
+  assert.throws(() => competition.createCompetition("Friends", ["A", "B", "C", "D"], "four", "unknown"));
+  const legacy = competition.createCompetition("Friends", ["A", "B"], "quick");
+  assert.equal(competition.restoreCompetition({ ...legacy, format: "four" }), null);
+});
+
 test("two participants play each of the four heritage games", () => {
   const cup = competition.createCompetition("Friendly Cup", ["Mary", "Ahmad"], "quick");
   assert.equal(cup.matches.length, 4);

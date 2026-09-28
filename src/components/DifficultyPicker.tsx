@@ -28,7 +28,7 @@ export default function DifficultyPicker({ value, onChange, description, disable
           );
         })}
       </div>
-      <p><Sparkles size={14} /> {description} {disabled ? t("The same level is used for both players.") : t("Changing level starts a fresh random round.")}</p>
+      <p><Sparkles size={14} /> {description} {disabled ? t("The same level is used for both players.") : t("Changing level starts a fresh round.")}</p>
     </fieldset>
   );
 }

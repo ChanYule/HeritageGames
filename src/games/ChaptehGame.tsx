@@ -4,8 +4,10 @@ import { useEffect, useRef, useState } from "react";
 
 import InstructionSteps from "../components/InstructionSteps";
 import PlayerScoreboard from "../components/PlayerScoreboard";
+import DifficultyPicker from "../components/DifficultyPicker";
+import type { Difficulty } from "./mechanics";
 import { chaptehPaceLevel } from "./mechanics";
-import { canSeniorKick, CHAPTEH_GRAVITY, CHAPTEH_ZONE_HEIGHT, chaptehReturnVelocity, chaptehTimeScale } from "./chaptehRules";
+import { canSeniorKick, CHAPTEH_GRAVITY, CHAPTEH_ZONE_HEIGHT, chaptehReturnVelocity, chaptehTimeScale, type ChaptehAim } from "./chaptehRules";
 import type { CompetitionGameProps } from "../types";
 
 type Chapteh = {
@@ -100,6 +102,7 @@ export default function ChaptehGame({ playerNames, onComplete, competitionMode =
   const reportedRef = useRef(false);
   const pausedRef = useRef(false);
   const paceRef = useRef<"gentle" | "lively">("gentle");
+  const levelRef = useRef<Difficulty>(competitionMode ? "medium" : "easy");
   const soundRef = useRef(false);
 
   const [running, setRunning] = useState(false);
@@ -116,6 +119,7 @@ export default function ChaptehGame({ playerNames, onComplete, competitionMode =
   const [kickWindowPlayer, setKickWindowPlayer] = useState<Player | null>(null);
   const [paused, setPaused] = useState(false);
   const [pace, setPace] = useState<"gentle" | "lively">("gentle");
+  const [difficulty, setDifficulty] = useState<Difficulty>(competitionMode ? "medium" : "easy");
   const [sound, setSound] = useState(false);
 
   const combo = getComboData(rally);
@@ -276,7 +280,7 @@ export default function ChaptehGame({ playerNames, onComplete, competitionMode =
     setMessage(() => () => t("Point to {0}. {1} {2} serves the next rally.", playerLabel(scorer), reason(), playerLabel(scorer)));
   };
 
-  const kick = (side: Side) => {
+  const kick = (side: Side, aim: ChaptehAim = levelRef.current === "easy" ? "centre" : "near") => {
     if (!runningRef.current || pausedRef.current || gameOverRef.current) return;
 
     const player: Player = side === "left" ? 0 : 1;
@@ -304,7 +308,7 @@ export default function ChaptehGame({ playerNames, onComplete, competitionMode =
     const nextPace = chaptehPaceLevel(nextRally, scoresRef.current[0] + scoresRef.current[1]);
     paceLevelRef.current = nextPace;
     setPaceLevel(nextPace);
-    Object.assign(chapteh, chaptehReturnVelocity(chapteh.x, chapteh.y, player));
+    Object.assign(chapteh, chaptehReturnVelocity(chapteh.x, chapteh.y, player, aim));
 
     for (let index = 0; index < 10; index++) {
       const spread = (index - 4.5) * 0.3;
@@ -346,7 +350,9 @@ export default function ChaptehGame({ playerNames, onComplete, competitionMode =
     if (nextRally > 0 && nextRally % 6 === 0) {
       setMessage(() => () => t("{0}-kick rally. {1}, get ready on the {2}.", nextRally, playerLabel(nextPlayer), nextPlayer === 0 ? t("left") : t("right")));
     } else {
-      setMessage(() => () => t("Good kick. {0} is next.", playerLabel(nextPlayer)));
+      setMessage(() => () => levelRef.current === "easy"
+        ? t("Good kick. {0} is next.", playerLabel(nextPlayer))
+        : t("{0} shot. {1}, watch where it lands.", aim === "far" ? t("Far") : t("Near"), playerLabel(nextPlayer)));
     }
   };
 
@@ -379,9 +385,11 @@ export default function ChaptehGame({ playerNames, onComplete, competitionMode =
     const keyHandler = (event: KeyboardEvent) => {
       if (event.repeat || event.altKey || event.ctrlKey || event.metaKey || (event.target instanceof HTMLElement && event.target.closest("input, textarea, select, [contenteditable=true]"))) return;
       const key = event.key.toLowerCase();
-      if (["a", "d", "arrowleft", "arrowright"].includes(key)) event.preventDefault();
+      if (["a", "d", "s", "f", "arrowleft", "arrowright"].includes(key)) event.preventDefault();
       if (key === "a" || event.key === "ArrowLeft") kick("left");
       if (key === "d" || event.key === "ArrowRight") kick("right");
+      if (key === "s" && levelRef.current !== "easy") kick("left", "far");
+      if (key === "f" && levelRef.current !== "easy") kick("right", "far");
     };
     window.addEventListener("keydown", keyHandler);
     return () => window.removeEventListener("keydown", keyHandler);
@@ -455,6 +463,18 @@ export default function ChaptehGame({ playerNames, onComplete, competitionMode =
         ctx.strokeStyle = PLAYER_COLORS[expected];
         ctx.lineWidth = 3;
         ctx.strokeRect(zoneX + 8, GROUND - CHAPTEH_ZONE_HEIGHT + 8, MID - 16, CHAPTEH_ZONE_HEIGHT - 16);
+        if (levelRef.current !== "easy") {
+          const nearX = WIDTH * (expected === 0 ? 0.38 : 0.62);
+          const farX = WIDTH * (expected === 0 ? 0.16 : 0.84);
+          for (const [x, label] of [[nearX, t("NEAR")], [farX, t("FAR")]] as const) {
+            ctx.fillStyle = "rgba(255,255,255,.78)";
+            ctx.fillRect(x - 48, GROUND - 72, 96, 42);
+            ctx.fillStyle = PLAYER_COLORS[expected];
+            ctx.font = "800 16px system-ui";
+            ctx.textAlign = "center";
+            ctx.fillText(label, x, GROUND - 46);
+          }
+        }
       }
 
       drawCourtLabel(0, t("{0} · LEFT", playerLabel(0).toUpperCase()), t("A / ←  ·  tap left"), MID / 2);
@@ -581,12 +601,20 @@ export default function ChaptehGame({ playerNames, onComplete, competitionMode =
           steps={[
             t("{0} controls the left half with A / Left Arrow. {1} controls the right half with D / Right Arrow.", playerLabel(0), playerLabel(1)),
             t("The server waits for the chapteh to drop into their shaded kick zone, then kicks it across the centre line."),
-            t("The other player becomes the next kicker. You cannot kick twice in a row. Keep alternating for as long as possible."),
+            difficulty === "easy" ? t("The other player becomes the next kicker. You cannot kick twice in a row. Keep alternating for as long as possible.") : t("Choose a near or far kick. The other player watches its path and returns it. Keep alternating."),
             t("If the chapteh touches the floor on your side, the other player scores 1 point. Sending it out past a player also gives the opponent a point."),
             t("The player who scores serves the next rally. First to {0} points wins the match.", WIN_SCORE),
           ]}
-          tip={t("Wait for Kick now, then tap your large kick button once. Gentle pace gives both players more time. Pause whenever you need a break.")}
+          tip={difficulty === "easy" ? t("Wait for Kick now, then tap your large kick button once. Pause whenever you need a break.") : t("Choose a near or far shot when Kick now appears. Watch its path so you can return it. Pause whenever you need a break.")}
         />
+        <DifficultyPicker value={difficulty} disabled={competitionMode} onChange={(next) => {
+          resetMatch();
+          levelRef.current = next;
+          setDifficulty(next);
+          const nextPace = next === "difficult" ? "lively" : "gentle";
+          paceRef.current = nextPace;
+          setPace(nextPace);
+        }} description={t("Easy: simple returns. Medium: choose near or far. Difficult: choose shots at a quicker pace.")} />
 
         <PlayerScoreboard
           activePlayer={expectedPlayer}
@@ -613,11 +641,7 @@ export default function ChaptehGame({ playerNames, onComplete, competitionMode =
           {gameOver ? t("Match complete") : running ? t("Rally in progress") : t("Start rally · {0} serves", playerLabel(server))}
         </button>
         {!competitionMode && <button className="secondary-button" onClick={resetMatch}>{t("Restart match")}</button>}
-        <label className="pace-control">{t("Pace")} <select value={pace} disabled={running || competitionMode} onChange={(event) => { const next = event.target.value as "gentle" | "lively"; paceRef.current = next; setPace(next); }}>
-          <option value="gentle">{t("Gentle — more time to kick")}</option>
-          <option value="lively">{t("Lively — a little faster")}</option>
-        </select></label>
-        {competitionMode && <p className="competition-fairness-note">{t("Both players use the same gentle pace throughout the match.")}</p>}
+        {competitionMode && <p className="competition-fairness-note">{t("Both players can choose near or far shots at the same gentle pace.")}</p>}
         <button className="secondary-button" aria-pressed={sound} onClick={() => { soundRef.current = !soundRef.current; setSound(soundRef.current); }}>{sound ? t("Sound on") : t("Sound off")}</button>
       </aside>
 
@@ -725,23 +749,29 @@ export default function ChaptehGame({ playerNames, onComplete, competitionMode =
           {paused && <div className="game-pause-overlay" role="status"><strong>{t("Paused — both players can take a break")}</strong><button className="primary-button" onClick={resumeRally}>{t("Resume")}</button></div>}
         </div>
 
-        <div className="foot-controls control-deck versus-foot-controls">
+        <div className={`foot-controls control-deck versus-foot-controls ${difficulty !== "easy" ? "has-aim-options" : ""}`}>
           <button
             className={`kick-button kick-left ${kickWindowPlayer === 0 ? "kick-ready" : "kick-waiting"}`}
             disabled={!running || paused || expectedPlayer !== 0}
             onClick={() => kick("left")}
           >
-            <span>{playerLabel(0)} · {kickWindowPlayer === 0 ? t("Kick now") : t("Wait")}</span>
+            <span>{playerLabel(0)} · {difficulty === "easy" ? kickWindowPlayer === 0 ? t("Kick now") : t("Wait") : t("Near kick")}</span>
             <kbd>A / ←</kbd>
           </button>
+          {difficulty !== "easy" && <button className={`kick-button kick-left kick-far ${kickWindowPlayer === 0 ? "kick-ready" : "kick-waiting"}`} disabled={!running || paused || expectedPlayer !== 0} onClick={() => kick("left", "far")}>
+            <span>{playerLabel(0)} · {t("Far kick")}</span><kbd>S</kbd>
+          </button>}
           <button
             className={`kick-button kick-right ${kickWindowPlayer === 1 ? "kick-ready" : "kick-waiting"}`}
             disabled={!running || paused || expectedPlayer !== 1}
             onClick={() => kick("right")}
           >
-            <span>{playerLabel(1)} · {kickWindowPlayer === 1 ? t("Kick now") : t("Wait")}</span>
+            <span>{playerLabel(1)} · {difficulty === "easy" ? kickWindowPlayer === 1 ? t("Kick now") : t("Wait") : t("Near kick")}</span>
             <kbd>D / →</kbd>
           </button>
+          {difficulty !== "easy" && <button className={`kick-button kick-right kick-far ${kickWindowPlayer === 1 ? "kick-ready" : "kick-waiting"}`} disabled={!running || paused || expectedPlayer !== 1} onClick={() => kick("right", "far")}>
+            <span>{playerLabel(1)} · {t("Far kick")}</span><kbd>F</kbd>
+          </button>}
         </div>
 
         <p className="control-hint"> {t("Both players play at the same time on one device.")} {playerLabel(0)} {t("stays on the left,")} {playerLabel(1)} {t("stays on the right, and each successful kick must send the chapteh to the other player.")} </p>
