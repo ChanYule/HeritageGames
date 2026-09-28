@@ -12,14 +12,14 @@ export type Marble = {
 
 export const MARBLES_WIDTH = 900;
 export const MARBLES_HEIGHT = 560;
-export const MARBLES_RING = { x: MARBLES_WIDTH / 2, y: MARBLES_HEIGHT / 2, radius: 175 };
+export const MARBLES_RING = { x: MARBLES_WIDTH / 2, y: MARBLES_HEIGHT / 2, radius: 200 };
 
 export function returnShooterToStart(marbles: Marble[]) {
   const shooter = marbles.find((marble) => !marble.target);
   if (!shooter) return;
   shooter.x = MARBLES_RING.x;
   // A target still touching the ring cannot overlap this starting position.
-  shooter.y = MARBLES_HEIGHT - 40;
+  shooter.y = MARBLES_HEIGHT - shooter.radius;
   shooter.vx = 0;
   shooter.vy = 0;
 }

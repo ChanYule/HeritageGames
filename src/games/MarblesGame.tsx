@@ -45,7 +45,7 @@ function createMarbles(difficulty: Difficulty): Marble[] {
     {
       id: 100,
       x: RING.x,
-      y: HEIGHT - 40,
+      y: HEIGHT - 20,
       vx: 0,
       vy: 0,
       radius: 20,

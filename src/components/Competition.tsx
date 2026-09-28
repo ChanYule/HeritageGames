@@ -1,6 +1,6 @@
 import { t, useLanguage } from "../i18n";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowRight, Check, ChevronLeft, Medal, RotateCcw, Trophy, Users2 } from "lucide-react";
+import { ArrowRight, Check, ChevronLeft, Medal, RotateCcw, Trophy } from "lucide-react";
 import GameShell from "./GameShell";
 import LanguageSwitcher from "./LanguageSwitcher";
 import MarblesGame from "../games/MarblesGame";
@@ -16,7 +16,6 @@ import {
   restoreCompetition,
   validCompetitorNames,
   validScores,
-  type CompetitionFormat,
   type CompetitionSession,
 } from "../competition";
 import type { GameKey, GameResult } from "../types";
@@ -38,13 +37,12 @@ const loadSession = () => {
   }
 };
 
-export default function Competition({ onExit, initialGame = "marbles", startInSetup = false }: { onExit: () => void; initialGame?: GameKey; startInSetup?: boolean }) {
+export default function Competition({ onExit, onSoloPlay, initialGame = "marbles", startInSetup = false }: { onExit: () => void; onSoloPlay: (game: GameKey, name: string) => void; initialGame?: GameKey; startInSetup?: boolean }) {
   useLanguage();
   const [loaded] = useState(loadSession);
   const [session, setSession] = useState<CompetitionSession | null>(loaded.session);
   const [stage, setStage] = useState<Stage>(startInSetup ? "setup" : loaded.session?.draft?.scores ? "result" : loaded.session ? "standings" : "setup");
   const [competitionName, setCompetitionName] = useState("Heritage Games Cup");
-  const [format, setFormat] = useState<CompetitionFormat>("four");
   const [selectedGame, setSelectedGame] = useState<GameKey | "all">(initialGame);
   const [names, setNames] = useState(["", "", "", ""]);
   const [storageUnavailable, setStorageUnavailable] = useState(loaded.unavailable);
@@ -79,27 +77,28 @@ export default function Competition({ onExit, initialGame = "marbles", startInSe
     ];
   }, [session, currentMatch]);
   const standings = useMemo(() => session ? competitionStandings(session) : [], [session]);
-  const cleanNames = names.map((name, index) => name.trim() || (format === "four" ? t("Player {0}", index + 1) : ""));
-  const canStart = validCompetitorNames(cleanNames);
+  const cleanNames = names.map((name, index) => name.trim() || t("Player {0}", index + 1));
+  const canStart = names.length === 1 ? cleanNames[0].length <= 24 : validCompetitorNames(cleanNames);
   const duplicateNames = new Set(cleanNames.filter(Boolean).map((name) => name.normalize("NFKC").toLocaleLowerCase())).size < cleanNames.filter(Boolean).length;
-  const setupMatchCount = format === "four" ? selectedGame === "all" ? 16 : 4 : names.length === 2 ? 4 : format === "quick" ? names.length : names.length * (names.length - 1) / 2;
+  const setupMatchCount = (selectedGame === "all" ? 4 : 1) * names.length;
   const storageNotice = storageUnavailable ? <p className="competition-storage-note" role="status">{t("Saving is unavailable on this device. Keep this page open to keep your competition.")}</p> : null;
 
   const startCompetition = () => {
     if (!canStart) return;
+    if (names.length === 1) {
+      onSoloPlay(selectedGame === "all" ? "marbles" : selectedGame, cleanNames[0]);
+      return;
+    }
     if (session && !window.confirm(t("Start a new competition? This will replace the saved competition and its results."))) return;
-    const next = createCompetition(competitionName, cleanNames, format, selectedGame);
+    const next = createCompetition(competitionName, cleanNames, "four", selectedGame);
     setInvalidSave(false);
     setSession(next);
     setStage("ready");
   };
 
-  const addPlayer = () => {
-    if (names.length < 8) setNames((current) => [...current, ""]);
-  };
-
-  const removePlayer = (index: number) => {
-    if (names.length > 2) setNames((current) => current.filter((_, playerIndex) => playerIndex !== index));
+  const choosePlayerCount = (count: number) => {
+    setNames((current) => Array.from({ length: count }, (_, index) => current[index] ?? ""));
+    if (count === 1 && selectedGame === "all") setSelectedGame("marbles");
   };
 
   const beginMatch = () => {
@@ -144,7 +143,6 @@ export default function Competition({ onExit, initialGame = "marbles", startInSe
     try { localStorage.removeItem(competitionStorageKey); } catch { setStorageUnavailable(true); }
     setSession(null);
     setNames(["", "", "", ""]);
-    setFormat("four");
     setSelectedGame(initialGame);
     setConfirmReset(false);
     setStage("setup");
@@ -159,43 +157,33 @@ export default function Competition({ onExit, initialGame = "marbles", startInSe
         {invalidSave ? <p className="competition-storage-note" role="status">{t("The previous saved competition could not be opened. Create a new one below.")}</p> : null}
         <header className="competition-topbar">
           <button className="back-button premium-back-button" onClick={onExit}><ChevronLeft size={18} /> {t("Home")}</button>
-          <div><p className="eyebrow">{t("Same-device competition")}</p><h1 ref={headingRef} tabIndex={-1}>{t("Play together with 4 players")}</h1></div>
+          <div><p className="eyebrow">{t("Same-device competition")}</p><h1 ref={headingRef} tabIndex={-1}>{t("Choose your players and game")}</h1></div>
         </header>
         <form className="competition-card competition-setup" aria-labelledby="competition-setup-title" onSubmit={(event) => { event.preventDefault(); startCompetition(); }}>
           <div className="competition-intro-icon"><Trophy size={34} /></div>
           <div>
             <p className="eyebrow">{t("Friendly competition")}</p>
             <h2 id="competition-setup-title">{t("Who is playing today?")}</h2>
-            <p>{format === "four" ? t("Four friends, one screen. Play in pairs, swap partners and cheer each other on. Everyone gets two matches per game.") : t("Enter 2 to 8 names. The device will guide everyone through each handover, match and result.")}</p>
+            <p>{names.length === 1 ? t("One player practises at their own pace. For two to four players, everyone gets two matches per game.") : t("Play together on one screen. Everyone gets two matches per game, with clear handovers and saved scores.")}</p>
           </div>
-          {format === "four" ? <fieldset className="four-game-picker">
-            <legend>{t("1. Choose a game")}</legend>
+          <fieldset className="player-count-picker">
+            <legend>{t("1. How many players?")}</legend>
+            <div>{[1, 2, 3, 4].map((count) => <button key={count} type="button" className={names.length === count ? "is-selected" : ""} aria-pressed={names.length === count} onClick={() => choosePlayerCount(count)}>{count}</button>)}</div>
+            <p>{names.length === 1 ? t("Solo practice: play both sides in Marbles, Pick-Up Sticks and Chapteh.") : t("{0} players · everyone plays twice per game", names.length)}</p>
+          </fieldset>
+          <fieldset className="four-game-picker">
+            <legend>{t("2. Choose a game")}</legend>
             {games.map((game) => <label key={game.key} className={selectedGame === game.key ? "is-selected" : ""}>
               <input type="radio" name="four-game" checked={selectedGame === game.key} onChange={() => setSelectedGame(game.key)} />
-              <strong>{t(game.title)}</strong><span>{t("4 matches · everyone plays twice")}</span>
+              <strong>{t(game.title)}</strong><span>{names.length === 1 ? t("Solo practice") : t("{0} matches · everyone plays twice", names.length)}</span>
             </label>)}
-            <label className={selectedGame === "all" ? "is-selected" : ""}><input type="radio" name="four-game" checked={selectedGame === "all"} onChange={() => setSelectedGame("all")} /><strong>{t("All 4 games")}</strong><span>{t("16 matches · a longer session")}</span></label>
-          </fieldset> : null}
-          <details className="four-more-options"><summary>{t("More session options")}</summary>
+            {names.length > 1 && <label className={selectedGame === "all" ? "is-selected" : ""}><input type="radio" name="four-game" checked={selectedGame === "all"} onChange={() => setSelectedGame("all")} /><strong>{t("All 4 games")}</strong><span>{t("{0} matches · a longer session", setupMatchCount)}</span></label>}
+          </fieldset>
+          {names.length > 1 && <details className="four-more-options"><summary>{t("More session options")}</summary>
           <label className="competition-field">{t("Competition name")} <input value={competitionName} maxLength={40} onChange={(event) => setCompetitionName(event.target.value)} />
           </label>
-          <fieldset className="competition-format">
-            <legend>{t("Competition length")}</legend>
-            <label className={format === "four" ? "is-selected" : ""}>
-              <input type="radio" name="format" checked={format === "four"} onChange={() => { setFormat("four"); setNames((current) => Array.from({ length: 4 }, (_, i) => current[i] ?? "")); }} />
-              <strong>{t("4-player session")}</strong><span>{t("Easy setup · equal play")}</span>
-            </label>
-            <label className={format === "quick" ? "is-selected" : ""}>
-              <input type="radio" name="format" checked={format === "quick"} onChange={() => setFormat("quick")} />
-              <strong>{t("Quick Cup")}</strong><span>{names.length === 2 ? t("All 4 games") : t("2 matches each")}</span>
-            </label>
-            <label className={format === "league" ? "is-selected" : ""}>
-              <input type="radio" name="format" checked={format === "league"} onChange={() => setFormat("league")} />
-              <strong>{t("Full league")}</strong><span>{names.length === 2 ? t("All 4 games") : t("Everyone meets once")}</span>
-            </label>
-          </fieldset>
-          </details>
-          <h3>{format === "four" ? t("2. Add names, or use Player 1–4") : t("Who is playing today?")}</h3>
+          </details>}
+          <h3>{t("3. Add player names (optional)")}</h3>
           <div className="competition-player-list">
             {names.map((name, index) => (
               <div className="competition-player-field" key={index}>
@@ -204,22 +192,19 @@ export default function Competition({ onExit, initialGame = "marbles", startInSe
                 <input
                   id={`participant-${index}`}
                   autoComplete="off"
-                  required={format !== "four"}
                   aria-describedby="competition-participants-help"
                   value={name}
                   maxLength={24}
                   placeholder={t("Player {0}", index + 1)}
                   onChange={(event) => setNames((current) => current.map((item, playerIndex) => playerIndex === index ? event.target.value : item))}
                 />
-                {format !== "four" && names.length > 2 ? <button type="button" onClick={() => removePlayer(index)} aria-label={t("Remove participant {0}", index + 1)}>{t("Remove")}</button> : null}
               </div>
             ))}
           </div>
-          <p id="competition-participants-help" className="competition-setup-summary" role="status">{duplicateNames ? t("Use different names or add initials so everyone knows whose turn it is.") : t("{0} participants · {1} matches", names.length, setupMatchCount)}</p>
-          <p className="competition-fairness-note">{t("A win earns 3 points. A draw earns 1 each. Equal points and wins share a place.")}</p>
+          <p id="competition-participants-help" className="competition-setup-summary" role="status">{duplicateNames ? t("Use different names or add initials so everyone knows whose turn it is.") : names.length === 1 ? t("Solo practice · no competition score") : t("{0} participants · {1} matches", names.length, setupMatchCount)}</p>
+          {names.length > 1 && <p className="competition-fairness-note">{t("A win earns 3 points. A draw earns 1 each. Equal points and wins share a place.")}</p>}
           <div className="competition-setup-actions">
-            {format !== "four" ? <button className="secondary-button" type="button" onClick={addPlayer} disabled={names.length >= 8}><Users2 size={17} /> {t("Add participant")}</button> : null}
-            <button className="primary-button" type="submit" disabled={!canStart}>{format === "four" ? t("Start 4-player session") : t("Create competition")} <ArrowRight size={18} /></button>
+            <button className="primary-button" type="submit" disabled={!canStart}>{names.length === 1 ? t("Start solo practice") : t("Start {0}-player session", names.length)} <ArrowRight size={18} /></button>
           </div>
         </form>
       </main>
@@ -231,7 +216,7 @@ export default function Competition({ onExit, initialGame = "marbles", startInSe
   const completedCount = session.matches.filter((item) => item.status === "complete").length;
   const champions = standings.filter((player) => player.rank === 1);
   const nextMatch = session.matches[session.currentMatch + 1];
-  const groupRoster = session.format === "four" ? <section className={`four-roster ${stage === "playing" ? "four-roster-playing" : ""}`} aria-label={t("Our four players")}>
+  const groupRoster = session.format === "four" ? <section className={`four-roster roster-count-${session.competitors.length} ${stage === "playing" ? "four-roster-playing" : ""}`} aria-label={t("Our players")}>
     {session.competitors.map((player, index) => {
       const playing = currentMatch.game === "five-stones" ? player.id === players[soloPlayer].id : currentMatch.playerIds.includes(player.id);
       return <div key={player.id} className={`four-seat seat-${index + 1} ${playing ? "is-playing" : ""}`}>

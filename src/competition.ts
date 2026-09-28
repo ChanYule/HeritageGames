@@ -68,7 +68,7 @@ export function restoreCompetition(value: unknown): CompetitionSession | null {
     competitors.push({ id: player.id, name: player.name.trim() });
   }
   if (!validCompetitorNames(competitors.map((player) => player.name))) return null;
-  if (data.format === "four" && competitors.length !== 4) return null;
+  if (data.format === "four" && (competitors.length < 2 || competitors.length > 4)) return null;
   const ids = new Set(competitors.map((player) => player.id));
   if (ids.size !== competitors.length || data.matches.length === 0 || data.matches.length > 28) return null;
   const matches: CompetitionMatch[] = [];
@@ -107,7 +107,7 @@ const match = (index: number, game: GameKey, a: Competitor, b: Competitor): Comp
 export function createCompetition(name: string, names: string[], format: CompetitionFormat, selectedGame: GameKey | "all" = "all"): CompetitionSession {
   if (!validCompetitorNames(names)) throw new Error("Enter 2 to 8 different participant names.");
   if (format !== "four" && format !== "quick" && format !== "league") throw new Error("Choose a competition format.");
-  if (format === "four" && names.length !== 4) throw new Error("Four players are needed.");
+  if (format === "four" && (names.length < 2 || names.length > 4)) throw new Error("Choose 2 to 4 players.");
   if (selectedGame !== "all" && !games.includes(selectedGame)) throw new Error("Choose a game.");
   const competitors = names.map((playerName, index) => ({
     id: `player-${index + 1}`,
@@ -116,9 +116,13 @@ export function createCompetition(name: string, names: string[], format: Competi
 
   let pairs: [Competitor, Competitor][] = [];
   if (format === "four") {
-    // Disjoint opening pairs keep waiting short. Each player then changes
-    // opponent, giving everyone two matches and one first-player duty per game.
-    const roundPairs = [[0, 1], [2, 3], [1, 2], [3, 0]] as const;
+    // Every participant plays twice per game, and starts once. The four-player
+    // opening pairs are disjoint to keep waits short.
+    const roundPairs = competitors.length === 2
+      ? [[0, 1], [1, 0]]
+      : competitors.length === 3
+        ? [[0, 1], [2, 0], [1, 2]]
+        : [[0, 1], [2, 3], [1, 2], [3, 0]];
     const selectedGames = selectedGame === "all" ? games : [selectedGame];
     pairs = selectedGames.flatMap(() => roundPairs.map(([a, b]): [Competitor, Competitor] => [competitors[a], competitors[b]]));
   } else if (competitors.length === 2) {
@@ -151,7 +155,7 @@ export function createCompetition(name: string, names: string[], format: Competi
     format,
     competitors,
     matches: pairs.map(([a, b], index) => match(index,
-      format === "four" ? selectedGame === "all" ? games[Math.floor(index / 4)] : selectedGame : games[index % games.length], a, b)),
+      format === "four" ? selectedGame === "all" ? games[Math.floor(index / competitors.length)] : selectedGame : games[index % games.length], a, b)),
     currentMatch: 0,
     status: "active",
     createdAt: new Date().toISOString(),

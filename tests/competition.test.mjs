@@ -47,11 +47,29 @@ test("four-player Five Stones retains the first attempt during handover", () => 
   assert.deepEqual(restored.draft, cup.draft);
 });
 
-test("four-player sessions reject incorrect group sizes and unknown games", () => {
-  assert.throws(() => competition.createCompetition("Friends", ["A", "B"], "four"));
+test("shared-device sessions support 2–4 players with two balanced matches per player and game", () => {
+  for (const count of [2, 3, 4]) {
+    const names = Array.from({ length: count }, (_, index) => `Player ${index + 1}`);
+    const cup = competition.createCompetition("Friends", names, "four", "all");
+    assert.equal(cup.matches.length, count * 4);
+    assert.equal(competition.restoreCompetition(structuredClone(cup))?.matches.length, count * 4);
+    for (const game of ["marbles", "pick-up-sticks", "five-stones", "chapteh"]) {
+      const matches = cup.matches.filter((item) => item.game === game);
+      assert.equal(matches.length, count);
+      for (const player of cup.competitors) {
+        assert.equal(matches.filter((item) => item.playerIds.includes(player.id)).length, 2);
+        assert.equal(matches.filter((item) => item.playerIds[0] === player.id).length, 1);
+      }
+    }
+  }
+});
+
+test("shared-device sessions reject sizes outside 2–4 and unknown games", () => {
+  assert.throws(() => competition.createCompetition("Friends", ["A"], "four"));
+  assert.throws(() => competition.createCompetition("Friends", ["A", "B", "C", "D", "E"], "four"));
   assert.throws(() => competition.createCompetition("Friends", ["A", "B", "C", "D"], "four", "unknown"));
   const legacy = competition.createCompetition("Friends", ["A", "B"], "quick");
-  assert.equal(competition.restoreCompetition({ ...legacy, format: "four" }), null);
+  assert.equal(competition.restoreCompetition({ ...legacy, format: "four" })?.competitors.length, 2);
 });
 
 test("two participants play each of the four heritage games", () => {

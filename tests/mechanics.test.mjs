@@ -48,7 +48,7 @@ test(`${difficulty} marble rounds contain the correct number of separated target
     assert.equal(positions.length, settings.marbles);
     assert.notDeepEqual(positions, previous);
     for (let i = 0; i < positions.length; i++) {
-      assert.ok(Math.hypot(positions[i].x, positions[i].y) + settings.marbleRadius < 175);
+      assert.ok(Math.hypot(positions[i].x, positions[i].y) + settings.marbleRadius < 200);
       for (let j = 0; j < i; j++) {
         assert.ok(Math.hypot(positions[i].x - positions[j].x, positions[i].y - positions[j].y) > settings.marbleRadius * 2);
       }

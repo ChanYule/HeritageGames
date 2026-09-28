@@ -38,7 +38,7 @@ export default function Home({ onPlay, onCompetition }: { onPlay: (key: GameKey)
     try { return restoreCompetition(JSON.parse(localStorage.getItem(competitionStorageKey) ?? "null")); }
     catch { return null; }
   });
-  const competitionLabel = savedCompetition ? savedCompetition.status === "complete" ? t("View competition results") : t("Continue competition") : t("Play with 4 players");
+  const competitionLabel = savedCompetition ? savedCompetition.status === "complete" ? t("View competition results") : t("Continue competition") : t("Choose 1–4 players");
   useEffect(() => { heading.current?.focus({ preventScroll: true }); }, []);
   return <main className="heritage-home" id="main-content">
     <a className="skip-link" href="#games">{t("Skip to games")}</a>
@@ -56,22 +56,22 @@ export default function Home({ onPlay, onCompetition }: { onPlay: (key: GameKey)
         <div className="welcome-reassurance"><Check size={18}/>{t("No sign-up. Just choose a game and play.")}</div>
       </div>
       <aside className="together-card" aria-label={t("A friendly competition")}>
-        <div className="together-art"><GameArtwork game="chapteh"/><span className="together-seal"><Users2 size={22}/>{t("4 friends")}</span></div>
+        <div className="together-art"><GameArtwork game="chapteh"/><span className="together-seal"><Users2 size={22}/>{t("1–4 players")}</span></div>
         <div className="together-copy"><span className="welcome-eyebrow">{t("ONE DEVICE. EVERYONE INCLUDED.")}</span><h2>{t("A friendly little competition")}</h2><p>{t("Add your names. Take turns. Cheer each other on. We keep the scores for you.")}</p><span className="together-note"><Check size={18}/>{t("Time to get ready before every turn")}</span></div>
       </aside>
     </section>
     <section id="games" className="practice-section" aria-labelledby="practice-title">
-      <div className="practice-heading"><div><p className="welcome-eyebrow">{t("YOUR CHILDHOOD FAVOURITES")}</p><h2 id="practice-title">{t("Which shall we play?")}</h2></div><p>{t("Choose a game for all four, or practise first.")}</p></div>
+      <div className="practice-heading"><div><p className="welcome-eyebrow">{t("YOUR CHILDHOOD FAVOURITES")}</p><h2 id="practice-title">{t("Which shall we play?")}</h2></div><p>{t("Choose a game, then choose 1 to 4 players.")}</p></div>
       <div className="heritage-game-grid">{games.map((game, index)=><article key={game.key} className={`heritage-game-card heritage-art-${game.key}`}>
         <div className="heritage-card-art"><GameArtwork game={game.key}/><span className="heritage-card-number">0{index+1}</span></div>
-        <div className="heritage-card-content"><p className="heritage-card-players"><Users2 size={17}/>{t("4 players · play in pairs")}</p><h3>{t(game.title)}</h3><p>{t(game.description)}</p><div className="heritage-card-footer"><span>{t(game.control)}</span><button onClick={()=>onCompetition(game.key)} aria-label={t("Play {0} with 4 players", t(game.title))}>{t("Play with 4")}<ArrowRight size={20}/></button></div><button className="four-practice-link" onClick={() => onPlay(game.key)} aria-label={t("Practise {0}", t(game.title))}>{t("Practise first")} · {t(game.players)}</button></div>
+        <div className="heritage-card-content"><p className="heritage-card-players"><Users2 size={17}/>{t("1–4 players")}</p><h3>{t(game.title)}</h3><p>{t(game.description)}</p><div className="heritage-card-footer"><span>{t(game.control)}</span><button onClick={()=>onCompetition(game.key)} aria-label={t("Choose players for {0}", t(game.title))}>{t("Choose players")}<ArrowRight size={20}/></button></div><button className="four-practice-link" onClick={() => onPlay(game.key)} aria-label={t("Practise {0}", t(game.title))}>{t("Practise first")} · {t(game.players)}</button></div>
       </article>)}</div>
     </section>
     <section className="play-together-guide" aria-labelledby="together-title"><div><p className="welcome-eyebrow">{t("LET'S PLAY TOGETHER")}</p><h2 id="together-title">{t("Three small steps. Plenty of fun.")}</h2></div><ol>
-      <li><span>1</span><div><h3>{t("Add your names")}</h3><p>{t("Bring 4 players together. Names are optional — you can start straight away.")}</p></div></li>
+      <li><span>1</span><div><h3>{t("Add your names")}</h3><p>{t("Choose 1 to 4 players. Names are optional — you can start straight away.")}</p></div></li>
       <li><span>2</span><div><h3>{t("Get comfortable")}</h3><p>{t("Read the instructions and press Ready when you are settled.")}</p></div></li>
       <li><span>3</span><div><h3>{t("Play and cheer")}</h3><p>{t("Follow the player names on screen. Scores are saved after each match.")}</p></div></li>
-    </ol><button className="heritage-primary" onClick={() => onCompetition()}><Trophy size={21}/>{savedCompetition ? competitionLabel : t("Play with 4 players")}<ArrowRight size={20}/></button></section>
+    </ol><button className="heritage-primary" onClick={() => onCompetition()}><Trophy size={21}/>{savedCompetition ? competitionLabel : t("Choose 1–4 players")}<ArrowRight size={20}/></button></section>
     <footer className="heritage-footer"><strong>{t("Heritage Games")}</strong><span>{t("Made for memories. Played together.")}</span><a href="#main-content">{t("Back to top ↑")}</a></footer>
   </main>;
 }

@@ -48,7 +48,7 @@ export function chaptehFlightTuning(level: number) {
 export function randomMarblePositions(random = Math.random, difficulty: Difficulty = "medium"): Point[] {
   const settings = difficultySettings[difficulty];
   const positions: Point[] = [];
-  const maxRadius = 138;
+  const maxRadius = 162;
   const minDistance = settings.marbleRadius * 2 + 5;
   let attempts = 0;
 
@@ -65,7 +65,7 @@ export function randomMarblePositions(random = Math.random, difficulty: Difficul
   if (positions.length < settings.marbles) {
     const fallback: Point[] = [];
     for (let ring = 0; ring < 3 && fallback.length < settings.marbles; ring++) {
-      const ringRadius = ring === 0 ? 0 : ring === 1 ? 60 : 118;
+      const ringRadius = ring === 0 ? 0 : ring === 1 ? 72 : 138;
       const slots = ring === 0 ? 1 : ring === 1 ? 6 : 12;
       const offset = random() * Math.PI * 2;
       for (let index = 0; index < slots && fallback.length < settings.marbles; index++) {
