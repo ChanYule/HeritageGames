@@ -1,3 +1,4 @@
+import { t, useLanguage } from "../i18n";
 import { useId, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, Lightbulb, ListChecks } from "lucide-react";
@@ -10,6 +11,7 @@ type Props = {
 };
 
 export default function InstructionSteps({ title, objective, steps, tip }: Props) {
+  useLanguage();
   const [open, setOpen] = useState(true);
   const contentId = useId();
 
@@ -24,8 +26,8 @@ export default function InstructionSteps({ title, objective, steps, tip }: Props
       >
         <div className="instruction-heading">
           <div className="instruction-heading-topline">
-            <p className="eyebrow"><ListChecks size={14} /> How to play</p>
-            <span className="instruction-collapse-hint">{open ? "Hide" : "Show"}</span>
+            <p className="eyebrow"><ListChecks size={14} /> {t("How to play")}</p>
+            <span className="instruction-collapse-hint">{open ? t("Hide") : t("Show")}</span>
           </div>
           <h2>{title}</h2>
           <p>{objective}</p>
@@ -65,7 +67,7 @@ export default function InstructionSteps({ title, objective, steps, tip }: Props
             </ol>
             {tip && (
               <p className="instruction-tip premium-tip">
-                <Lightbulb size={16} /> <span><strong>Tip:</strong> {tip}</span>
+                <Lightbulb size={16} /> <span><strong>{t("Tip:")}</strong> {tip}</span>
               </p>
             )}
           </motion.div>

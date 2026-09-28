@@ -1,13 +1,15 @@
+import { t, useLanguage } from "../i18n";
 import { motion } from "framer-motion";
 import { Gauge, Sparkles } from "lucide-react";
 import { difficultySettings, type Difficulty } from "../games/mechanics";
 
-type Props = { value: Difficulty; onChange: (value: Difficulty) => void; description: string };
+type Props = { value: Difficulty; onChange: (value: Difficulty) => void; description: string; disabled?: boolean };
 
-export default function DifficultyPicker({ value, onChange, description }: Props) {
+export default function DifficultyPicker({ value, onChange, description, disabled = false }: Props) {
+  useLanguage();
   return (
-    <fieldset className="difficulty-picker premium-difficulty-picker">
-      <legend><Gauge size={16} /> Choose your level</legend>
+    <fieldset className="difficulty-picker premium-difficulty-picker" disabled={disabled}>
+      <legend><Gauge size={16} /> {t("Choose your level")}</legend>
       <div className="difficulty-options premium-difficulty-options">
         {(Object.keys(difficultySettings) as Difficulty[]).map((difficulty) => {
           const selected = value === difficulty;
@@ -21,12 +23,12 @@ export default function DifficultyPicker({ value, onChange, description }: Props
                 onChange={() => onChange(difficulty)}
               />
               {selected && <motion.span className="difficulty-active-bg" layoutId="difficulty-active-bg" />}
-              <span className="difficulty-label">{difficultySettings[difficulty].label}</span>
+              <span className="difficulty-label">{t(difficultySettings[difficulty].label)}</span>
             </label>
           );
         })}
       </div>
-      <p><Sparkles size={14} /> {description} Changing level starts a fresh random round.</p>
+      <p><Sparkles size={14} /> {description} {disabled ? t("The same level is used for both players.") : t("Changing level starts a fresh random round.")}</p>
     </fieldset>
   );
 }

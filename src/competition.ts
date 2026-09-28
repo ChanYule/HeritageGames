@@ -25,9 +25,15 @@ export type CompetitionSession = {
   currentMatch: number;
   status: CompetitionStatus;
   createdAt: string;
+  draft?: {
+    matchId: string;
+    firstSoloScore?: number;
+    scores?: [number, number];
+  };
 };
 
 export type Standing = Competitor & {
+  rank: number;
   played: number;
   wins: number;
   draws: number;
@@ -39,6 +45,57 @@ export type Standing = Competitor & {
 const games: GameKey[] = ["marbles", "pick-up-sticks", "five-stones", "chapteh"];
 export const competitionStorageKey = "heritage-games-competition-v1";
 
+const validScore = (value: unknown): value is number => typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
+export const validScores = (value: unknown): value is [number, number] => Array.isArray(value) && value.length === 2 && value.every(validScore);
+const nameKey = (name: string) => name.trim().normalize("NFKC").toLocaleLowerCase();
+
+export function validCompetitorNames(names: string[]): boolean {
+  return names.length >= 2 && names.length <= 8 && names.every((name) => name.trim().length > 0 && name.trim().length <= 24)
+    && new Set(names.map(nameKey)).size === names.length;
+}
+
+// Treat browser storage as untrusted. Derive progress from validated results rather
+// than trusting a saved cursor, and retain completed attempts during a handover.
+export function restoreCompetition(value: unknown): CompetitionSession | null {
+  if (!value || typeof value !== "object") return null;
+  const data = value as Record<string, unknown>;
+  if (typeof data.id !== "string" || !data.id || typeof data.name !== "string" || data.name.length > 40
+    || (data.format !== "quick" && data.format !== "league") || typeof data.createdAt !== "string"
+    || !Number.isFinite(Date.parse(data.createdAt)) || !Array.isArray(data.competitors) || !Array.isArray(data.matches)) return null;
+  const competitors: Competitor[] = [];
+  for (const player of data.competitors) {
+    if (!player || typeof player.id !== "string" || !player.id || typeof player.name !== "string") return null;
+    competitors.push({ id: player.id, name: player.name.trim() });
+  }
+  if (!validCompetitorNames(competitors.map((player) => player.name))) return null;
+  const ids = new Set(competitors.map((player) => player.id));
+  if (ids.size !== competitors.length || data.matches.length === 0 || data.matches.length > 28) return null;
+  const matches: CompetitionMatch[] = [];
+  for (const item of data.matches) {
+    if (!item || typeof item.id !== "string" || !item.id || !games.includes(item.game)
+      || !Array.isArray(item.playerIds) || item.playerIds.length !== 2 || item.playerIds[0] === item.playerIds[1]
+      || !item.playerIds.every((id: unknown) => typeof id === "string" && ids.has(id))
+      || (item.status !== "pending" && item.status !== "complete")
+      || (item.status === "complete" && !validScores(item.scores))) return null;
+    matches.push({ id: item.id, game: item.game, playerIds: [...item.playerIds] as [string, string], status: item.status,
+      ...(item.status === "complete" ? { scores: [...item.scores] as [number, number] } : {}) });
+  }
+  if (new Set(matches.map((item) => item.id)).size !== matches.length) return null;
+  const pending = matches.findIndex((item) => item.status === "pending");
+  const restored: CompetitionSession = {
+    id: data.id, name: data.name.trim() || "Heritage Games Cup", format: data.format, createdAt: data.createdAt,
+    competitors, matches, currentMatch: pending === -1 ? matches.length - 1 : pending, status: pending === -1 ? "complete" : "active",
+  };
+  const draft = data.draft as Record<string, unknown> | undefined;
+  if (pending !== -1 && draft && draft.matchId === matches[pending].id) {
+    if (validScores(draft.scores)) restored.draft = { matchId: matches[pending].id, scores: [...draft.scores] };
+    else if (matches[pending].game === "five-stones" && validScore(draft.firstSoloScore)) {
+      restored.draft = { matchId: matches[pending].id, firstSoloScore: draft.firstSoloScore };
+    }
+  }
+  return restored;
+}
+
 const match = (index: number, game: GameKey, a: Competitor, b: Competitor): CompetitionMatch => ({
   id: `match-${index + 1}-${a.id}-${b.id}`,
   game,
@@ -47,6 +104,8 @@ const match = (index: number, game: GameKey, a: Competitor, b: Competitor): Comp
 });
 
 export function createCompetition(name: string, names: string[], format: CompetitionFormat): CompetitionSession {
+  if (!validCompetitorNames(names)) throw new Error("Enter 2 to 8 different participant names.");
+  if (format !== "quick" && format !== "league") throw new Error("Choose a competition format.");
   const competitors = names.map((playerName, index) => ({
     id: `player-${index + 1}`,
     name: playerName.trim(),
@@ -54,18 +113,32 @@ export function createCompetition(name: string, names: string[], format: Competi
 
   let pairs: [Competitor, Competitor][] = [];
   if (competitors.length === 2) {
-    pairs = games.map(() => [competitors[0], competitors[1]]);
+    pairs = games.map((_, index) => index % 2 === 0 ? [competitors[0], competitors[1]] : [competitors[1], competitors[0]]);
   } else if (format === "quick") {
     pairs = competitors.map((player, index) => [player, competitors[(index + 1) % competitors.length]]);
   } else {
-    for (let a = 0; a < competitors.length; a += 1) {
-      for (let b = a + 1; b < competitors.length; b += 1) pairs.push([competitors[a], competitors[b]]);
+    // Round-robin rounds spread everyone's appearances through the event. Orient each
+    // pair around a circle so first-player duties differ by at most one match.
+    const rotation: (Competitor | null)[] = [...competitors];
+    if (rotation.length % 2) rotation.push(null);
+    for (let round = 0; round < rotation.length - 1; round += 1) {
+      for (let index = 0; index < rotation.length / 2; index += 1) {
+        const a = rotation[index];
+        const b = rotation[rotation.length - 1 - index];
+        if (!a || !b) continue;
+        const aIndex = competitors.indexOf(a);
+        const bIndex = competitors.indexOf(b);
+        const distance = (bIndex - aIndex + competitors.length) % competitors.length;
+        const aStarts = distance < competitors.length / 2 || (distance === competitors.length / 2 && aIndex < bIndex);
+        pairs.push(aStarts ? [a, b] : [b, a]);
+      }
+      rotation.splice(1, 0, rotation.pop()!);
     }
   }
 
   return {
     id: `cup-${Date.now()}`,
-    name: name.trim() || "Heritage Games Cup",
+    name: name.trim().slice(0, 40) || "Heritage Games Cup",
     format,
     competitors,
     matches: pairs.map(([a, b], index) => match(index, games[index % games.length], a, b)),
@@ -75,13 +148,16 @@ export function createCompetition(name: string, names: string[], format: Competi
   };
 }
 
-export function recordMatchResult(session: CompetitionSession, scores: [number, number]): CompetitionSession {
+export function recordMatchResult(session: CompetitionSession, scores: [number, number], expectedMatchId = session.matches[session.currentMatch]?.id): CompetitionSession {
+  const current = session.matches[session.currentMatch];
+  if (session.status !== "active" || !current || current.status !== "pending" || current.id !== expectedMatchId || !validScores(scores)) return session;
   const matches = session.matches.map((item, index) => index === session.currentMatch
-    ? { ...item, status: "complete" as const, scores }
+    ? { ...item, status: "complete" as const, scores: [...scores] as [number, number] }
     : item);
   const next = matches.findIndex((item, index) => index > session.currentMatch && item.status === "pending");
   return {
     ...session,
+    draft: undefined,
     matches,
     currentMatch: next === -1 ? session.currentMatch : next,
     status: next === -1 ? "complete" : "active",
@@ -90,7 +166,7 @@ export function recordMatchResult(session: CompetitionSession, scores: [number, 
 
 export function competitionStandings(session: CompetitionSession): Standing[] {
   const table = new Map(session.competitors.map((player) => [player.id, {
-    ...player, played: 0, wins: 0, draws: 0, losses: 0, points: 0, scoreDifference: 0,
+    ...player, rank: 1, played: 0, wins: 0, draws: 0, losses: 0, points: 0, scoreDifference: 0,
   }]));
 
   session.matches.forEach((item) => {
@@ -111,8 +187,14 @@ export function competitionStandings(session: CompetitionSession): Standing[] {
     }
   });
 
-  return [...table.values()].sort((a, b) =>
-    b.points - a.points || b.wins - a.wins || b.scoreDifference - a.scoreDifference || a.name.localeCompare(b.name));
+  // A stick point and a Five Stones point have different scales. Equal cup
+  // points and wins share a place; names only make tied rows stable to read.
+  const standings = [...table.values()].sort((a, b) => b.points - a.points || b.wins - a.wins || a.name.localeCompare(b.name));
+  standings.forEach((player, index) => {
+    const previous = standings[index - 1];
+    player.rank = previous && player.points === previous.points && player.wins === previous.wins ? previous.rank : index + 1;
+  });
+  return standings;
 }
 
 export function gameTitle(game: GameKey) {

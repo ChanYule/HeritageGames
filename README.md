@@ -1,179 +1,63 @@
-# Singapore Heritage Games
+﻿# Singapore Heritage Games
 
-A browser-based collection of four playable heritage games:
-
-- Marbles, local 2-player
-- Pick-Up Sticks, local 2-player
-- Five Stones, single-player
-- Chapteh, local 2-player
+Four digital childhood games for seniors to enjoy on a shared device. Includes English and Chinese, larger-text and contrast preferences, practice games, and competitions for 2–8 named players. No backend or account is required.
 
 ## Run locally
 
-```bash
+```sh
 npm install
 npm run dev
 ```
 
-Open the local URL shown by Vite.
+On Windows PowerShell, use `npm.cmd` if script execution is restricted. Open the URL printed by Vite.
 
-## Production build
-
-```bash
+```sh
 npm run build
 npm run preview
-```
-
-## Multiplayer rules
-
-### Marbles
-Player 1 and Player 2 alternate after every shot on the same board. Drag backwards from the coloured shooter and release, or use the Aim and Power controls. A target scores after it fully leaves the ring. Multi-captures earn bonus points. The higher score wins when the ring is empty.
-
-### Pick-Up Sticks
-Both players share one pile. A clean pickup scores the stick value and lets the same player continue. Choosing a blocked stick counts as a mistake and passes the turn. The higher score wins after the final stick is removed.
-
-### Chapteh
-The match has three rounds. Player 1 takes one rally, then Player 2 takes one rally. Each successful kick adds to that player's match total. After both players complete all three rounds, the higher total wins.
-
-## Five Stones
-Five Stones stays single-player. Choose Practice or Challenge pacing. Toss the main stone, collect the required ground stones, then catch the airborne stone while it is falling. Complete the patterns 1+1+1+1, 2+2, 3+1, and 4.
-
-## Controls
-
-### Marbles
-- Mouse or touch: press the coloured shooter, drag backwards, release.
-- Alternative controls: set Aim and Power, then press Shoot.
-
-### Pick-Up Sticks
-- Mouse or touch: drag an exposed stick completely away from the pile.
-- Keyboard: Tab to a stick, then press Enter or Space.
-- Use Show a free stick for a hint.
-
-### Five Stones
-- Press Toss Stone.
-- Tap the required ground stones.
-- Tap the airborne stone after it starts falling.
-- Keyboard: 1-4 to collect and Space to toss or catch.
-
-### Chapteh
-- Left foot: A or Left Arrow.
-- Right foot: D or Right Arrow.
-- Touch: tap the left or right side of the court.
-- Kick only while the chapteh is falling inside the shaded kick zone.
-
-## Technology
-
-- React
-- TypeScript
-- Vite
-- HTML5 Canvas
-- Pointer Events
-
-No backend is required for local multiplayer.
-
-## Gameplay checks
-
-```bash
 npm test
 ```
 
-Checks cover shot power limits, stick overlap geometry, Chapteh kick timing, and marble layouts.
+## Play together
 
+Choose **Play a competition** on Home, enter distinct player names, and choose Quick Cup or Full league. A saved competition appears as **Continue competition**.
 
-## Turn timer
+- With two players, either format plays all four games. First-player duties alternate.
+- With 3–8 players, Quick Cup gives each player two matches. Full league pairs everyone once.
+- Read the match instructions, then press Ready. Marbles and Pick-Up Sticks also wait for the next player to press **I am ready** after every handover.
+- Each win earns 3 competition points; a draw earns 1 each. Equal points and wins share a place. Raw scores from different games are not used to break ties.
+- Check both scores and confirm the result to update standings. The schedule shows completed and upcoming matches.
+- Completed results, finished Five Stones attempts and results awaiting confirmation are saved on this browser and device. An unfinished game restarts if the page reloads or the player returns to the match lobby. Storage failures are shown on screen.
+- Starting a new competition asks before clearing the previous results.
 
-Marbles and Pick-Up Sticks use a 30-second local multiplayer turn timer by default. Players can switch the timer off from the game panel.
+## Games and controls
 
-- Marbles: the countdown runs while the active player is aiming and pauses while the marbles are moving. If it reaches 0 before a shot, the turn passes to the other player.
-- Pick-Up Sticks: the countdown covers the full turn. Successful pickups let the same player continue with the remaining time. If it reaches 0, the turn passes automatically.
+| Game | How to play | Scoring |
+| --- | --- | --- |
+| Marbles | Tap the ring to aim, adjust power, then press Shoot marble. Dragging the shooter backwards and releasing also works. On a focused board, use arrows to aim and set power, and Space to shoot. | Alternate shots. A marble must fully cross the ring to score 100. Capturing two or more in one shot adds 50 per marble. The higher score wins when all targets are out. |
+| Pick-Up Sticks | Tap a stick, then press Lift selected stick, or drag it away. Tab to a stick and press Enter/Space for keyboard play. Show a free stick selects an available stick. | A clean lift earns its colour's points and keeps the turn. Lifting a blocked stick or running out of time passes the turn. Selecting a stick alone is safe. |
+| Five Stones | Press Toss stone, tap the required numbered stones, then use the large Catch now button during the falling phase. Number keys 1–4 collect stones; Space tosses/catches when the board is focused. | Complete patterns 1+1+1+1, 2+2, 3+1, then 4. Each collected stone earns 120 points plus up to 100 per catch for timing. Practice allows 8 seconds per toss; Challenge allows 4.8 seconds. |
+| Chapteh | Share the screen: left player uses A/Left Arrow; right player uses D/Right Arrow. Tap either side or its large kick button when Kick now appears. | Send the chapteh to the other side. Landing on a player's side gives the opponent a point. The scorer serves next; first to 7 wins. |
 
+Five Stones is solo in practice. In competition, players take separate attempts with the same practice timing and a maximum of 12 tosses each. Nine successful catches complete all patterns. An attempt can be ended early between tosses with score confirmation.
 
-## Pause / Resume
+## Timing and accessibility
 
-Marbles and Pick-Up Sticks include a Pause turn button when the 30-second turn timer is enabled. Pausing freezes the countdown and blocks gameplay input. Resuming continues with the same active player and the exact remaining time. Turning the timer off clears the paused state.
+- Marbles and Pick-Up Sticks default to Easy. Practice turns allow 30 seconds; competition turns allow 45 seconds. Competition fixes the level and timer for both players.
+- Marbles pauses its countdown while a shot is rolling. Pick-Up Sticks uses one countdown for the entire turn.
+- Turn timers stay stopped during handovers. Pause and Resume retain the current player and progress.
+- All games pause active play when the page is hidden. Chapteh and Five Stones also pause when the browser window loses focus. Resume is explicit.
+- Gentle Chapteh pace gives extra time in the visible kick zone and stays consistent throughout competition. Lively pace is available for practice; sound is optional.
+- Fullscreen includes the board and its controls, with a fallback for browsers without native fullscreen support. Exit fullscreen returns to the game page.
+- Larger text, stronger contrast and language choices are saved when browser storage is available. Scores and timers avoid pulsing motion.
 
-### Paused score indicator
+## Verification
 
-When Marbles or Pick-Up Sticks is paused, the shared scoreboard clearly shows which player paused the game. The active player's card also shows a paused badge and a short reminder that Resume continues the same turn.
+`npm test` covers competition schedules for 2–8 players, balanced starting duties, shared standings, invalid saved data, duplicate results, Five Stones handovers and toss limits, marble physics, stick overlap geometry and Chapteh returns.
 
-## UI and interaction polish
+The senior UI pass was checked with TypeScript, the production build, 32 automated tests, translation coverage, and server rendering of every initial route in both languages. Server rendering checks markup; it does not verify browser interaction or layout.
 
-The current version also includes:
+A connected browser was unavailable during this pass. Before a live event, run a complete competition on the intended device and check touch input, pause/resume, fullscreen, English/Chinese, larger text, portrait/landscape layout, result confirmation and saved progress after reload.
 
-- Clear top navigation and improved homepage flow
-- Collection highlights and local multiplayer labels
-- Four-step Choose → Learn → Play → Pass guide
-- Animated game-card entrances and hover feedback
-- Smoother home-to-game transitions
-- Sticky desktop game controls for easier play
-- Stronger active-player and turn-state visuals
-- Timer urgency animation and polished pause feedback
-- Improved button, game-board and control interactions
-- Responsive mobile layouts
-- Reduced-motion support for accessibility
+## Technology
 
-## UI polish update
-
-This version includes a full interaction and visual refresh:
-
-- Sticky glass-style navigation and game header
-- Collapsible in-game instructions
-- Animated score and timer changes
-- Stronger active-player states
-- Improved responsive game panels and play areas
-- Marbles motion streaks and distinct player shooters
-- Pick-Up Sticks collection and hint effects
-- Five Stones toss and catch-window feedback
-- Chapteh kick particles and rally feedback
-- Reduced-motion support for accessibility
-
-## Chapteh local versus mode
-
-Player 1 controls the left half with A / Left Arrow. Player 2 controls the right half with D / Right Arrow. Each kick sends the chapteh across to the other player. If it lands on your side, the opponent scores. First to 7 points wins.
-
-## Chapteh rally streak
-
-The two-player Chapteh mode now includes a live rally streak counter. Every successful kick increases the streak. The display celebrates longer exchanges at 4, 8 and 12 successful kicks, and resets to 0 immediately when a rally ends because a player misses or the chapteh goes out.
-
-## Premium UI layer
-
-This version adds:
-
-- Framer Motion for page, card, score, timer and panel transitions.
-- Lucide React for a consistent icon system.
-- Glass-like shared surfaces, improved spacing, depth and responsive states.
-- Motion respects the user's reduced-motion preference through CSS fallbacks.
-
-## Featured game carousel
-
-The home page includes a featured-game carousel for all four games. Use the previous/next buttons, the game tabs below the carousel, or focus the carousel and press the Left/Right Arrow keys. Each slide includes game mode, difficulty, skill, controls, player count, and a direct Play now action.
-
-## Mobile and tablet support
-
-The interface includes responsive layouts for phones, portrait tablets, and landscape tablets.
-
-- Featured carousel supports touch swipe, arrow buttons, dots, and keyboard arrows.
-- Marbles has a larger touch hit area for the shooter on touch screens.
-- Marbles and Pick-Up Sticks expose mobile pause and timer controls beside the play area.
-- Five Stones exposes mobile Toss and Restart controls beside the board.
-- Chapteh keeps large left and right kick controls near the bottom of the screen on phones.
-- Game boards, score panels, timers, instructions, difficulty controls, and cards reflow based on screen width.
-
-## Professional public-facing UI
-
-The interface uses a restrained design system intended for broad public use:
-
-- Clear typographic hierarchy and consistent spacing
-- Responsive phone, tablet and desktop layouts
-- Touch, mouse and keyboard support
-- Visible keyboard focus states
-- Reduced-motion and higher-contrast preference support
-- Large touch targets and readable game status information
-- Consistent navigation, cards, controls and game shells
-- No account or sign-in requirement
-
-The home page also includes an accessibility and device-support section so visitors understand how the collection is intended to be used.
-
-
-## Mobile fullscreen hint
-
-A compact touch-device hint appears below the game header before fullscreen is active. It explains how to enter fullscreen, return with the Exit fullscreen control, and notes that some mobile browsers expose their own exit gesture or control. Desktop layouts are unchanged.
+React, TypeScript, Vite, Canvas, Pointer Events, Framer Motion and Lucide React. The current senior presentation is in `src/senior.css`; game artwork is local SVG in `src/components/Home.tsx`.

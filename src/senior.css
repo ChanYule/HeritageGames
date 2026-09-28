@@ -1,0 +1,299 @@
+/* Shared senior-friendly presentation; loaded after legacy game styling. */
+html { font-size: 18px; scroll-behavior: auto; }
+html[data-large-text="true"] { font-size: 21px; }
+body { background: #f6f4eb; color: #263d33; line-height: 1.55; }
+:root { --muted: #526057; --ink: #263d33; }
+button, input, select { font-family: inherit; }
+button, a, input, select { -webkit-tap-highlight-color: transparent; }
+button { touch-action: manipulation; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, [tabindex="0"]:focus-visible {
+  outline: 3px solid #145b83; outline-offset: 4px; box-shadow: 0 0 0 6px #fff;
+}
+button:disabled { cursor: not-allowed; }
+button, a { overflow-wrap: anywhere; }
+/* Keep score changes and countdowns still and readable. */
+.premium-orb, .game-header-meta, .fullscreen-mobile-hint { display: none; }
+.timer-second-pop, .stat-value-pop, .turn-pill, .player-score::after,
+.timer-inline, .timer-icon-shell, .game-paused-overlay, .kick-button,
+.marble-capture-feedback, .five-stones-catch-cue { animation: none !important; }
+.display-settings {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end;
+  gap: 8px 12px; width: min(1240px, calc(100% - 40px)); margin: 0 auto;
+  padding: 12px 0; border-bottom: 1px solid #d4d9cc;
+}
+.display-settings > span { margin-right: auto; color: #526057; font-size: .85rem; }
+.display-settings button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 46px; padding: 8px 13px; border: 1px solid #abb9aa; border-radius: 8px;
+  background: #fffdf7; color: #304f42; font-size: .85rem; font-weight: 650; cursor: pointer;
+}
+.display-settings button[aria-pressed="true"] { background: #244f43; color: #fff; border-color: #244f43; }
+.heritage-home { width: min(1200px, calc(100% - 48px)); margin: auto; }
+.heritage-nav { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 25px 0; }
+.heritage-brand { display: flex; align-items: center; gap: 12px; color: #263d33; text-decoration: none; }
+.heritage-brand > span { display: grid; place-items: center; width: 51px; height: 51px; border-radius: 50%; background: #285a4c; color: #fff7dc; font-family: Georgia, serif; font-weight: 700; }
+.heritage-brand strong { font-size: 1.05rem; line-height: 1.3; }
+.heritage-brand small { display: block; margin-top: 4px; color: #59645b; font-size: .76rem; font-weight: 500; }
+.language-switcher button { font-size: .85rem; min-height: 46px; }
+.welcome-hero { display: grid; grid-template-columns: 1.2fr 1fr; gap: clamp(28px, 5vw, 80px); align-items: center; padding: 42px 0 62px; }
+.welcome-eyebrow { display: flex; align-items: center; gap: 8px; color: #526b56; font-size: .77rem; font-weight: 750; letter-spacing: .055em; margin: 0 0 15px; }
+.welcome-copy h1 { color: #253e32; margin: 0 0 25px; font-size: clamp(2.5rem, 4.6vw, 3.5rem); font-weight: 750; line-height: 1.12; letter-spacing: -.045em; }
+.welcome-copy h1:focus { outline: none; }
+.welcome-copy h1 em { font-family: Georgia, "Times New Roman", serif; color: #597354; font-weight: 400; }
+.welcome-copy > p:not(.welcome-eyebrow) { max-width: 550px; margin: 0; color: #526057; font-size: 1.06rem; line-height: 1.75; }
+.welcome-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+.heritage-primary, .heritage-secondary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 12px;
+  min-height: 58px; border: 1px solid #285a4c; border-radius: 10px; padding: 14px 20px;
+  font-size: .96rem; line-height: 1.4; font-weight: 700; cursor: pointer; text-decoration: none;
+}
+.heritage-primary { background: #285a4c; color: #fff; box-shadow: 0 3px 0 #163d32; }
+.heritage-primary:hover { background: #1f473c; }
+.heritage-secondary { color: #285a4c; background: transparent; border-color: #afbdad; }
+.heritage-secondary:hover { background: #e7eddf; }
+.welcome-reassurance { display: flex; align-items: center; gap: 8px; margin-top: 20px; color: #526057; font-size: .82rem; }
+.welcome-reassurance svg, .together-note svg { flex-shrink: 0; }
+.welcome-copy > p.saved-competition-note { font-size: .87rem; margin-top: 18px; color: #345b45; font-weight: 650; }
+.together-card { border: 1px solid #d2d9c9; border-radius: 22px; overflow: hidden; background: #fffdf7; box-shadow: 0 12px 32px #2e4c3010; transform: rotate(1deg); }
+.together-art { position: relative; background: #dae4d1; min-height: 190px; }
+.together-art > svg { width: 100%; height: 225px; display: block; }
+.together-seal { position: absolute; right: 20px; top: 20px; display: flex; gap: 8px; align-items: center; padding: 8px 12px; color: #294c3a; background: #fffdf2; border: 1px solid #c9d3bb; border-radius: 99px; font-size: .8rem; font-weight: 750; }
+.together-copy { padding: 24px 28px 27px; }
+.together-copy .welcome-eyebrow { font-size: .69rem; margin-bottom: 10px; }
+.together-copy h2 { margin: 0 0 10px; color: #263d33; font-size: 1.55rem; line-height: 1.3; letter-spacing: -.025em; }
+.together-copy p { font-size: .96rem; color: #526057; margin: 0 0 20px; }
+.together-note { display: flex; gap: 8px; align-items: center; font-size: .82rem; color: #3b5f46; }
+.practice-section { padding: 35px 0 62px; border-top: 1px solid #d4d9cc; scroll-margin-top: 20px; }
+.practice-heading { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px 32px; align-items: end; margin-bottom: 26px; }
+.practice-heading h2, .play-together-guide h2 { margin: 0; font-size: clamp(1.8rem, 3vw, 2.3rem); line-height: 1.2; letter-spacing: -.035em; }
+.practice-heading .welcome-eyebrow { margin-bottom: 10px; }
+.practice-heading > p { max-width: 310px; color: #526057; font-size: .95rem; margin: 0; }
+.heritage-game-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
+.heritage-game-card { display: flex; flex-direction: column; min-width: 0; border: 1px solid #d3d8cb; background: #fffdf7; border-radius: 16px; overflow: hidden; }
+.heritage-card-art { position: relative; background: #ede5d1; border-bottom: 1px solid #dedfd1; }
+.heritage-art-pick-up-sticks .heritage-card-art { background: #e6ebdc; }
+.heritage-art-five-stones .heritage-card-art { background: #f1e2d6; }
+.heritage-art-chapteh .heritage-card-art { background: #e0e9dd; }
+.heritage-card-art svg { display: block; width: 100%; height: 170px; }
+.heritage-card-number { position: absolute; left: 15px; top: 10px; font-size: .75rem; color: #5a6656; font-variant-numeric: tabular-nums; }
+.heritage-card-content { display: flex; flex: 1; flex-direction: column; padding: 21px; }
+.heritage-card-players { display: flex; gap: 6px; align-items: center; min-height: 2.8em; color: #526057; font-size: .76rem; margin: 0 0 10px; }
+.heritage-card-players svg { flex-shrink: 0; }
+.heritage-card-content h3 { font-size: 1.35rem; line-height: 1.3; letter-spacing: -.025em; margin: 0 0 12px; }
+.heritage-card-content > p:not(.heritage-card-players) { font-size: .92rem; color: #526057; margin: 0 0 24px; line-height: 1.6; }
+.heritage-card-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-top: auto; padding-top: 15px; border-top: 1px solid #e1e4d9; }
+.heritage-card-footer > span { color: #526057; font-size: .78rem; }
+.heritage-card-footer button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 50px; padding: 8px 14px; border: 1px solid #b5c4af; border-radius: 8px; background: #e9f0e2; color: #254c3a; font-size: 1rem; font-weight: 750; cursor: pointer; }
+.heritage-card-footer button:hover { background: #dce8d1; }
+.play-together-guide { border: 1px solid #d2dac8; border-radius: 18px; padding: 34px; background: #edf1e5; margin-bottom: 45px; }
+.play-together-guide ol { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 32px; padding: 0; list-style: none; margin: 30px 0; }
+.play-together-guide li { display: flex; gap: 14px; }
+.play-together-guide li > span { display: grid; place-items: center; flex: 0 0 34px; height: 34px; background: #d5e1c9; border-radius: 50%; color: #30513c; font-weight: 800; }
+.play-together-guide h3 { font-size: 1.05rem; margin: 2px 0 8px; }
+.play-together-guide li p { color: #526057; font-size: .92rem; line-height: 1.65; margin: 0; }
+.heritage-footer { display: flex; align-items: center; flex-wrap: wrap; gap: 16px 30px; border-top: 1px solid #d4d9cc; padding: 28px 0 40px; color: #526057; font-size: .83rem; }
+.heritage-footer > strong { color: #263d33; }
+.heritage-footer a { margin-left: auto; color: #285a4c; min-height: 48px; display: inline-flex; align-items: center; }
+
+/* Play areas use consistent, reachable controls at every screen size. */
+.game-header.premium-game-header { position: relative; top: auto; padding: 18px; border-radius: 14px; grid-template-columns: auto minmax(0,1fr) auto; }
+.game-header h1 { font-size: clamp(1.8rem, 3vw, 2.5rem); line-height: 1.2; }
+.game-subtitle { font-size: 1rem; color: #526057; line-height: 1.5; }
+.game-header .eyebrow { font-size: .76rem; }
+.game-header-actions { gap: 10px; }
+.game-fullscreen-button, .premium-back-button { min-height: 50px; font-size: .9rem; }
+.game-layout, .multiplayer-layout { grid-template-columns: minmax(310px, .85fr) minmax(0, 1.65fr); gap: 22px; padding-top: 12px; }
+.game-panel, .game-play-area { min-width: 0; }
+.game-panel :is(p, .player-score-secondary, .difficulty-picker p, .timer-label, .timer-toggle em, .player-score-pause-hint) { font-size: .91rem; line-height: 1.65; }
+.instruction-summary { align-items: flex-start; }
+.instruction-heading h2 { font-size: 1.2rem; line-height: 1.4; }
+.instruction-list p, .instruction-tip, .instruction-heading > p { color: #455a4e; }
+.instruction-list { gap: 14px; }
+.instruction-collapse-hint { font-size: .8rem; }
+.instruction-list li > span { min-width: 29px; min-height: 29px; }
+.primary-button, .secondary-button, .mobile-game-control, .kick-button { min-height: 54px; font-size: .97rem; line-height: 1.4; }
+.difficulty-options label { min-height: 50px; }
+.difficulty-label { font-size: .9rem; }
+.difficulty-options input:focus-visible + .difficulty-active-bg { outline: 3px solid #145b83; outline-offset: 2px; }
+.player-score-name { flex-wrap: wrap; gap: 6px; }
+.player-score-name strong { font-size: 1rem; overflow-wrap: anywhere; }
+.player-score-value { font-size: 2rem; }
+.turn-pill { font-size: .75rem; }
+.turn-message strong { font-size: 1rem; }
+.play-status-bar { gap: 10px; flex-wrap: wrap; }
+.play-status-bar strong { font-size: 1rem; overflow-wrap: anywhere; }
+.play-status-bar span, .timer-inline { font-size: .86rem; }
+.mobile-game-toolbar, .chapteh-play-area .fullscreen-only-controls {
+  display: flex; flex-wrap: wrap; gap: 10px; width: 100%; max-width: none; padding: 10px 0;
+}
+.mobile-game-toolbar > button, .chapteh-play-area .fullscreen-only-controls > button { flex: 1 1 120px; min-height: 52px; font-size: .92rem; }
+.game-play-area.is-fullscreen .mobile-game-control { min-height: 50px; font-size: .92rem; }
+.control-hint, .score-key-bar { font-size: .9rem; line-height: 1.6; color: #475b50; }
+.marble-shot-controls label, .marble-shot-controls legend { font-size: .92rem; }
+.marble-shot-controls input[type="range"] { min-height: 48px; accent-color: #285a4c; }
+.game-paused-overlay, .turn-ready-overlay {
+  color: #253d32; padding: 20px; background: #f9f8eff5;
+  backdrop-filter: blur(3px); text-align: center; gap: 14px;
+}
+.game-paused-overlay strong { padding: 0; background: none; border-radius: 0; box-shadow: none; color: #253d32; font-size: clamp(1.3rem,3vw,2rem); overflow-wrap: anywhere; max-width: 100%; }
+.game-paused-overlay span { color: #4b6054; font-size: 1rem; max-width: 32ch; line-height: 1.6; }
+.game-paused-overlay button { min-width: min(250px, 100%); max-width: 100%; min-height: 56px; white-space: normal; }
+.five-stones-phase-strip li { font-size: .87rem; min-height: 44px; }
+.pace-control { font-size: .95rem; }
+.pace-control select { min-height: 50px; font-size: 1rem; }
+.competition-card p, .competition-match-brief li, .competition-format span, .competition-ready-note, .competition-field { font-size: 1rem; color: #465d50; }
+.competition-page .eyebrow { font-size: .82rem; }
+.competition-player-field input, .competition-field input { min-height: 54px; }
+.competition-setup button, .competition-standings-actions button { min-height: 52px; }
+.standings-table th, .standings-table td { font-size: .93rem; }
+.standings-table thead th { font-size: .85rem; text-transform: none; letter-spacing: 0; }
+.competition-game-banner { font-size: .94rem; }
+.competition-game-banner small { font-size: .85rem; }
+.competition-attempt-label span, .competition-fairness-note { font-size: .9rem; }
+.marbles-play-area .marble-shot-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 20px; margin-block: 14px; padding: 18px; border: 1px solid #c4d0bd; border-radius: 12px; background: #fffdf7; }
+.marbles-play-area .marble-shot-controls legend { padding-inline: 6px; color: #2b4d3b; font-weight: 750; }
+.marbles-play-area .marble-shot-controls label { min-width: 0; }
+.marbles-play-area .marble-shot-controls button { grid-column: 1/-1; }
+.marbles-play-area .marble-shot-controls input { width: 100%; }
+.stick.is-selected { outline: 3px solid #174f68; outline-offset: 4px; box-shadow: 0 0 0 6px #fff7; }
+.stick-pick-controls { display: flex; flex-wrap: wrap; gap: 12px; padding: 18px; margin-top: 14px; background: #fffdf7; border: 1px solid #c4d0bd; border-radius: 12px; }
+.stick-pick-controls > p { flex-basis: 100%; margin: 0; font-size: .95rem; color: #3e5849; }
+.stick-pick-controls > button { flex: 1 1 170px; }
+.five-stones-action-controls, .game-action-toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin-block: 12px; }
+.five-stones-action-controls > button, .game-action-toolbar > button { flex: 1 1 130px; }
+.game-pause-overlay { position: absolute; inset: 0; z-index: 150; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 20px; padding: 24px; text-align: center; background: #f9f8eff5; color: #253d32; backdrop-filter: blur(3px); }
+.game-pause-overlay strong { font-size: clamp(1.2rem,3vw,1.8rem); max-width: 30ch; }
+.game-pause-overlay button { min-width: min(220px,100%); }
+.chapteh-play-area .chapteh-combo-meter, .chapteh-play-area .chapteh-streak-counter { display: none; }
+.chapteh-side-header { padding: 10px 12px; }
+.chapteh-side-header strong { font-size: 1rem; overflow-wrap: anywhere; }
+.versus-foot-controls .kick-button { min-height: 68px; }
+.competition-storage-note, .competition-reset-confirm { padding: 20px; border: 1px solid #b9a16b; border-radius: 12px; background: #fff6dd; color: #5c461f; }
+.competition-reset-confirm { margin-top: 24px; }
+.competition-reset-confirm > div { display: flex; flex-wrap: wrap; gap: 12px; }
+.competition-reset-confirm button { flex: 1 1 200px; }
+.competition-setup-summary, .competition-first-player { padding: 12px 16px; background: #edf3e8; border-radius: 9px; color: #2b523d; font-weight: 700; }
+.competition-progress { display: block; width: 100%; height: 14px; margin: 18px 0; accent-color: #285a4c; }
+.competition-save-note { font-size: .88rem !important; margin-top: 24px; }
+.competition-schedule { margin-top: 24px; }
+.competition-match-list { list-style: none; padding: 0; margin: 24px 0 0; display: grid; gap: 12px; }
+.competition-match-list li { display: grid; grid-template-columns: 38px minmax(0,1fr) auto; align-items: center; gap: 14px; padding: 16px; border: 1px solid #d8ded1; border-radius: 12px; background: #fffef9; }
+.competition-match-list li.is-next { background: #edf4e8; border: 2px solid #63835a; }
+.competition-match-list li.is-complete { background: #f4f5ef; }
+.competition-match-number { display: grid; place-items: center; width: 36px; height: 36px; background: #e3e9da; border-radius: 50%; font-weight: 750; }
+.competition-match-list li > div { display: grid; gap: 5px; min-width: 0; }
+.competition-match-list strong { overflow-wrap: anywhere; }
+.competition-match-list li > div > span { font-size: .88rem; color: #526057; }
+.competition-match-status { font-size: .85rem; color: #3e5849; font-variant-numeric: tabular-nums; }
+.game-paused-overlay { z-index: 150; }
+.game-paused-overlay, .game-pause-overlay { justify-content: safe center; overflow: auto; }
+.chapteh-center-rally-indicator { display: none; }
+.game-panel { grid-template-columns: minmax(0,1fr); }
+.stick.is-blocked:not(.removed) { cursor: pointer; }
+.stick.is-selected:hover, .stick.is-selected:focus-visible { outline-color: #174f68; }
+
+/* Keep all fullscreen controls in document flow so they never cover the board. */
+.game-play-area.is-fullscreen {
+  display: flex; flex-direction: column; align-items: stretch; gap: 10px;
+  height: 100dvh; min-height: 100dvh; overflow: auto; isolation: isolate;
+  padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+}
+.game-play-area.is-fullscreen > :is(.game-fullscreen-toolbar, .play-status-bar, .mobile-game-toolbar, .fullscreen-only-controls, .round-cue, .five-stones-phase-strip, .chapteh-side-header, .versus-foot-controls, .marble-shot-controls, .stick-pick-controls, .five-stones-action-controls, .game-action-toolbar) {
+  position: relative; inset: auto; transform: none; flex-shrink: 0; z-index: auto;
+  width: 100%; max-width: 1000px; height: auto; margin: 0 auto;
+}
+.game-play-area.is-fullscreen .game-fullscreen-toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; padding: 0 0 8px; pointer-events: auto; }
+.game-play-area.is-fullscreen > :is(.canvas-frame, .chapteh-frame, .sticks-board, .five-stones-board) {
+  position: relative; inset: auto; flex: 0 0 auto; z-index: 0; transform: none;
+  width: 100%; max-width: 1000px; height: auto; min-height: 0; margin: 0 auto;
+  border: 1px solid #b5bba9 !important; border-radius: 14px;
+}
+.marbles-play-area.is-fullscreen .canvas-frame { aspect-ratio: 900 / 560; }
+.chapteh-play-area.is-fullscreen .chapteh-frame { aspect-ratio: 760 / 560; }
+.game-play-area.is-fullscreen > :is(.sticks-board, .five-stones-board) { height: clamp(340px, 65dvh, 620px); }
+.game-play-area.is-fullscreen .canvas-frame canvas { display: block; width: 100%; height: 100%; max-height: none; object-fit: contain; }
+.chapteh-play-area.is-fullscreen .chapteh-side-header { display: grid; }
+.game-play-area.is-fullscreen .versus-foot-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 10px; pointer-events: auto; }
+.game-play-area.is-fullscreen .versus-foot-controls .kick-button { position: relative; inset: auto; transform: none; width: 100%; height: auto; min-height: 72px; padding: 12px; opacity: 1; }
+.game-play-area.is-fullscreen .five-stones-action-controls, .game-play-area.is-fullscreen .game-action-toolbar { display: flex; }
+.game-play-area.is-fullscreen .control-hint, .game-play-area.is-fullscreen .score-key-bar { display: flex; position: static; max-width: 1000px; flex-shrink: 0; }
+.game-play-area.is-fullscreen .chapteh-center-rally-indicator { display: none; }
+.game-play-area.is-fullscreen .marble-shot-controls { display: grid; }
+.game-play-area.is-pseudo-fullscreen { position: fixed; inset: 0; z-index: 1200; }
+.game-play-area > .player-scoreboard { margin-bottom: 12px; }
+.game-play-area.is-fullscreen > :is(.player-scoreboard, .competition-finish-confirm, .competition-finish-attempt) { flex-shrink: 0; width: 100%; max-width: 1000px; margin: 0 auto; }
+.game-play-area.is-fullscreen .versus-foot-controls .kick-button.kick-ready,
+.game-play-area.is-fullscreen .versus-foot-controls .kick-button:hover:not(:disabled),
+.game-play-area.is-fullscreen .versus-foot-controls .kick-button:active:not(:disabled) { transform: none; }
+
+html[data-high-contrast="true"] body { background: #fff; color: #17291f; }
+html[data-high-contrast="true"] :is(.heritage-home p, .game-panel p, .control-hint, .competition-card p, .competition-match-brief li, .competition-format span, .welcome-eyebrow, .heritage-card-footer > span, .display-settings > span, .heritage-footer, .player-score-secondary) { color: #233e2c !important; }
+html[data-high-contrast="true"] :is(.heritage-game-card, .together-card, .competition-card, .instruction-card, .turn-timer-panel, .player-score, .play-status-bar, .control-hint, .game-header, .play-together-guide) { border-color: #36513f; box-shadow: none; background-color: #fff; }
+html[data-high-contrast="true"] :is(button, input, select) { border-width: 2px; }
+html[data-high-contrast="true"] button:disabled { opacity: .65; }
+@media (max-width: 1100px) {
+  .heritage-game-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .heritage-card-art svg { height: 180px; }
+  .heritage-card-players { min-height: 0; }
+  .game-header.premium-game-header { grid-template-columns: auto minmax(0,1fr); }
+  .game-header-actions { grid-column: 1/-1; justify-content: flex-end; }
+}
+@media (max-width: 900px) {
+  .welcome-hero { gap: 30px; }
+  .game-layout, .multiplayer-layout { grid-template-columns: 1fr !important; }
+  .game-layout > .game-panel { grid-column: 1; grid-row: 2; }
+  .game-layout > .game-play-area { grid-column: 1; grid-row: 1; }
+  .game-panel { grid-template-columns: minmax(0,1fr); }
+  .play-together-guide ol { gap: 22px; }
+}
+@media (max-width: 720px) {
+  .display-settings { width: calc(100% - 28px); justify-content: flex-start; gap: 8px; }
+  .display-settings > span { flex-basis: 100%; }
+  .display-settings button { flex: 1; padding-inline: 8px; font-size: .82rem; }
+  .heritage-home { width: calc(100% - 32px); }
+  .heritage-nav { gap: 10px; padding: 18px 0; }
+  .heritage-brand small { display: none; }
+  .heritage-brand > span { width: 42px; height: 42px; flex-shrink: 0; }
+  .heritage-brand strong { font-size: .9rem; }
+  .welcome-hero { grid-template-columns: 1fr; padding: 28px 0 36px; gap: 32px; }
+  .welcome-copy h1 { font-size: clamp(2.1rem, 7.8vw, 3.1rem); }
+  .welcome-copy > p:not(.welcome-eyebrow) { font-size: 1rem; }
+  .welcome-actions > * { width: 100%; }
+  .together-card { transform: none; }
+  .together-art > svg { height: 170px; }
+  .together-copy { padding: 22px; }
+  .practice-section { padding-block: 28px 36px; }
+  .heritage-game-grid { gap: 14px; }
+  .heritage-card-content { padding: 16px; }
+  .heritage-card-content h3 { font-size: 1.2rem; }
+  .heritage-card-art svg { height: 130px; }
+  .heritage-card-footer { gap: 12px; }
+  .heritage-card-footer button { width: 100%; }
+  .play-together-guide { padding: 24px 20px; }
+  .play-together-guide ol { grid-template-columns: 1fr; }
+  .play-together-guide > button { width: 100%; }
+  .game-header.premium-game-header { display: flex; flex-wrap: wrap; padding: 14px; gap: 14px; }
+  .game-title-block { flex: 1 1 160px; }
+  .game-header-actions { width: 100%; justify-content: space-between; }
+  .game-header-actions .game-fullscreen-button { min-height: 48px; }
+  .game-header-actions .language-switcher { flex: 0 0 auto; }
+  .competition-topbar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
+  .competition-topbar > div { order: -1; width: 100%; }
+  .competition-game-banner { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 16px; }
+}
+@media (max-width: 430px) {
+  .competition-match-list li { grid-template-columns: 32px minmax(0,1fr); padding: 12px; gap: 10px; }
+  .competition-match-status { grid-column: 2; }
+  .marbles-play-area .marble-shot-controls { grid-template-columns: 1fr; }
+  .heritage-game-grid { grid-template-columns: 1fr; }
+  .heritage-card-art svg { height: 155px; }
+  .heritage-card-footer button { width: auto; min-width: 120px; }
+  .heritage-card-content > p:not(.heritage-card-players) { margin-bottom: 14px; }
+  .heritage-brand { gap: 7px; }
+  .language-switcher button { min-width: 48px; padding-inline: 7px; }
+  .display-settings button { font-size: .77rem; }
+  .game-header h1 { font-size: 1.65rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}

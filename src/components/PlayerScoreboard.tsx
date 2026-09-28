@@ -1,3 +1,4 @@
+import { t, useLanguage } from "../i18n";
 import { AnimatePresence, motion } from "framer-motion";
 import { Pause, Trophy } from "lucide-react";
 
@@ -14,18 +15,19 @@ type Props = {
 export default function PlayerScoreboard({
   activePlayer,
   scores,
-  labels = ["Player 1", "Player 2"],
+  labels = [t("Player 1"), t("Player 2")],
   gameOver = false,
   secondary,
   paused = false,
   pausedBy = null,
 }: Props) {
+  useLanguage();
   const pausedPlayer = pausedBy ?? activePlayer;
 
   return (
     <motion.div
       className={`player-scoreboard premium-scoreboard ${paused ? "is-paused" : ""}`}
-      aria-label="Two player scoreboard"
+      aria-label={t("Two player scoreboard")}
       layout
     >
       <AnimatePresence initial={false}>
@@ -41,9 +43,9 @@ export default function PlayerScoreboard({
             <div className="scoreboard-pause-title">
               <Pause size={15} />
               <span className={`player-dot player-dot-${pausedPlayer + 1}`} />
-              <strong>Paused by {labels[pausedPlayer]}</strong>
+              <strong>{t("Paused by")} {labels[pausedPlayer]}</strong>
             </div>
-            <span>Press Resume to continue this turn.</span>
+            <span>{t("Press Resume to continue this turn.")}</span>
           </motion.div>
         ) : null}
       </AnimatePresence>
@@ -62,15 +64,15 @@ export default function PlayerScoreboard({
 
         return (
           <motion.div
-            key={labels[player]}
+            key={player}
             className={`player-score player-${player + 1} ${isActive ? "active" : ""} ${
               paused && isActive ? "paused-active" : ""
             }`}
-            animate={{ scale: isActive ? 1.015 : 1, y: isActive ? -2 : 0 }}
+            animate={{ scale: 1, y: 0 }}
             transition={{ type: "spring", stiffness: 330, damping: 26 }}
             layout
             aria-current={isActive ? "true" : undefined}
-            aria-label={`${labels[player]}, ${scores[player]} points${isActive ? ", current turn" : ""}`}
+            aria-label={t("{0}, {1} points{2}", labels[player], scores[player], isActive ? t(", current turn") : "")}
           >
             <div className="player-score-name">
               <span className="player-dot" />
@@ -81,7 +83,7 @@ export default function PlayerScoreboard({
                   initial={{ opacity: 0, scale: 0.85 }}
                   animate={{ opacity: 1, scale: 1 }}
                 >
-                  {paused ? "Paused" : "Your turn"}
+                  {paused ? t("Paused") : t("Your turn")}
                 </motion.span>
               )}
             </div>
@@ -102,7 +104,7 @@ export default function PlayerScoreboard({
             </div>
             {secondary && <span className="player-score-secondary">{secondary[player]}</span>}
             {paused && isActive ? (
-              <span className="player-score-pause-hint">Resume keeps this player active.</span>
+              <span className="player-score-pause-hint">{t("Resume keeps this player active.")}</span>
             ) : null}
           </motion.div>
         );

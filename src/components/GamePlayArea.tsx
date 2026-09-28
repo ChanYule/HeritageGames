@@ -1,5 +1,7 @@
+import { t, useLanguage } from "../i18n";
 import { createContext, useContext, useEffect, useRef, type ReactNode, type RefObject } from "react";
 import { Minimize2 } from "lucide-react";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 export const GameFullscreenContext = createContext<{
   playAreaRef: RefObject<HTMLDivElement>;
@@ -9,6 +11,7 @@ export const GameFullscreenContext = createContext<{
 } | null>(null);
 
 export default function GamePlayArea({ children, className = "" }: { children: ReactNode; className?: string }) {
+  useLanguage();
   const fullscreen = useContext(GameFullscreenContext);
   const exitRef = useRef<HTMLButtonElement>(null);
   const active = fullscreen?.fullscreenActive ?? false;
@@ -50,9 +53,9 @@ export default function GamePlayArea({ children, className = "" }: { children: R
     <div ref={playAreaRef} className={`play-column game-play-area ${className}${active ? " is-fullscreen" : ""}${pseudo ? " is-pseudo-fullscreen" : ""}`.trim()}>
       {active && (
         <div className="game-fullscreen-toolbar">
+          <LanguageSwitcher />
           <button ref={exitRef} type="button" className="game-fullscreen-button" onClick={fullscreen?.toggleFullscreen}>
-            <Minimize2 size={17} /> Exit fullscreen
-          </button>
+            <Minimize2 size={17} /> {t("Exit fullscreen")} </button>
         </div>
       )}
       {children}

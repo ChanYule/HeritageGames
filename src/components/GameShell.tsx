@@ -1,5 +1,7 @@
+import { t, useLanguage } from "../i18n";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { GameFullscreenContext } from "./GamePlayArea";
+import LanguageSwitcher from "./LanguageSwitcher";
 import { motion } from "framer-motion";
 import { ChevronLeft, Info, Maximize2, Minimize2, MonitorSmartphone, ShieldCheck } from "lucide-react";
 
@@ -11,7 +13,8 @@ type Props = {
   children: ReactNode;
 };
 
-export default function GameShell({ title, subtitle, onBack, backLabel = "All games", children }: Props) {
+export default function GameShell({ title, subtitle, onBack, backLabel = t("All games"), children }: Props) {
+  useLanguage();
   const playAreaRef = useRef<HTMLDivElement | null>(null);
   const titleRef = useRef<HTMLHeadingElement | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -97,7 +100,7 @@ export default function GameShell({ title, subtitle, onBack, backLabel = "All ga
         <motion.button
           className="back-button premium-back-button"
           onClick={onBack}
-          aria-label={`Back to ${backLabel.toLowerCase()}`}
+          aria-label={t("Back to {0}", backLabel.toLowerCase())}
           whileHover={{ x: -3 }}
           whileTap={{ scale: 0.97 }}
         >
@@ -105,7 +108,7 @@ export default function GameShell({ title, subtitle, onBack, backLabel = "All ga
           <span>{backLabel}</span>
         </motion.button>
         <div className="game-title-block">
-          <p className="eyebrow">Now playing</p>
+          <p className="eyebrow">{t("Now playing")}</p>
           <motion.h1
             ref={titleRef}
             tabIndex={-1}
@@ -113,31 +116,32 @@ export default function GameShell({ title, subtitle, onBack, backLabel = "All ga
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.07 }}
           >
-            {title}
+            {t(title)}
           </motion.h1>
-          <p className="game-subtitle">{subtitle}</p>
+          <p className="game-subtitle">{t(subtitle)}</p>
         </div>
         <div className="game-header-actions">
-          <div className="game-header-meta" aria-label="Game availability">
-            <span><MonitorSmartphone size={16} /> Touch ready</span>
-            <span><ShieldCheck size={16} /> No sign-in</span>
+          <LanguageSwitcher />
+          <div className="game-header-meta" aria-label={t("Game availability")}>
+            <span><MonitorSmartphone size={16} /> {t("Touch ready")}</span>
+            <span><ShieldCheck size={16} /> {t("No sign-in")}</span>
           </div>
           <span className="fullscreen-tooltip-wrap">
             <motion.button
               type="button"
               className="game-fullscreen-button"
               onClick={toggleFullscreen}
-              aria-label={fullscreenActive ? "Exit fullscreen" : "Enter fullscreen"}
+              aria-label={fullscreenActive ? t("Exit fullscreen") : t("Enter fullscreen")}
               aria-pressed={fullscreenActive}
               aria-describedby="fullscreen-button-tooltip"
               whileHover={{ y: -2 }}
               whileTap={{ scale: 0.97 }}
             >
               {fullscreenActive ? <Minimize2 size={17} /> : <Maximize2 size={17} />}
-              <span>{fullscreenActive ? "Exit fullscreen" : "Fullscreen"}</span>
+              <span>{fullscreenActive ? t("Exit fullscreen") : t("Fullscreen")}</span>
             </motion.button>
             <span id="fullscreen-button-tooltip" className="fullscreen-button-tooltip" role="tooltip">
-              {fullscreenActive ? "Return to the standard game view" : "Expand the game to fill your screen"}
+              {fullscreenActive ? t("Return to the standard game view") : t("Expand the game to fill your screen")}
             </span>
           </span>
         </div>
@@ -147,15 +151,15 @@ export default function GameShell({ title, subtitle, onBack, backLabel = "All ga
         <motion.div
           className="fullscreen-mobile-hint"
           role="note"
-          aria-label="Mobile fullscreen tip"
+          aria-label={t("Mobile fullscreen tip")}
           initial={{ opacity: 0, y: -6 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.12, duration: 0.25 }}
         >
           <span className="fullscreen-mobile-hint-icon" aria-hidden="true"><Info size={15} /></span>
           <p>
-            <strong>Mobile fullscreen</strong>
-            <span>Tap the fullscreen button above to expand the game. Tap <b>Exit fullscreen</b> to return. Some browsers also show their own exit control or gesture.</span>
+            <strong>{t("Mobile fullscreen")}</strong>
+            <span>{t("Tap the fullscreen button above to expand the game. Tap")} <b>{t("Exit fullscreen")}</b> {t("to return. Some browsers also show their own exit control or gesture.")}</span>
           </p>
         </motion.div>
       )}
