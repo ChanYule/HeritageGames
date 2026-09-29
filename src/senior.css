@@ -85,10 +85,23 @@ button, a { overflow-wrap: anywhere; }
 .heritage-card-footer > span { color: #526057; font-size: .78rem; }
 .heritage-card-footer button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 50px; padding: 8px 14px; border: 1px solid #b5c4af; border-radius: 8px; background: #e9f0e2; color: #254c3a; font-size: 1rem; font-weight: 750; cursor: pointer; }
 .heritage-card-footer button:hover { background: #dce8d1; }
-.play-together-guide { border: 1px solid #d2dac8; border-radius: 18px; padding: 34px; background: #edf1e5; margin-bottom: 45px; }
+.play-together-guide { border: 1px solid #d6a861; border-radius: 18px; padding: 34px; background: #fff3d8; margin-bottom: 0; }
+.play-together-guide .welcome-eyebrow { color: #874021; }
+.practice-section { border-top: 0; }
 .play-together-guide ol { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 32px; padding: 0; list-style: none; margin: 30px 0; }
 .play-together-guide li { display: flex; gap: 14px; }
 .play-together-guide li > span { display: grid; place-items: center; flex: 0 0 34px; height: 34px; background: #d5e1c9; border-radius: 50%; color: #30513c; font-weight: 800; }
+.play-together-guide li > span { background: #a94429; color: white; }
+.welcome-actions .heritage-primary, .play-together-guide .heritage-primary,
+.heritage-card-footer button, .competition-setup-actions .primary-button:not(:disabled),
+.competition-ready-button:not(:disabled), .turn-ready-overlay .primary-button,
+.five-stones-action-controls > .primary-button:first-child:not(:disabled),
+.chapteh-action-controls > .primary-button:not(:disabled) { background: #a94429; border-color: #a94429; color: #fff; box-shadow: 0 3px 0 #71301e; }
+.welcome-actions .heritage-primary:hover, .play-together-guide .heritage-primary:hover,
+.heritage-card-footer button:hover, .competition-setup-actions .primary-button:hover:not(:disabled),
+.competition-ready-button:hover:not(:disabled), .turn-ready-overlay .primary-button:hover,
+.five-stones-action-controls > .primary-button:first-child:hover:not(:disabled),
+.chapteh-action-controls > .primary-button:hover:not(:disabled) { background: #8e3822; border-color: #8e3822; }
 .play-together-guide h3 { font-size: 1.05rem; margin: 2px 0 8px; }
 .play-together-guide li p { color: #526057; font-size: .92rem; line-height: 1.65; margin: 0; }
 .heritage-footer { display: flex; align-items: center; flex-wrap: wrap; gap: 16px 30px; border-top: 1px solid #d4d9cc; padding: 28px 0 40px; color: #526057; font-size: .83rem; }
@@ -111,6 +124,9 @@ button, a { overflow-wrap: anywhere; }
 .instruction-list { gap: 14px; }
 .instruction-collapse-hint { font-size: .8rem; }
 .instruction-list li > span { min-width: 29px; min-height: 29px; }
+.premium-instruction-card { border: 2px solid #c98c39; background: #fff5dd; box-shadow: 0 4px 0 #dfc79a; }
+.premium-instruction-summary .eyebrow { color: #914121; }
+.instruction-collapse-hint { color: #914121; font-weight: 800; }
 .primary-button, .secondary-button, .mobile-game-control, .kick-button { min-height: 54px; font-size: .97rem; line-height: 1.4; }
 .difficulty-options label { min-height: 50px; }
 .difficulty-label { font-size: .9rem; }
@@ -241,9 +257,10 @@ html[data-high-contrast="true"] button:disabled { opacity: .65; }
 @media (max-width: 900px) {
   .welcome-hero { gap: 30px; }
   .game-layout, .multiplayer-layout { grid-template-columns: 1fr !important; }
-  .game-layout > .game-panel { grid-column: 1; grid-row: 2; }
-  .game-layout > .game-play-area { grid-column: 1; grid-row: 1; }
+  .game-layout > .game-panel { grid-column: 1; grid-row: 1; }
+  .game-layout > .game-play-area { grid-column: 1; grid-row: 2; }
   .game-panel { grid-template-columns: minmax(0,1fr); }
+  .game-panel > .instruction-card { order: -1; }
   .play-together-guide ol { gap: 22px; }
 }
 @media (max-width: 720px) {
@@ -259,7 +276,7 @@ html[data-high-contrast="true"] button:disabled { opacity: .65; }
   .welcome-copy h1 { font-size: clamp(2.1rem, 7.8vw, 3.1rem); }
   .welcome-copy > p:not(.welcome-eyebrow) { font-size: 1rem; }
   .welcome-actions > * { width: 100%; }
-  .together-card { transform: none; }
+  .together-card { display: none; }
   .together-art > svg { height: 170px; }
   .together-copy { padding: 22px; }
   .practice-section { padding-block: 28px 36px; }
@@ -287,7 +304,7 @@ html[data-high-contrast="true"] button:disabled { opacity: .65; }
   .marbles-play-area .marble-shot-controls { grid-template-columns: 1fr; }
   .heritage-game-grid { grid-template-columns: 1fr; }
   .heritage-card-art svg { height: 155px; }
-  .heritage-card-footer button { width: auto; min-width: 120px; }
+  .heritage-card-footer button { width: 100%; }
   .heritage-card-content > p:not(.heritage-card-players) { margin-bottom: 14px; }
   .heritage-brand { gap: 7px; }
   .language-switcher button { min-width: 48px; padding-inline: 7px; }
