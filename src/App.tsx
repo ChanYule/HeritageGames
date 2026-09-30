@@ -8,12 +8,13 @@ import DisplaySettings from "./components/DisplaySettings";
 import GameShell from "./components/GameShell";
 import MarblesGame from "./games/MarblesGame";
 import PickUpSticksGame from "./games/PickUpSticksGame";
-import FiveStonesGame from "./games/FiveStonesGame";
-import ChaptehGame from "./games/ChaptehGame";
+import ArcadeTargetGame from "./games/ArcadeTargetGame";
 import Competition from "./components/Competition";
 
 function gameFromLocation(): GameKey | null {
   const key = new URLSearchParams(window.location.search).get("game");
+  if (key === "five-stones") return "carom";
+  if (key === "chapteh") return "tin-can-knockdown";
   return games.some(game => game.key === key) ? key as GameKey : null;
 }
 
@@ -120,12 +121,12 @@ export default function App() {
         <Home key="home" onPlay={openGame} onCompetition={openCompetition} />
       ) : (
         <GameShell key={`${currentGame}-${soloPlayerName ?? "group"}`} title={game.title} subtitle={soloPlayerName ? t("Solo practice for {0}", soloPlayerName) : game.subtitle} onBack={closeGame}>
-          {soloPlayerName && <p className="solo-practice-note">{currentGame === "five-stones" ? t("Take your time with the pickup plan and try to improve your score.") : t("Play both sides yourself. The colours help you see which side is active.")}</p>}
+          {soloPlayerName && <p className="solo-practice-note">{t("Play both sides yourself. The colours help you see which side is active.")}</p>}
           {{
             marbles: <MarblesGame playerNames={soloPlayerName ? [t("{0} · Blue", soloPlayerName), t("{0} · Red", soloPlayerName)] : undefined} />,
             "pick-up-sticks": <PickUpSticksGame playerNames={soloPlayerName ? [t("{0} · Blue", soloPlayerName), t("{0} · Red", soloPlayerName)] : undefined} />,
-            "five-stones": <FiveStonesGame playerName={soloPlayerName ?? undefined} />,
-            chapteh: <ChaptehGame playerNames={soloPlayerName ? [t("{0} · Left", soloPlayerName), t("{0} · Right", soloPlayerName)] : undefined} />,
+            carom: <ArcadeTargetGame kind="carom" playerNames={soloPlayerName ? [t("{0} · Blue", soloPlayerName), t("{0} · Red", soloPlayerName)] : undefined} />,
+            "tin-can-knockdown": <ArcadeTargetGame kind="tin-can-knockdown" playerNames={soloPlayerName ? [t("{0} · Blue", soloPlayerName), t("{0} · Red", soloPlayerName)] : undefined} />,
           }[currentGame]}
         </GameShell>
       )}

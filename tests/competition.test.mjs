@@ -9,7 +9,7 @@ const { outputText } = ts.transpileModule(source, { compilerOptions: { module: t
 const competition = await import(`data:text/javascript;base64,${Buffer.from(outputText).toString("base64")}`);
 
 test("four-player sessions give equal play and first turns in every selected game", () => {
-  for (const game of ["marbles", "pick-up-sticks", "five-stones", "chapteh", "all"]) {
+  for (const game of ["marbles", "pick-up-sticks", "carom", "tin-can-knockdown", "all"]) {
     const cup = competition.createCompetition("Four friends", ["A", "B", "C", "D"], "four", game);
     assert.equal(cup.matches.length, game === "all" ? 16 : 4);
     for (const selected of new Set(cup.matches.map(match => match.game))) {
@@ -40,11 +40,22 @@ test("four-player results survive reload and complete without eliminating anyone
   assert.deepEqual(competition.competitionStandings(cup).map(player => [player.played, player.points, player.rank]), Array.from({ length: 4 }, () => [8, 8, 1]));
 });
 
-test("four-player Five Stones retains the first attempt during handover", () => {
-  const cup = competition.createCompetition("Friends", ["A", "B", "C", "D"], "four", "five-stones");
+test("legacy Five Stones matches become Carom while unfinished solo attempts restart", () => {
+  const cup = competition.createCompetition("Friends", ["A", "B", "C", "D"], "four", "carom");
+  cup.matches[0].game = "five-stones";
   cup.draft = { matchId: cup.matches[0].id, firstSoloScore: 25 };
   const restored = competition.restoreCompetition(JSON.parse(JSON.stringify(cup)));
-  assert.deepEqual(restored.draft, cup.draft);
+  assert.equal(restored.matches[0].game, "carom");
+  assert.equal(restored.draft, undefined);
+});
+
+test("completed Chapteh scores survive migration to Tin Can Knockdown", () => {
+  const cup = competition.createCompetition("Friends", ["A", "B"], "four", "tin-can-knockdown");
+  cup.matches[0].game = "chapteh";
+  const done = competition.recordMatchResult(cup, [700, 500]);
+  const restored = competition.restoreCompetition(structuredClone(done));
+  assert.equal(restored.matches[0].game, "tin-can-knockdown");
+  assert.deepEqual(restored.matches[0].scores, [700, 500]);
 });
 
 test("shared-device sessions support 2–4 players with two balanced matches per player and game", () => {
@@ -53,7 +64,7 @@ test("shared-device sessions support 2–4 players with two balanced matches per
     const cup = competition.createCompetition("Friends", names, "four", "all");
     assert.equal(cup.matches.length, count * 4);
     assert.equal(competition.restoreCompetition(structuredClone(cup))?.matches.length, count * 4);
-    for (const game of ["marbles", "pick-up-sticks", "five-stones", "chapteh"]) {
+    for (const game of ["marbles", "pick-up-sticks", "carom", "tin-can-knockdown"]) {
       const matches = cup.matches.filter((item) => item.game === game);
       assert.equal(matches.length, count);
       for (const player of cup.competitors) {
@@ -75,7 +86,7 @@ test("shared-device sessions reject sizes outside 2–4 and unknown games", () =
 test("two participants play each of the four heritage games", () => {
   const cup = competition.createCompetition("Friendly Cup", ["Mary", "Ahmad"], "quick");
   assert.equal(cup.matches.length, 4);
-  assert.deepEqual(cup.matches.map((match) => match.game), ["marbles", "pick-up-sticks", "five-stones", "chapteh"]);
+  assert.deepEqual(cup.matches.map((match) => match.game), ["marbles", "pick-up-sticks", "carom", "tin-can-knockdown"]);
 });
 
 test("quick cups give every participant two matches", () => {
@@ -176,7 +187,7 @@ test("storage validation rejects malformed competitors, games, and results", () 
   }
 });
 
-test("restoring storage repairs its progress cursor and retains a Five Stones handover", () => {
+test("restoring storage repairs its progress cursor and drops an old solo handover", () => {
   let cup = competition.createCompetition("Restore", ["A", "B"], "quick");
   cup = competition.recordMatchResult(cup, [1, 0]);
   cup = competition.recordMatchResult(cup, [1, 0]);
@@ -186,7 +197,7 @@ test("restoring storage repairs its progress cursor and retains a Five Stones ha
   const restored = competition.restoreCompetition(JSON.parse(JSON.stringify(cup)));
   assert.equal(restored.currentMatch, 2);
   assert.equal(restored.status, "active");
-  assert.equal(restored.draft.firstSoloScore, 0);
+  assert.equal(restored.draft, undefined);
   restored.draft = { matchId: restored.matches[2].id, scores: [0, 12] };
   const result = competition.restoreCompetition(JSON.parse(JSON.stringify(restored)));
   assert.deepEqual(result.draft.scores, [0, 12]);

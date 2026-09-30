@@ -12,7 +12,7 @@ type Props = {
 
 export default function InstructionSteps({ title, objective, steps, tip }: Props) {
   useLanguage();
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(() => typeof window === "undefined" || typeof window.matchMedia !== "function" || !window.matchMedia("(max-width: 900px)").matches);
   const contentId = useId();
 
   return (
@@ -22,7 +22,7 @@ export default function InstructionSteps({ title, objective, steps, tip }: Props
         className="instruction-summary premium-instruction-summary"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
-        aria-controls={contentId}
+        aria-controls={open ? contentId : undefined}
       >
         <div className="instruction-heading">
           <div className="instruction-heading-topline">

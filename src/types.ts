@@ -1,4 +1,4 @@
-export type GameKey = "marbles" | "pick-up-sticks" | "five-stones" | "chapteh";
+export type GameKey = "marbles" | "pick-up-sticks" | "carom" | "tin-can-knockdown";
 
 export type GameDefinition = {
   key: GameKey;

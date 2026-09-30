@@ -5,8 +5,7 @@ import GameShell from "./GameShell";
 import LanguageSwitcher from "./LanguageSwitcher";
 import MarblesGame from "../games/MarblesGame";
 import PickUpSticksGame from "../games/PickUpSticksGame";
-import FiveStonesGame from "../games/FiveStonesGame";
-import ChaptehGame from "../games/ChaptehGame";
+import ArcadeTargetGame from "../games/ArcadeTargetGame";
 import {
   competitionStandings,
   competitionStorageKey,
@@ -51,8 +50,6 @@ export default function Competition({ onExit, onSoloPlay, initialGame = "marbles
   const headingRef = useRef<HTMLHeadingElement>(null);
   const resultHandledRef = useRef(false);
   const pendingScores = session?.draft?.scores ?? null;
-  const firstSoloScore = session?.draft?.firstSoloScore;
-  const soloPlayer: 0 | 1 = firstSoloScore === undefined ? 0 : 1;
 
   useEffect(() => {
     headingRef.current?.focus({ preventScroll: true });
@@ -113,19 +110,6 @@ export default function Competition({ onExit, onSoloPlay, initialGame = "marbles
     setStage("result");
   };
 
-  const finishSolo = (score: number) => {
-    if (!currentMatch || resultHandledRef.current || !validScores([score, score])) return;
-    resultHandledRef.current = true;
-    if (soloPlayer === 0) {
-      setSession((current) => current ? { ...current, draft: { matchId: currentMatch.id, firstSoloScore: score } } : current);
-      setStage("ready");
-    } else {
-      const scores: [number, number] = [firstSoloScore ?? 0, score];
-      setSession((current) => current ? { ...current, draft: { matchId: currentMatch.id, scores } } : current);
-      setStage("result");
-    }
-  };
-
   const saveResult = () => {
     if (!session || !pendingScores || !currentMatch) return;
     const matchId = currentMatch.id;
@@ -169,7 +153,7 @@ export default function Competition({ onExit, onSoloPlay, initialGame = "marbles
           <fieldset className="player-count-picker">
             <legend>{t("1. How many players?")}</legend>
             <div>{[1, 2, 3, 4].map((count) => <button key={count} type="button" className={names.length === count ? "is-selected" : ""} aria-pressed={names.length === count} onClick={() => choosePlayerCount(count)}>{count}</button>)}</div>
-            <p>{names.length === 1 ? t("Solo practice: play both sides in Marbles, Pick-Up Sticks and Chapteh.") : t("{0} players · everyone plays twice per game", names.length)}</p>
+            <p>{names.length === 1 ? t("Solo practice: play both sides yourself.") : t("{0} players · everyone plays twice per game", names.length)}</p>
           </fieldset>
           <fieldset className="four-game-picker">
             <legend>{t("2. Choose a game")}</legend>
@@ -218,20 +202,20 @@ export default function Competition({ onExit, onSoloPlay, initialGame = "marbles
   const nextMatch = session.matches[session.currentMatch + 1];
   const groupRoster = session.format === "four" ? <section className={`four-roster roster-count-${session.competitors.length} ${stage === "playing" ? "four-roster-playing" : ""}`} aria-label={t("Our players")}>
     {session.competitors.map((player, index) => {
-      const playing = currentMatch.game === "five-stones" ? player.id === players[soloPlayer].id : currentMatch.playerIds.includes(player.id);
+      const playing = currentMatch.playerIds.includes(player.id);
       return <div key={player.id} className={`four-seat seat-${index + 1} ${playing ? "is-playing" : ""}`}>
         <span className="four-seat-number">{index + 1}</span><strong>{player.name}</strong>
         <span>{playing ? t("Playing now") : t("Cheer them on")}</span>
         <small>{t("{0} cup points", standings.find((item) => item.id === player.id)?.points ?? 0)}</small>
       </div>;
     })}
-    {currentMatch.game === "five-stones" && soloPlayer === 0 ? <p>{t("Next turn: {0}", players[1].name)}</p> : nextMatch ? <p>{t("Up next: {0} and {1}", ...nextMatch.playerIds.map((id) => session.competitors.find((player) => player.id === id)!.name))}</p> : <p>{t("Last match. Cheer everyone on!")}</p>}
+    {nextMatch ? <p>{t("Up next: {0} and {1}", ...nextMatch.playerIds.map((id) => session.competitors.find((player) => player.id === id)!.name))}</p> : <p>{t("Last match. Cheer everyone on!")}</p>}
   </section> : null;
   const matchGuidance = {
     marbles: [t("45 seconds for each shot"), t("Tap the ring to aim, then press Shoot marble."), t("Controlled shots are often easier than full power")],
     "pick-up-sticks": [t("45 seconds for the whole turn"), t("A clean pickup lets you continue"), t("Lifting a blocked stick passes the turn. Tapping to select a stick is safe.")],
-    "five-stones": [t("Each participant has up to 12 tosses"), t("Follow the numbered pickup plan, then catch"), t("Nine successful catches complete the challenge")],
-    chapteh: [t("Both participants play at the same time"), t("Wait for Kick now, then choose a near or far shot"), t("The first participant to 7 points wins")],
+    carom: [t("Six shots for each player"), t("Tap a coin, choose a corner pocket and set the strength"), t("Each pocketed coin scores 100 points")],
+    "tin-can-knockdown": [t("Six throws for each player"), t("Choose an aiming lane and strength"), t("Each fallen can scores 100 points")],
   }[currentMatch.game];
 
   if (stage === "playing") {
@@ -240,18 +224,16 @@ export default function Competition({ onExit, onSoloPlay, initialGame = "marbles
       ? <MarblesGame playerNames={labels} onComplete={finishVersus} competitionMode />
       : currentMatch.game === "pick-up-sticks"
         ? <PickUpSticksGame playerNames={labels} onComplete={finishVersus} competitionMode />
-        : currentMatch.game === "chapteh"
-          ? <ChaptehGame playerNames={labels} onComplete={finishVersus} competitionMode />
-          : <FiveStonesGame playerName={labels[soloPlayer]} onComplete={finishSolo} competitionMode />;
+        : <ArcadeTargetGame kind={currentMatch.game} playerNames={labels} onComplete={finishVersus} competitionMode />;
     return (
-      <GameShell title={title} subtitle={currentMatch.game === "five-stones" ? t("{0}'s scored attempt", labels[soloPlayer]) : t("{0} vs {1}", labels[0], labels[1])} onBack={() => {
+      <GameShell title={title} subtitle={t("{0} vs {1}", labels[0], labels[1])} onBack={() => {
         if (window.confirm(t("Return to the match lobby? This unfinished attempt will restart. Confirmed results are kept."))) setStage("ready");
       }} backLabel={t("Match lobby")}>
         {storageNotice}
         {groupRoster}
         <div className="competition-game-banner" role="status">
           <span>{t("Match")} {completedCount + 1} {t("of")} {session.matches.length}</span>
-          <strong>{currentMatch.game === "five-stones" ? t("{0}'s turn", labels[soloPlayer]) : t("{0} vs {1}", labels[0], labels[1])}</strong>
+          <strong>{t("{0} vs {1}", labels[0], labels[1])}</strong>
           <small>{t("The result appears when the game finishes")}</small>
         </div>
         {game}
@@ -283,7 +265,6 @@ export default function Competition({ onExit, onSoloPlay, initialGame = "marbles
   }
 
   if (stage === "ready") {
-    const isSecondSoloAttempt = currentMatch.game === "five-stones" && soloPlayer === 1;
     return (
       <main className="competition-page premium-page professional-page">
         <div className="competition-language"><LanguageSwitcher /></div>
@@ -293,24 +274,17 @@ export default function Competition({ onExit, onSoloPlay, initialGame = "marbles
           <div><p className="eyebrow">{session.name}</p><h1 ref={headingRef} tabIndex={-1}>{t("Match")} {completedCount + 1} {t("of")} {session.matches.length}</h1></div>
         </header>
         <section className="competition-card competition-handover">
-          <p className="eyebrow">{isSecondSoloAttempt ? t("Pass the device") : t("Next match")}</p>
+          <p className="eyebrow">{t("Next match")}</p>
           <h2>{title}</h2>
           {groupRoster}
-          {currentMatch.game === "five-stones" ? (
-            <>
-              <div className="competition-versus single-player"><strong>{players[soloPlayer].name}</strong><span>{t("Scored attempt")}</span></div>
-              {isSecondSoloAttempt ? <p>{t("{0} scored {1}. Now hand the device to {2}.", players[0].name, firstSoloScore ?? 0, players[1].name)}</p> : <p>{t("Each participant gets the same challenge. The higher score wins.")}</p>}
-            </>
-          ) : (
-            <div className="competition-versus"><strong>{players[0].name}</strong><span>{t("versus")}</span><strong>{players[1].name}</strong></div>
-          )}
+          <div className="competition-versus"><strong>{players[0].name}</strong><span>{t("versus")}</span><strong>{players[1].name}</strong></div>
           <div className="competition-match-brief">
             <strong>{t("How this match works")}</strong>
             <ul>{matchGuidance.map((item) => <li key={item}><Check size={17} /> <span>{item}</span></li>)}</ul>
           </div>
-          {currentMatch.game === "marbles" || currentMatch.game === "pick-up-sticks" ? <p className="competition-first-player">{t("{0} goes first", players[0].name)}</p> : null}
+          <p className="competition-first-player">{t("{0} goes first", players[0].name)}</p>
           <div className="competition-ready-note"><Check size={18} /><span>{t("Take your time reading. The game begins only when you press Ready.")}</span></div>
-          <button className="primary-button competition-ready-button" onClick={beginMatch}>{currentMatch.game === "five-stones" ? t("{0} is ready", players[soloPlayer].name) : t("Both players are ready")} <ArrowRight size={19} /></button>
+          <button className="primary-button competition-ready-button" onClick={beginMatch}>{t("Both players are ready")} <ArrowRight size={19} /></button>
         </section>
       </main>
     );
@@ -337,7 +311,7 @@ export default function Competition({ onExit, onSoloPlay, initialGame = "marbles
           </table>
         </div>
         <div className="competition-standings-actions">
-          {session.status === "active" ? <button className="primary-button" onClick={startNext}>{firstSoloScore !== undefined ? t("Continue match") : t("Next match")} <ArrowRight size={18} /></button> : null}
+          {session.status === "active" ? <button className="primary-button" onClick={startNext}>{t("Next match")} <ArrowRight size={18} /></button> : null}
           <button className="secondary-button" onClick={() => setConfirmReset(true)}><RotateCcw size={17} /> {t("New competition")}</button>
         </div>
         {confirmReset ? <div className="competition-reset-confirm" role="group" aria-labelledby="competition-reset-title">

@@ -59,6 +59,7 @@ function createMarbles(difficulty: Difficulty): Marble[] {
 export default function MarblesGame({ playerNames, competitionMode = false, onComplete }: CompetitionGameProps = {}) {
   useLanguage();
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
+  const [difficultyLocked, setDifficultyLocked] = useState(false);
   const settings = difficultySettings[difficulty];
 
   return (
@@ -66,15 +67,15 @@ export default function MarblesGame({ playerNames, competitionMode = false, onCo
       <DifficultyPicker
         value={difficulty}
         onChange={setDifficulty}
-        disabled={competitionMode}
+        disabled={competitionMode && difficultyLocked}
         description={t("{0} targets. {1} and {2} alternate after every shot. Highest score wins when the ring is empty.", settings.marbles, playerNames?.[0] ?? t("Player 1"), playerNames?.[1] ?? t("Player 2"))}
       />
-      <MarblesRound key={difficulty} difficulty={difficulty} playerNames={playerNames} competitionMode={competitionMode} onComplete={onComplete} />
+      <MarblesRound difficulty={difficulty} playerNames={playerNames} competitionMode={competitionMode} onComplete={onComplete} onRoundStart={() => { if (competitionMode) setDifficultyLocked(true); }} onDifficultyChange={setDifficulty} canChangeDifficulty={!difficultyLocked} />
     </>
   );
 }
 
-function MarblesRound({ difficulty, playerNames, competitionMode = false, onComplete }: { difficulty: Difficulty } & CompetitionGameProps) {
+function MarblesRound({ difficulty, playerNames, competitionMode = false, onComplete, onRoundStart, onDifficultyChange, canChangeDifficulty }: { difficulty: Difficulty; onRoundStart: () => void; onDifficultyChange: (difficulty: Difficulty) => void; canChangeDifficulty: boolean } & CompetitionGameProps) {
   useLanguage();
   const targetCount = difficultySettings[difficulty].marbles;
   const turnSeconds = competitionMode ? COMPETITION_TURN_SECONDS : TURN_SECONDS;
@@ -98,6 +99,7 @@ function MarblesRound({ difficulty, playerNames, competitionMode = false, onComp
   const aimRef = useRef(-90);
   const captureFeedbackTimerRef = useRef<number | null>(null);
   const reportedRef = useRef(false);
+  const previousDifficultyRef = useRef(difficulty);
 
   const [activePlayer, setActivePlayer] = useState<Player>(0);
   const [scores, setScores] = useState<[number, number]>([0, 0]);
@@ -123,6 +125,7 @@ function MarblesRound({ difficulty, playerNames, competitionMode = false, onComp
   };
 
   const beginTurn = () => {
+    onRoundStart();
     awaitingReadyRef.current = false;
     setAwaitingReady(false);
     setTimeLeft(turnSeconds);
@@ -182,6 +185,12 @@ function MarblesRound({ difficulty, playerNames, competitionMode = false, onComp
     syncPlayer(0);
     setMessage(() => () => t("{0} starts. Drag the shooter backwards and release.", playerLabel(0)));
   };
+
+  useEffect(() => {
+    if (previousDifficultyRef.current === difficulty) return;
+    previousDifficultyRef.current = difficulty;
+    reset();
+  }, [difficulty]);
 
   const switchTurnOnTimeout = () => {
     if (gameOverRef.current || movingRef.current || pausedRef.current || awaitingReadyRef.current) return;
@@ -456,6 +465,15 @@ function MarblesRound({ difficulty, playerNames, competitionMode = false, onComp
 
       marbles.forEach((marble) => {
         if (marble.captured) return;
+        if (marble.target) {
+          ctx.save();
+          ctx.strokeStyle = "rgba(30, 55, 49, 0.65)";
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(marble.x, marble.y, marble.radius + 5, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        }
         const speed = Math.hypot(marble.vx, marble.vy);
         if (speed > 0.8) {
           ctx.save();
@@ -743,6 +761,7 @@ function MarblesRound({ difficulty, playerNames, competitionMode = false, onComp
               {awaitingReady ? t("Ready when you are") : timerEnabled ? (paused ? t("Paused · {0}s", timeLeft) : moving ? t("Shot rolling") : t("{0}s", timeLeft)) : t("Timer off")}
             </span>
           </div>
+          <span className="fullscreen-score-summary">{playerLabel(0)}: {scores[0]} · {playerLabel(1)}: {scores[1]}</span>
         </div>
 
         <div className="mobile-game-toolbar" aria-label={t("Mobile turn controls")}>
@@ -788,6 +807,9 @@ function MarblesRound({ difficulty, playerNames, competitionMode = false, onComp
           {awaitingReady ? <div className="game-paused-overlay turn-ready-overlay">
             <strong>{t("{0}, ready?", playerLabel(activePlayer))}</strong>
             <span>{t("Take your time passing the device. Your timer starts only when you are ready.")}</span>
+            {canChangeDifficulty && shots[0] + shots[1] === 0 && <div className="ready-level-picker" role="group" aria-label={t("Choose your level")}>
+              {(Object.keys(difficultySettings) as Difficulty[]).map(level => <button key={level} type="button" className={difficulty === level ? "is-selected" : ""} aria-pressed={difficulty === level} onClick={() => onDifficultyChange(level)}>{t(difficultySettings[level].label)}</button>)}
+            </div>}
             <button type="button" className="primary-button" onClick={beginTurn}>{t("I am ready")}</button>
           </div> : null}
           {paused ? <div className="game-paused-overlay"><strong>{t("Paused")}</strong><span>{t("{0} keeps this turn", playerLabel(activePlayer))}</span><button type="button" className="primary-button" onClick={() => togglePause(false)}>{t("Resume turn")}</button></div> : null}

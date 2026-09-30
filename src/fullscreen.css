@@ -1,0 +1,144 @@
+/* Touch difficulty choices use real buttons, including on tablet browsers. */
+.premium-difficulty-options .difficulty-choice {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 54px;
+  padding: 8px;
+  border: 2px solid transparent;
+  border-radius: 11px;
+  background: transparent;
+  color: #264338;
+  font: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.premium-difficulty-options .difficulty-choice.is-selected { border-color: #376b55; background: #fffdf7; }
+.premium-difficulty-options .difficulty-choice:focus-visible,
+.ready-level-picker button:focus-visible { outline: 3px solid #155a9a; outline-offset: 2px; }
+.premium-difficulty-options .difficulty-choice:disabled { cursor: not-allowed; }
+.premium-difficulty-options .difficulty-active-bg { pointer-events: none; }
+
+.ready-level-picker { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; width: min(100%, 390px); }
+.ready-level-picker button { min-width: 0; max-width: none; width: 100%; min-height: 48px; padding: 5px; border: 2px solid #536f5a; border-radius: 10px; background: #fffdf7; color: #284437; font: inherit; font-weight: 800; cursor: pointer; touch-action: manipulation; }
+.ready-level-picker button.is-selected { border-color: #194d38; background: #285d45; color: white; }
+.fullscreen-score-summary { display: none; }
+
+/* Fullscreen is a fixed game surface. Page scrolling and browser swipe panning stay off. */
+.game-play-area.is-fullscreen {
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(4px, .8dvh, 8px) !important;
+  width: 100vw !important;
+  max-width: none !important;
+  height: 100dvh !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: max(6px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(7px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)) !important;
+  overflow: hidden !important;
+  overscroll-behavior: none;
+  background: #f4f0e6;
+}
+.game-play-area.is-fullscreen > * { min-width: 0; max-width: 100%; }
+.game-play-area.is-fullscreen .game-fullscreen-toolbar,
+.game-play-area.is-fullscreen > :is(.player-scoreboard,.play-status-bar,.mobile-game-toolbar,.marble-shot-controls,.stick-pick-controls,.arcade-status,.arcade-controls) {
+  position: relative;
+  inset: auto;
+  z-index: auto;
+  transform: none;
+  flex: 0 0 auto;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+.game-play-area.is-fullscreen .game-fullscreen-toolbar { min-height: 42px; padding: 0; }
+.game-play-area.is-fullscreen .game-fullscreen-button { min-height: 40px; padding: 5px 12px; }
+.game-play-area.is-fullscreen > .player-scoreboard { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.game-play-area.is-fullscreen .player-score { min-width: 0; padding: 6px 9px; }
+.game-play-area.is-fullscreen .player-score-name strong { font-size: clamp(.78rem, 1.8vw, .95rem); }
+.game-play-area.is-fullscreen .player-score-value { font-size: clamp(1.2rem, 2.5vw, 1.6rem); }
+.game-play-area.is-fullscreen .player-score-secondary,
+.game-play-area.is-fullscreen .turn-pill,
+.game-play-area.is-fullscreen .control-hint,
+.game-play-area.is-fullscreen .score-key-bar,
+.game-play-area.is-fullscreen .arcade-help,
+.game-play-area.is-fullscreen .fullscreen-only-controls { display: none !important; }
+.game-play-area.is-fullscreen .play-status-bar,
+.game-play-area.is-fullscreen .arcade-status { min-height: 0; padding: 6px 10px; }
+.game-play-area.is-fullscreen .mobile-game-toolbar { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px; padding: 0; }
+.game-play-area.is-fullscreen .mobile-game-control { min-height: 42px; padding: 4px 8px; }
+.game-play-area.is-fullscreen > :is(.canvas-frame,.sticks-board,.carom-board,.can-scene) {
+  position: relative;
+  inset: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  margin: 0 auto;
+  transform: none;
+}
+.marbles-play-area.is-fullscreen .canvas-frame { width: min(100%, 900px); height: auto; max-height: calc(100dvh - 270px); aspect-ratio: 900 / 560; }
+.marbles-play-area.is-fullscreen .canvas-frame canvas { width: 100%; height: 100%; object-fit: contain; touch-action: none; }
+.sticks-play-area.is-fullscreen .sticks-board { width: 100%; height: auto; touch-action: none; }
+.game-play-area.is-fullscreen .marble-shot-controls { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 5px 10px; padding: 5px 10px; }
+.game-play-area.is-fullscreen .marble-shot-controls label { min-width: 0; }
+.game-play-area.is-fullscreen .marble-shot-controls input[type="range"] { min-height: 36px; }
+.game-play-area.is-fullscreen .marble-shot-controls button { min-height: 44px; }
+.game-play-area.is-fullscreen .stick-pick-controls { gap: 5px; padding: 6px; }
+.game-play-area.is-fullscreen .stick-pick-controls p { display: none; }
+.game-play-area.is-fullscreen .stick-pick-controls button { min-height: 44px; }
+.game-play-area.is-fullscreen .turn-ready-overlay { gap: 7px; padding: 8px; }
+.game-play-area.is-fullscreen .turn-ready-overlay > span { max-width: 42ch; font-size: .88rem; line-height: 1.3; }
+.game-play-area.is-fullscreen .turn-ready-overlay > strong { font-size: clamp(1.1rem, 2.5vw, 1.5rem); }
+.game-play-area.is-fullscreen .turn-ready-overlay > .primary-button { min-height: 46px; }
+.game-play-area.is-fullscreen > :is(.carom-board,.can-scene) { touch-action: none; }
+
+.arcade-play-area.is-fullscreen .arcade-status { max-width: 640px; gap: 0; }
+.arcade-play-area.is-fullscreen .arcade-status strong { font-size: clamp(1rem,2vw,1.25rem); }
+.arcade-play-area.is-fullscreen .arcade-status span { font-size: .85rem; line-height: 1.3; }
+.arcade-play-area.is-fullscreen .carom-board { flex: 0 1 auto; width: min(100%, 570px, max(256px, calc(100dvh - 385px))); height: auto; aspect-ratio: 1; }
+.arcade-play-area.is-fullscreen .can-scene { flex: 1 1 auto; width: min(100%, 640px); min-height: 0; max-height: 330px; padding-block: 5px; }
+.arcade-play-area.is-fullscreen .arcade-ready { flex: 0 0 auto; min-height: 48px; }
+.arcade-play-area.is-fullscreen .arcade-controls { max-width: 640px; gap: 5px; padding: 6px 10px; }
+.arcade-play-area.is-fullscreen .arcade-controls p { font-size: .82rem; }
+.arcade-play-area.is-fullscreen .arcade-power button { min-height: 44px; }
+.arcade-play-area.is-fullscreen .arcade-shoot { min-height: 48px; }
+
+@media (max-height: 650px) and (orientation: portrait) {
+  .game-play-area.is-fullscreen > .player-scoreboard { display: none; }
+  .game-play-area.is-fullscreen .fullscreen-score-summary { display: block; font-size: .78rem; font-weight: 750; overflow-wrap: anywhere; }
+  .arcade-play-area.is-fullscreen .carom-board { width: min(100%, 570px, max(256px, calc(100dvh - 300px))); }
+}
+
+@media (max-height: 600px) and (orientation: landscape) {
+  .game-play-area.is-fullscreen { position: relative; display: block !important; padding: max(5px,env(safe-area-inset-top)) max(7px,env(safe-area-inset-right)) max(5px,env(safe-area-inset-bottom)) max(7px,env(safe-area-inset-left)) !important; }
+  .game-play-area.is-fullscreen > .player-scoreboard { display: none; }
+  .game-play-area.is-fullscreen .fullscreen-score-summary { display: block; font-size: .72rem; font-weight: 750; overflow-wrap: anywhere; }
+  .game-play-area.is-fullscreen .game-fullscreen-toolbar { position: absolute; top: max(6px,env(safe-area-inset-top)); right: max(7px,env(safe-area-inset-right)); z-index: 20; width: min(250px,31vw); min-height: 40px; }
+  .game-play-area.is-fullscreen .game-fullscreen-toolbar .language-switcher { display: none; }
+  .game-play-area.is-fullscreen > :is(.canvas-frame,.sticks-board,.carom-board,.can-scene) { position: absolute; top: 50%; left: max(7px,env(safe-area-inset-left)); right: auto; bottom: auto; width: calc(100vw - min(270px,32vw) - 20px); height: calc(100dvh - 12px); max-height: calc(100dvh - 12px); margin: 0; transform: translateY(-50%); }
+  .marbles-play-area.is-fullscreen .canvas-frame { aspect-ratio: auto; }
+  .sticks-play-area.is-fullscreen .sticks-board { min-height: 0; }
+  .game-play-area.is-fullscreen > :is(.play-status-bar,.arcade-status) { position: absolute; top: 52px; right: max(7px,env(safe-area-inset-right)); left: auto; z-index: 10; width: min(250px,31vw); min-height: 0; padding: 5px 7px; }
+  .game-play-area.is-fullscreen .play-status-bar { display: grid; gap: 2px; }
+  .game-play-area.is-fullscreen .play-status-bar .status-bar-right { gap: 4px; }
+  .game-play-area.is-fullscreen .mobile-game-toolbar { position: absolute; top: 143px; right: max(7px,env(safe-area-inset-right)); left: auto; bottom: auto; z-index: 10; width: min(250px,31vw); margin: 0; transform: none; }
+  .game-play-area.is-fullscreen > :is(.marble-shot-controls,.stick-pick-controls,.arcade-controls) { position: absolute; right: max(7px,env(safe-area-inset-right)); left: auto; bottom: max(5px,env(safe-area-inset-bottom)); z-index: 10; width: min(250px,31vw); margin: 0; }
+  .game-play-area.is-fullscreen .marble-shot-controls { grid-template-columns: 1fr; }
+  .game-play-area.is-fullscreen .marble-shot-controls button { grid-column: 1; }
+  .game-play-area.is-fullscreen .stick-pick-controls { display: grid; grid-template-columns: 1fr; }
+  .game-play-area.is-fullscreen .stick-pick-controls button { width: 100%; }
+  .arcade-play-area.is-fullscreen .carom-board { width: min(calc(100vw - min(270px,32vw) - 20px), calc(100dvh - 12px)); height: auto; aspect-ratio: 1; }
+  .arcade-play-area.is-fullscreen .can-scene { min-height: 0; max-height: none; padding-block: 4px; }
+  .arcade-play-area.is-fullscreen .arcade-ready { position: absolute; right: max(7px,env(safe-area-inset-right)); bottom: max(8px,env(safe-area-inset-bottom)); z-index: 10; width: min(250px,31vw); min-width: 0; margin: 0; }
+  .arcade-play-area.is-fullscreen .arcade-controls p { font-size: .75rem; }
+  .arcade-play-area.is-fullscreen .arcade-power button { min-height: 40px; font-size: .8rem; padding: 2px; }
+  .arcade-play-area.is-fullscreen .arcade-shoot { min-width: 0; width: 100%; min-height: 44px; }
+}
+@media (max-height: 360px) and (orientation: landscape) {
+  .game-play-area.is-fullscreen .mobile-game-toolbar { top: 112px; }
+  .game-play-area.is-fullscreen .mobile-game-control { min-height: 38px; }
+  .game-play-area.is-fullscreen .marble-shot-controls input[type="range"] { min-height: 30px; }
+}

@@ -14,17 +14,10 @@ export default function DifficultyPicker({ value, onChange, description, disable
         {(Object.keys(difficultySettings) as Difficulty[]).map((difficulty) => {
           const selected = value === difficulty;
           return (
-            <label key={difficulty} className={selected ? "is-selected" : ""}>
-              <input
-                type="radio"
-                name="difficulty"
-                value={difficulty}
-                checked={selected}
-                onChange={() => onChange(difficulty)}
-              />
+            <button key={difficulty} type="button" className={`difficulty-choice ${selected ? "is-selected" : ""}`} aria-pressed={selected} onClick={() => onChange(difficulty)}>
               {selected && <motion.span className="difficulty-active-bg" layoutId="difficulty-active-bg" />}
               <span className="difficulty-label">{t(difficultySettings[difficulty].label)}</span>
-            </label>
+            </button>
           );
         })}
       </div>

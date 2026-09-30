@@ -57,6 +57,7 @@ function createSticks(difficulty: Difficulty): Stick[] {
 export default function PickUpSticksGame({ playerNames, competitionMode = false, onComplete }: CompetitionGameProps = {}) {
   useLanguage();
   const [difficulty, setDifficulty] = useState<Difficulty>("easy");
+  const [difficultyLocked, setDifficultyLocked] = useState(false);
   const settings = difficultySettings[difficulty];
 
   return (
@@ -64,15 +65,15 @@ export default function PickUpSticksGame({ playerNames, competitionMode = false,
       <DifficultyPicker
         value={difficulty}
         onChange={setDifficulty}
-        disabled={competitionMode}
+        disabled={competitionMode && difficultyLocked}
         description={t("{0} sticks. A clean pickup lets you continue. Lifting a blocked stick ends your turn.", settings.sticks)}
       />
-      <SticksRound key={difficulty} difficulty={difficulty} playerNames={playerNames} competitionMode={competitionMode} onComplete={onComplete} />
+      <SticksRound difficulty={difficulty} playerNames={playerNames} competitionMode={competitionMode} onComplete={onComplete} onRoundStart={() => { if (competitionMode) setDifficultyLocked(true); }} onDifficultyChange={setDifficulty} canChangeDifficulty={!difficultyLocked} />
     </>
   );
 }
 
-function SticksRound({ difficulty, playerNames, competitionMode = false, onComplete }: { difficulty: Difficulty } & CompetitionGameProps) {
+function SticksRound({ difficulty, playerNames, competitionMode = false, onComplete, onRoundStart, onDifficultyChange, canChangeDifficulty }: { difficulty: Difficulty; onRoundStart: () => void; onDifficultyChange: (difficulty: Difficulty) => void; canChangeDifficulty: boolean } & CompetitionGameProps) {
   useLanguage();
   const turnSeconds = competitionMode ? COMPETITION_TURN_SECONDS : TURN_SECONDS;
   const playerLabel = (player: Player) => playerNames?.[player] ?? t("Player {0}", player + 1);
@@ -87,6 +88,7 @@ function SticksRound({ difficulty, playerNames, competitionMode = false, onCompl
   const pointPopupTimerRef = useRef<number | null>(null);
   const feedbackTimerRef = useRef<number | null>(null);
   const reportedRef = useRef(false);
+  const previousDifficultyRef = useRef(difficulty);
 
   const [hint, setHint] = useState<number | null>(null);
   const [sticks, setSticks] = useState<Stick[]>(() => createSticks(difficulty));
@@ -126,6 +128,7 @@ function SticksRound({ difficulty, playerNames, competitionMode = false, onCompl
   };
 
   const beginTurn = () => {
+    onRoundStart();
     awaitingReadyRef.current = false;
     setAwaitingReady(false);
     setTimeLeft(turnSeconds);
@@ -180,6 +183,12 @@ function SticksRound({ difficulty, playerNames, competitionMode = false, onCompl
     setPointPopup(null);
     setFeedbackTone(null);
   };
+
+  useEffect(() => {
+    if (previousDifficultyRef.current === difficulty) return;
+    previousDifficultyRef.current = difficulty;
+    reset();
+  }, [difficulty]);
 
   const resetDraggedStickVisual = () => {
     const drag = dragSessionRef.current;
@@ -460,6 +469,7 @@ function SticksRound({ difficulty, playerNames, competitionMode = false, onCompl
               {awaitingReady ? t("Ready when you are") : timerEnabled ? (paused ? t("Paused · {0}s", timeLeft) : t("{0}s", timeLeft)) : t("Timer off")}
             </span>
           </div>
+          <span className="fullscreen-score-summary">{playerLabel(0)}: {scores[0]} · {playerLabel(1)}: {scores[1]}</span>
         </div>
 
         <div className="mobile-game-toolbar" aria-label={t("Mobile turn controls")}>
@@ -488,6 +498,9 @@ function SticksRound({ difficulty, playerNames, competitionMode = false, onCompl
           {awaitingReady ? <div className="game-paused-overlay turn-ready-overlay">
             <strong>{t("{0}, ready?", playerLabel(activePlayer))}</strong>
             <span>{t("Take your time passing the device. Your timer starts only when you are ready.")}</span>
+            {canChangeDifficulty && scores[0] + scores[1] + mistakes[0] + mistakes[1] === 0 && <div className="ready-level-picker" role="group" aria-label={t("Choose your level")}>
+              {(Object.keys(difficultySettings) as Difficulty[]).map(level => <button key={level} type="button" className={difficulty === level ? "is-selected" : ""} aria-pressed={difficulty === level} onClick={() => onDifficultyChange(level)}>{t(difficultySettings[level].label)}</button>)}
+            </div>}
             <button type="button" className="primary-button" onClick={beginTurn}>{t("I am ready")}</button>
           </div> : null}
           {paused ? <div className="game-paused-overlay"><strong>{t("Paused")}</strong><span>{t("{0} keeps this turn", playerLabel(activePlayer))}</span><button type="button" className="primary-button" onClick={() => togglePause(false)}>{t("Resume turn")}</button></div> : null}

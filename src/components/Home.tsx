@@ -15,19 +15,8 @@ function GameArtwork({ game }: { game: GameKey }) {
     {game === "pick-up-sticks" && <g strokeLinecap="round">
       {[[83,47,267,152,"#4e7c73"],[90,148,261,60,"#b85442"],[152,32,196,166,"#c49937"],[109,51,242,164,"#455f89"],[91,106,282,92,"#996143"],[232,32,146,174,"#b85442"]].map(([x1,y1,x2,y2,color],i)=><g key={i}><line x1={x1} y1={Number(y1)+3} x2={x2} y2={Number(y2)+3} stroke="#423626" strokeWidth="9" opacity=".12"/><line x1={x1} y1={y1} x2={x2} y2={y2} stroke={String(color)} strokeWidth="7"/><line x1={Number(x1)*.85+Number(x2)*.15} y1={Number(y1)*.85+Number(y2)*.15} x2={Number(x1)*.15+Number(x2)*.85} y2={Number(y1)*.15+Number(y2)*.85} stroke="#f7e6c2" strokeWidth="7"/></g>)}
     </g>}
-    {game === "five-stones" && <>
-      {[[118,132,-16,"#b85a49"],[185,143,14,"#d0a341"],[247,125,-8,"#68856d"],[205,85,28,"#547b8d"],[153,47,-24,"#ad6b4f"]].map(([x,y,angle,color],i)=><g key={i} transform={`translate(${x} ${y}) rotate(${angle})`}><path d="M-25 16L-12-24Q0-31 15-18L31 17Q7 35-25 16Z" fill="#56412b" opacity=".12" transform="translate(0 5)"/><path d="M-25 16L-12-24Q0-31 15-18L31 17Q7 35-25 16Z" fill={String(color)}/><path d="M-20 14L-10-19M-7-23L24 15M-20 18Q5 30 27 18" fill="none" stroke="#fff1d8" strokeWidth="1.5" strokeDasharray="3 3" opacity=".8"/></g>)}
-    </>}
-    {game === "chapteh" && <g transform="translate(55 -16) rotate(15 130 115)">
-      <ellipse cx="136" cy="191" rx="49" ry="8" fill="#243f37" opacity=".15" />
-      <path d="M137 164C100 138 66 80 73 46C111 49 133 114 137 164Z" fill="#c57954" />
-      <path d="M137 164C110 98 111 40 132 23C157 54 155 122 137 164Z" fill="#faf0cc" stroke="#ddcca2" />
-      <path d="M137 164C150 101 181 51 211 50C216 95 175 147 137 164Z" fill="#d6ad4d" />
-      <path d="M137 164L79 57M137 164L133 35M137 164L203 58" stroke="#5c7558" strokeWidth="2" opacity=".6" />
-      <rect x="119" y="153" width="36" height="19" rx="5" fill="#a94f3c" />
-      <ellipse cx="137" cy="176" rx="27" ry="12" fill="#b65d41" />
-      <ellipse cx="137" cy="170" rx="27" ry="10" fill="#e9b368" />
-    </g>}
+    {game === "carom" && <><rect x="77" y="20" width="206" height="164" rx="16" fill="#9a6136"/><rect x="93" y="35" width="174" height="134" rx="7" fill="#e9ca8e"/>{[[103,44],[257,44],[103,160],[257,160]].map(([x,y],i)=><circle key={i} cx={x} cy={y} r="12" fill="#26352f"/>)}{[[145,82],[180,77],[215,82],[160,116],[200,116],[180,145]].map(([x,y],i)=><circle key={i} cx={x} cy={y} r="11" fill={i%2 ? "#ba5b43" : "#faf0d4"} stroke="#754d37" strokeWidth="2"/>)}</>}
+    {game === "tin-can-knockdown" && <><path d="M65 171h230" stroke="#855b3c" strokeWidth="14" strokeLinecap="round"/>{[[130,112],[180,112],[230,112],[155,62],[205,62],[180,12]].map(([x,y],i)=><g key={i}><rect x={x} y={y} width="45" height="55" rx="8" fill="#77a8ae" stroke="#3b6a73" strokeWidth="3"/><ellipse cx={Number(x)+22} cy={y} rx="21" ry="5" fill="#dce7dc"/><circle cx={Number(x)+22} cy={Number(y)+29} r="10" fill="#f7e8b4"/></g>)}</>}
   </svg>;
 }
 
@@ -56,7 +45,7 @@ export default function Home({ onPlay, onCompetition }: { onPlay: (key: GameKey)
         <div className="welcome-reassurance"><Check size={18}/>{t("No sign-up. Just choose a game and play.")}</div>
       </div>
       <aside className="together-card" aria-label={t("A friendly competition")}>
-        <div className="together-art"><GameArtwork game="chapteh"/><span className="together-seal"><Users2 size={22}/>{t("1–4 players")}</span></div>
+        <div className="together-art"><GameArtwork game="tin-can-knockdown"/><span className="together-seal"><Users2 size={22}/>{t("1–4 players")}</span></div>
         <div className="together-copy"><span className="welcome-eyebrow">{t("ONE DEVICE. EVERYONE INCLUDED.")}</span><h2>{t("A friendly little competition")}</h2><p>{t("Add your names. Take turns. Cheer each other on. We keep the scores for you.")}</p><span className="together-note"><Check size={18}/>{t("Time to get ready before every turn")}</span></div>
       </aside>
     </section>

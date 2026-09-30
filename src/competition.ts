@@ -42,7 +42,7 @@ export type Standing = Competitor & {
   scoreDifference: number;
 };
 
-const games: GameKey[] = ["marbles", "pick-up-sticks", "five-stones", "chapteh"];
+const games: GameKey[] = ["marbles", "pick-up-sticks", "carom", "tin-can-knockdown"];
 export const competitionStorageKey = "heritage-games-competition-v1";
 
 const validScore = (value: unknown): value is number => typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
@@ -73,12 +73,13 @@ export function restoreCompetition(value: unknown): CompetitionSession | null {
   if (ids.size !== competitors.length || data.matches.length === 0 || data.matches.length > 28) return null;
   const matches: CompetitionMatch[] = [];
   for (const item of data.matches) {
-    if (!item || typeof item.id !== "string" || !item.id || !games.includes(item.game)
+    const mappedGame = item?.game === "five-stones" ? "carom" : item?.game === "chapteh" ? "tin-can-knockdown" : item?.game;
+    if (!item || typeof item.id !== "string" || !item.id || !games.includes(mappedGame)
       || !Array.isArray(item.playerIds) || item.playerIds.length !== 2 || item.playerIds[0] === item.playerIds[1]
       || !item.playerIds.every((id: unknown) => typeof id === "string" && ids.has(id))
       || (item.status !== "pending" && item.status !== "complete")
       || (item.status === "complete" && !validScores(item.scores))) return null;
-    matches.push({ id: item.id, game: item.game, playerIds: [...item.playerIds] as [string, string], status: item.status,
+    matches.push({ id: item.id, game: mappedGame as GameKey, playerIds: [...item.playerIds] as [string, string], status: item.status,
       ...(item.status === "complete" ? { scores: [...item.scores] as [number, number] } : {}) });
   }
   if (new Set(matches.map((item) => item.id)).size !== matches.length) return null;
@@ -90,9 +91,7 @@ export function restoreCompetition(value: unknown): CompetitionSession | null {
   const draft = data.draft as Record<string, unknown> | undefined;
   if (pending !== -1 && draft && draft.matchId === matches[pending].id) {
     if (validScores(draft.scores)) restored.draft = { matchId: matches[pending].id, scores: [...draft.scores] };
-    else if (matches[pending].game === "five-stones" && validScore(draft.firstSoloScore)) {
-      restored.draft = { matchId: matches[pending].id, firstSoloScore: draft.firstSoloScore };
-    }
+    // An incomplete Five Stones solo attempt cannot be continued in Carom.
   }
   return restored;
 }
@@ -201,7 +200,7 @@ export function competitionStandings(session: CompetitionSession): Standing[] {
     }
   });
 
-  // A stick point and a Five Stones point have different scales. Equal cup
+  // Different games can have different score scales. Equal cup
   // points and wins share a place; names only make tied rows stable to read.
   const standings = [...table.values()].sort((a, b) => b.points - a.points || b.wins - a.wins || a.name.localeCompare(b.name));
   standings.forEach((player, index) => {
@@ -212,5 +211,5 @@ export function competitionStandings(session: CompetitionSession): Standing[] {
 }
 
 export function gameTitle(game: GameKey) {
-  return ({ marbles: "Marbles", "pick-up-sticks": "Pick-Up Sticks", "five-stones": "Five Stones", chapteh: "Chapteh" })[game];
+  return ({ marbles: "Marbles", "pick-up-sticks": "Pick-Up Sticks", carom: "Carom", "tin-can-knockdown": "Tin Can Knockdown" })[game];
 }
