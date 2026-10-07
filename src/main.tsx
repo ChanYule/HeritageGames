@@ -9,6 +9,7 @@ import "./senior.css";
 import "./four-players.css";
 import "./cognitive-games.css";
 import "./fullscreen.css";
+import "./physical-games.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

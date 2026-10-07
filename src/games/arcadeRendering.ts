@@ -1,5 +1,5 @@
 import type { CaromWorld } from "./caromPhysics";
-import type { CanWorld } from "./canPhysics";
+import { ballVelocity, type CanWorld } from "./canPhysics";
 
 export function drawCarom(ctx: CanvasRenderingContext2D, world: CaromWorld, strikerX: number, aim: { x: number; y: number; power: number } | null, ready: boolean) {
   ctx.clearRect(0, 0, 600, 600);
@@ -10,8 +10,12 @@ export function drawCarom(ctx: CanvasRenderingContext2D, world: CaromWorld, stri
   ctx.strokeRect(31, 31, 538, 538);
   ctx.beginPath(); ctx.arc(300, 300, 65, 0, Math.PI * 2); ctx.stroke();
   ctx.beginPath(); ctx.arc(300, 300, 13, 0, Math.PI * 2); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(110, 450); ctx.lineTo(490, 450); ctx.moveTo(110, 510); ctx.lineTo(490, 510); ctx.stroke();
-  for (const x of [110, 490]) { ctx.beginPath(); ctx.arc(x, 480, 15, 0, Math.PI * 2); ctx.stroke(); }
+  for (let side = 0; side < 4; side++) {
+    ctx.save(); ctx.translate(300, 300); ctx.rotate(side * Math.PI / 2); ctx.translate(-300, -300);
+    ctx.beginPath(); ctx.moveTo(110, 465); ctx.lineTo(490, 465); ctx.moveTo(110, 495); ctx.lineTo(490, 495); ctx.stroke();
+    for (const x of [110, 490]) { ctx.beginPath(); ctx.arc(x, 480, 15, 0, Math.PI * 2); ctx.stroke(); }
+    ctx.restore();
+  }
   for (const [x, y] of [[31,31],[569,31],[31,569],[569,569]]) {
     ctx.fillStyle = "#59351f"; ctx.beginPath(); ctx.arc(x, y, 28, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = "#1e2724"; ctx.beginPath(); ctx.arc(x, y, 21, 0, Math.PI * 2); ctx.fill();
@@ -20,16 +24,26 @@ export function drawCarom(ctx: CanvasRenderingContext2D, world: CaromWorld, stri
     ctx.strokeStyle = "#276550"; ctx.lineWidth = 6; ctx.lineCap = "round";
     ctx.beginPath(); ctx.moveTo(115, 480); ctx.lineTo(485, 480); ctx.stroke();
     if (aim) {
+      ctx.strokeStyle = "#276550"; ctx.lineWidth = 2; ctx.setLineDash([5, 7]);
+      ctx.beginPath(); ctx.arc(strikerX, 480, 85, 0, Math.PI); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = "#d8c49a"; ctx.fillRect(strikerX - 40, 580, 80, 8);
+      ctx.fillStyle = "#255a4a"; ctx.fillRect(strikerX - 40, 580, 80 * aim.power, 8);
       ctx.strokeStyle = "#255a4a"; ctx.lineWidth = 4; ctx.setLineDash([10, 8]);
-      ctx.beginPath(); ctx.moveTo(strikerX, 480); ctx.lineTo(strikerX + aim.x * 180, 480 + aim.y * 180); ctx.stroke(); ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(strikerX, 480); ctx.lineTo(strikerX + aim.x * (90 + aim.power * 170), 480 + aim.y * (90 + aim.power * 170)); ctx.stroke(); ctx.setLineDash([]);
       ctx.fillStyle = "#255a4a"; ctx.beginPath(); ctx.arc(strikerX + aim.x * 180, 480 + aim.y * 180, 6, 0, Math.PI * 2); ctx.fill();
     }
   }
   for (const disc of world.discs) {
-    if (disc.pocketed) continue;
+    if (disc.pocketed) {
+      if (disc.sink) {
+        ctx.globalAlpha = disc.sink / .28; ctx.fillStyle = disc.id === 1 ? "#b63836" : "#e8d4ac";
+        ctx.beginPath(); ctx.arc(disc.x, disc.y, disc.r * disc.sink / .28, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
+      }
+      continue;
+    }
     const striker = disc.id === 0;
     ctx.fillStyle = "#69442a"; ctx.beginPath(); ctx.arc(disc.x + 2, disc.y + 3, disc.r + 2, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = striker ? "#f5e9bf" : disc.id % 2 ? "#f3e7d0" : "#ae4938";
+    ctx.fillStyle = striker ? "#f5e9bf" : disc.id === 1 ? "#b63836" : disc.id % 2 === 0 ? "#f3e7d0" : "#323432";
     ctx.beginPath(); ctx.arc(disc.x, disc.y, disc.r, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = striker ? "#a96c37" : "#794b35"; ctx.lineWidth = striker ? 5 : 2;
     ctx.beginPath(); ctx.arc(disc.x, disc.y, disc.r - 3, 0, Math.PI * 2); ctx.stroke();
@@ -46,9 +60,9 @@ export function drawCarom(ctx: CanvasRenderingContext2D, world: CaromWorld, stri
 }
 
 export function drawCans(ctx: CanvasRenderingContext2D, world: CanWorld, aim: { x: number; y: number; power: number } | null, ready: boolean) {
-  ctx.clearRect(0, 0, 600, 500);
+  ctx.clearRect(0, 0, 600, 620);
   ctx.fillStyle = "#c6dce0"; ctx.fillRect(0, 0, 600, 300);
-  ctx.fillStyle = "#d9c59f"; ctx.fillRect(0, 300, 600, 200);
+  ctx.fillStyle = "#d9c59f"; ctx.fillRect(0, 300, 600, 320);
   ctx.fillStyle = "#796045"; ctx.fillRect(24, 405, 552, 16);
   ctx.fillStyle = "#ab8460"; ctx.fillRect(24, 421, 552, 20);
   for (const can of [...world.cans].sort((a, b) => a.y - b.y)) {
@@ -61,16 +75,20 @@ export function drawCans(ctx: CanvasRenderingContext2D, world: CanWorld, aim: { 
     ctx.fillStyle = "#28525a"; ctx.font = "bold 20px system-ui"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(String(can.id), 0, 3);
     ctx.restore();
   }
+  ctx.strokeStyle = "#6a7157"; ctx.lineWidth = 2; ctx.setLineDash([8, 6]);
+  ctx.strokeRect(180, 480, 240, 120); ctx.setLineDash([]);
   if (world.ball) {
-    const radius = 16 - world.ball.time * 7;
+    const radius = 16;
     ctx.fillStyle = "#ad6746"; ctx.beginPath(); ctx.arc(world.ball.x, world.ball.y, Math.max(8, radius), 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = "#6d3c2a"; ctx.lineWidth = 3; ctx.stroke();
   } else if (ready) {
-    ctx.fillStyle = "#b96f48"; ctx.beginPath(); ctx.arc(300, 470, 22, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#b96f48"; ctx.beginPath(); ctx.arc(300, 535, 22, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = "#71402a"; ctx.lineWidth = 4; ctx.stroke();
     if (aim) {
       ctx.strokeStyle = "#255a4a"; ctx.lineWidth = 4; ctx.setLineDash([9, 7]);
-      ctx.beginPath(); ctx.moveTo(300, 470); ctx.quadraticCurveTo((300 + aim.x) / 2, aim.y - 75, aim.x, aim.y); ctx.stroke(); ctx.setLineDash([]);
+      const velocity = ballVelocity(aim.x, aim.y, aim.power);
+      ctx.beginPath(); ctx.moveTo(300, 535);
+      for (let time = .03; time < .55; time += .03) ctx.lineTo(300 + velocity.vx * time, 535 + velocity.vy * time + 130 * time * time); ctx.stroke(); ctx.setLineDash([]);
       ctx.fillStyle = "#255a4a"; ctx.beginPath(); ctx.arc(aim.x, aim.y, 7, 0, Math.PI * 2); ctx.fill();
     }
   }

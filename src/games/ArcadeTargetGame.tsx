@@ -4,7 +4,7 @@ import { t, useLanguage } from "../i18n";
 import GamePlayArea from "../components/GamePlayArea";
 import PlayerScoreboard from "../components/PlayerScoreboard";
 import type { CompetitionGameProps } from "../types";
-import { caromSettled, createCaromWorld, legalStrikerX, shootCarom, stepCarom } from "./caromPhysics";
+import { caromSettled, createCaromWorld, legalStrikerX, shootCarom, stepCarom, createCaromMatch, resolveCaromTurn, coinColour } from "./caromPhysics";
 import { cansSettled, createCanWorld, stepCans, throwBall } from "./canPhysics";
 import { drawCans, drawCarom } from "./arcadeRendering";
 import { playArcadeSound, vibrateArcade } from "./arcadeSound";
@@ -19,11 +19,16 @@ export default function ArcadeTargetGame({ kind, playerNames, competitionMode = 
   const labels: [string, string] = playerNames ?? [t("Player 1"), t("Player 2")];
   const [scores, setScores] = useState<[number, number]>([0, 0]);
   const [shot, setShot] = useState(0);
+  const [casualActive, setCasualActive] = useState<0 | 1>(0);
+  const [casualWinner, setCasualWinner] = useState<0 | 1 | null>(null);
+  const match = useRef(createCaromMatch());
   const [ready, setReady] = useState(false);
   const [moving, setMoving] = useState(false);
   const [message, setMessage] = useState(carom ? "Move the striker, then drag back to shoot." : "Drag the ball toward the cans and release.");
   const [messagePoints, setMessagePoints] = useState(0);
   const [muted, setMuted] = useState(false);
+  const mutedRef = useRef(muted);
+  mutedRef.current = muted;
   const [strikerX, setStrikerX] = useState(300);
   const [angle, setAngle] = useState(-90);
   const [power, setPower] = useState(55);
@@ -34,16 +39,18 @@ export default function ArcadeTargetGame({ kind, playerNames, competitionMode = 
   const canvas = useRef<HTMLCanvasElement>(null);
   const caromWorld = useRef(createCaromWorld());
   const canWorld = useRef(createCanWorld());
-  const drag = useRef<{ id: number; x: number; y: number; mode: "place" | "aim" } | null>(null);
+  const drag = useRef<{ id: number; x: number; y: number; mode: "place" | "aim"; lastX: number; lastY: number; time: number; speed: number } | null>(null);
   const raf = useRef(0);
+  const previewFrame = useRef(0);
   const locked = useRef(false);
   const reported = useRef(false);
   const previousPocket = useRef(0);
   const previousImpact = useRef(0);
   const previousEdge = useRef(0);
   const previousFall = useRef(0);
-  const active = (shot % 2) as 0 | 1;
-  const finished = shot >= 12;
+  const casual = carom && !competitionMode;
+  const active = casual ? casualActive : (shot % 2) as 0 | 1;
+  const finished = casual ? casualWinner !== null : shot >= 12;
   const canPlay = ready && !moving && !finished;
 
   const render = useCallback((preview: Aim | null, showStriker = ready && !moving) => {
@@ -54,20 +61,28 @@ export default function ArcadeTargetGame({ kind, playerNames, competitionMode = 
     const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
     const w = Math.round(rect.width * pixelRatio), h = Math.round(rect.height * pixelRatio);
     if (element.width !== w || element.height !== h) { element.width = w; element.height = h; }
-    ctx.setTransform(w / 600, 0, 0, h / (carom ? 600 : 500), 0, 0);
+    ctx.setTransform(w / 600, 0, 0, h / (carom ? 600 : 620), 0, 0);
     if (carom) drawCarom(ctx, caromWorld.current, strikerX, preview, showStriker);
     else drawCans(ctx, canWorld.current, preview, showStriker);
   }, [carom, moving, ready, strikerX]);
 
   const renderRef = useRef(render);
   renderRef.current = render;
-  useEffect(() => render(aim), [render, aim]);
+  useEffect(() => {
+    const radians = angle * Math.PI / 180;
+    const preview = aimRef.current ?? (canPlay ? carom ? { x: Math.cos(radians), y: Math.sin(radians), power: power / 100 } : { x: targetX, y: targetY, power: power / 100 } : null);
+    render(preview);
+  }, [render, aim, angle, power, targetX, targetY, canPlay, carom]);
   useEffect(() => {
     const observer = new ResizeObserver(() => renderRef.current(aimRef.current));
     if (canvas.current) observer.observe(canvas.current);
     return () => observer.disconnect();
   }, []);
-  useEffect(() => () => cancelAnimationFrame(raf.current), []);
+  useEffect(() => () => { cancelAnimationFrame(raf.current); cancelAnimationFrame(previewFrame.current); }, []);
+  const schedulePreview = () => {
+    if (previewFrame.current) return;
+    previewFrame.current = requestAnimationFrame(() => { previewFrame.current = 0; if (!locked.current) renderRef.current(aimRef.current); });
+  };
   useEffect(() => {
     if (finished && onComplete && !reported.current) { reported.current = true; onComplete({ scores }); }
   }, [finished, onComplete, scores]);
@@ -75,14 +90,23 @@ export default function ArcadeTargetGame({ kind, playerNames, competitionMode = 
   const finishShot = (scored: number, foul: boolean) => {
     locked.current = false;
     setMoving(false); setReady(false); setAim(null); setShot(current => current + 1);
-    if (scored || foul) setScores(current => current.map((value, index) => index === active ? Math.max(0, value + scored * 100 - (foul ? 100 : 0)) : value) as [number, number]);
-    if (scored) playArcadeSound("score", !muted);
-    setMessage(foul ? "Striker pocketed. Foul: 100 points deducted." : scored ? "Great shot! {0} scored." : "No score this turn.");
+    if (casual) {
+      const ownCount = caromWorld.current.pocketed.filter(id => id !== 0 && coinColour(id) === (active === 0 ? "light" : "dark")).length;
+      scored = ownCount;
+      resolveCaromTurn(caromWorld.current, match.current);
+      setCasualActive(match.current.active); setCasualWinner(match.current.winner);
+      const totals = (["light", "dark"] as const).map(colour => caromWorld.current.discs.filter(d => d.pocketed && coinColour(d.id) === colour).length * 100) as [number, number];
+      if (match.current.winner !== null) totals[match.current.winner] += 300;
+      setScores(totals);
+    }
+    if (!casual && (scored || foul)) setScores(current => current.map((value, index) => index === active ? Math.max(0, value + scored * 100 - (foul ? 100 : 0)) : value) as [number, number]);
+    if (scored) playArcadeSound("score", !mutedRef.current);
+    setMessage(foul ? casual ? "Striker foul. Return one own coin and pass the turn." : "Striker pocketed. Foul: 100 points deducted." : scored ? "Great shot! {0} scored." : "No score this turn.");
     setMessagePoints(scored * 100);
     if (carom) {
       caromWorld.current.discs.forEach(d => { d.vx = 0; d.vy = 0; });
       caromWorld.current.discs = caromWorld.current.discs.filter(d => d.id !== 0);
-      if (caromWorld.current.discs.every(d => d.pocketed)) caromWorld.current = createCaromWorld();
+      if (!casual && caromWorld.current.discs.every(d => d.pocketed)) caromWorld.current = createCaromWorld();
       setStrikerX(x => legalStrikerX(caromWorld.current, x));
     } else {
       canWorld.current.cans.forEach(c => { c.vx = 0; c.vy = 0; c.spin = 0; });
@@ -92,25 +116,29 @@ export default function ArcadeTargetGame({ kind, playerNames, competitionMode = 
   };
 
   const animate = () => {
-    let last = 0;
+    let last = 0, accumulator = 0;
     const frame = (timestamp: number) => {
       if (!locked.current) return;
       if (document.hidden) { last = timestamp; raf.current = requestAnimationFrame(frame); return; }
       const dt = last ? Math.min((timestamp - last) / 1000, 1 / 30) : 1 / 60;
       last = timestamp;
-      if (carom) {
-        const world = caromWorld.current;
-        stepCarom(world, dt);
-        if (world.impacts > previousImpact.current) { playArcadeSound("wood", !muted); previousImpact.current = world.impacts; }
-        if (world.edges > previousEdge.current) { playArcadeSound("wood", !muted); previousEdge.current = world.edges; }
-        if (world.pocketed.length > previousPocket.current) { playArcadeSound("pocket", !muted); vibrateArcade(18); previousPocket.current = world.pocketed.length; }
-        if (caromSettled(world)) { finishShot(world.pocketed.filter(id => id !== 0).length, world.pocketed.includes(0)); return; }
-      } else {
-        const world = canWorld.current;
-        stepCans(world, dt);
-        if (world.impacts > previousImpact.current) { playArcadeSound("metal", !muted); previousImpact.current = world.impacts; vibrateArcade(12); }
-        if (world.falls > previousFall.current) { playArcadeSound("fall", !muted); previousFall.current = world.falls; }
-        if (cansSettled(world)) { finishShot(world.falls, false); return; }
+      accumulator += dt;
+      while (accumulator >= 1 / 120) {
+        accumulator -= 1 / 120;
+        if (carom) {
+          const world = caromWorld.current;
+          stepCarom(world, 1 / 120);
+          if (world.impacts > previousImpact.current) { playArcadeSound("wood", !mutedRef.current); previousImpact.current = world.impacts; }
+          if (world.edges > previousEdge.current) { playArcadeSound("wood", !mutedRef.current); previousEdge.current = world.edges; }
+          if (world.pocketed.length > previousPocket.current) { playArcadeSound("pocket", !mutedRef.current); vibrateArcade(18); previousPocket.current = world.pocketed.length; }
+          if (caromSettled(world)) { finishShot(world.pocketed.filter(id => id !== 0).length, world.pocketed.includes(0)); return; }
+        } else {
+          const world = canWorld.current;
+          stepCans(world, 1 / 120);
+          if (world.impacts > previousImpact.current) { playArcadeSound("metal", !mutedRef.current); previousImpact.current = world.impacts; vibrateArcade(12); }
+          if (world.falls > previousFall.current) { playArcadeSound("fall", !mutedRef.current); previousFall.current = world.falls; }
+          if (cansSettled(world)) { finishShot(world.falls, false); return; }
+        }
       }
       render(null, false);
       raf.current = requestAnimationFrame(frame);
@@ -125,11 +153,11 @@ export default function ArcadeTargetGame({ kind, playerNames, competitionMode = 
       const radians = angle * Math.PI / 180;
       const direction = preview ?? { x: Math.cos(radians), y: Math.sin(radians), power: power / 100 };
       if (!shootCarom(caromWorld.current, strikerX, direction.x * (150 + direction.power * 420), direction.y * (150 + direction.power * 420))) { setMessage("Move the striker to a clear place on the baseline."); return; }
-      playArcadeSound("strike", !muted); vibrateArcade(12);
+      playArcadeSound("strike", !mutedRef.current); vibrateArcade(12);
     } else {
       const direction = preview ?? { x: targetX, y: targetY, power: power / 100 };
       if (!throwBall(canWorld.current, direction.x, direction.y, direction.power)) return;
-      playArcadeSound("throw", !muted);
+      playArcadeSound("throw", !mutedRef.current);
     }
     locked.current = true;
     previousPocket.current = 0; previousImpact.current = 0; previousEdge.current = 0; previousFall.current = 0;
@@ -139,17 +167,18 @@ export default function ArcadeTargetGame({ kind, playerNames, competitionMode = 
 
   const coordinates = (event: PointerEvent<HTMLCanvasElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
-    return { x: (event.clientX - rect.left) / rect.width * 600, y: (event.clientY - rect.top) / rect.height * (carom ? 600 : 500) };
+    return { x: (event.clientX - rect.left) / rect.width * 600, y: (event.clientY - rect.top) / rect.height * (carom ? 600 : 620) };
   };
   const pointerDown = (event: PointerEvent<HTMLCanvasElement>) => {
-    if (!canPlay || locked.current) return;
+    if (!canPlay || locked.current || drag.current || !event.isPrimary || event.button !== 0) return;
+    event.preventDefault();
     const point = coordinates(event);
     aimRef.current = null;
-    if (carom && point.y > 440 && point.y < 520 && Math.abs(point.x - strikerX) > 32) {
+    if (carom && point.y > 440 && point.y < 520 && Math.abs(point.x - strikerX) > 55) {
       setStrikerX(legalStrikerX(caromWorld.current, point.x));
-      drag.current = { id: event.pointerId, x: point.x, y: point.y, mode: "place" };
-    } else if (carom ? Math.hypot(point.x - strikerX, point.y - 480) < 75 : Math.hypot(point.x - 300, point.y - 470) < 85) {
-      drag.current = { id: event.pointerId, x: point.x, y: point.y, mode: "aim" };
+      drag.current = { id: event.pointerId, x: point.x, y: point.y, mode: "place", lastX: point.x, lastY: point.y, time: event.timeStamp, speed: 0 };
+    } else if (carom ? Math.hypot(point.x - strikerX, point.y - 480) < 75 : Math.hypot(point.x - 300, point.y - 535) < 85) {
+      drag.current = { id: event.pointerId, x: point.x, y: point.y, mode: "aim", lastX: point.x, lastY: point.y, time: event.timeStamp, speed: 0 };
     } else return;
     event.currentTarget.setPointerCapture(event.pointerId);
   };
@@ -159,44 +188,63 @@ export default function ArcadeTargetGame({ kind, playerNames, competitionMode = 
     if (drag.current.mode === "place") { setStrikerX(legalStrikerX(caromWorld.current, point.x)); return; }
     if (carom) {
       const dx = drag.current.x - point.x, dy = drag.current.y - point.y, distance = Math.hypot(dx, dy);
-      const next = { x: dx / (distance || 1), y: dy / (distance || 1), power: Math.min(1, distance / 145) };
-      aimRef.current = next; setAim(next); setAngle(Math.round(Math.atan2(next.y, next.x) * 180 / Math.PI)); setPower(Math.round(next.power * 100));
+      const next = { x: dx / (distance || 1), y: dy / (distance || 1), power: Math.min(1, distance / 85) };
+      aimRef.current = next; schedulePreview();
     } else {
       const distance = Math.hypot(point.x - drag.current.x, point.y - drag.current.y);
-      const next = { x: point.x, y: point.y, power: Math.min(1, distance / 280) };
-      aimRef.current = next; setAim(next); setPower(Math.round(next.power * 100)); setTargetX(Math.round(point.x)); setTargetY(Math.round(Math.max(190, Math.min(385, point.y))));
+      const gesture = drag.current;
+      const elapsed = Math.max(8, event.timeStamp - gesture.time);
+      const movement = Math.hypot(point.x - gesture.lastX, point.y - gesture.lastY);
+      gesture.speed = movement > .5 ? .4 * gesture.speed + .6 * movement / elapsed : gesture.speed * Math.exp(-elapsed / 90);
+      gesture.lastX = point.x; gesture.lastY = point.y; gesture.time = event.timeStamp;
+      const dx = point.x - gesture.x, dy = point.y - gesture.y;
+      if (dy >= -8) { aimRef.current = null; schedulePreview(); return; }
+      const travel = Math.min(330, Math.max(170, distance));
+      const next = { x: Math.max(-50, Math.min(650, 300 + dx / distance * travel)), y: Math.max(190, Math.min(385, 535 + dy / distance * travel)), power: Math.min(1, distance / 300 + gesture.speed * .12) };
+      aimRef.current = next; schedulePreview();
     }
   };
   const pointerUp = (event: PointerEvent<HTMLCanvasElement>) => {
     if (!drag.current || drag.current.id !== event.pointerId) return;
-    const mode = drag.current.mode; drag.current = null;
-    if (mode === "aim" && aimRef.current) shoot(aimRef.current); else setAim(null);
+    pointerMove(event);
+    const mode = drag.current.mode, preview = aimRef.current; drag.current = null;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+    if (mode === "aim" && preview) shoot(preview); else setAim(null);
     aimRef.current = null;
   };
+  const cancelDrag = (event: PointerEvent<HTMLCanvasElement>) => { if (drag.current && event.pointerId !== drag.current.id) return; drag.current = null; aimRef.current = null; setAim(null); renderRef.current(null); };
+  useEffect(() => {
+    const cancel = () => { drag.current = null; aimRef.current = null; renderRef.current(null); };
+    window.addEventListener("resize", cancel); document.addEventListener("visibilitychange", cancel);
+    return () => { window.removeEventListener("resize", cancel); document.removeEventListener("visibilitychange", cancel); };
+  }, []);
   const restart = () => {
-    cancelAnimationFrame(raf.current); locked.current = false; reported.current = false;
+    cancelAnimationFrame(raf.current); cancelAnimationFrame(previewFrame.current); previewFrame.current = 0; locked.current = false; reported.current = false;
     caromWorld.current = createCaromWorld(); canWorld.current = createCanWorld();
+    match.current = createCaromMatch(); setCasualActive(0); setCasualWinner(null); drag.current = null; aimRef.current = null;
     setScores([0, 0]); setShot(0); setReady(false); setMoving(false); setAim(null); setStrikerX(300);
     setMessage(carom ? "Move the striker, then drag back to shoot." : "Drag the ball toward the cans and release.");
   };
-  const winner = scores[0] === scores[1] ? t("It's a draw!") : t("{0} wins!", labels[scores[0] > scores[1] ? 0 : 1]);
+  const winner = casualWinner !== null ? t("{0} wins!", labels[casualWinner]) : scores[0] === scores[1] ? t("It's a draw!") : t("{0} wins!", labels[scores[0] > scores[1] ? 0 : 1]);
 
   return <div className="arcade-layout">
     <div className="arcade-intro"><p className="eyebrow">{t(carom ? "CAROM" : "TIN CAN KNOCKDOWN")}</p><h2>{t(carom ? "Pocket the coins" : "Topple the cans")}</h2><p>{t(carom ? "Move the striker on the baseline. Drag back and release to shoot." : "Drag the ball toward the cans. Aim higher or lower on the stack.")}</p></div>
     <GamePlayArea className="arcade-play-area">
       <PlayerScoreboard activePlayer={active} scores={scores} labels={labels} gameOver={finished} />
-      <div className="arcade-status" role="status" aria-live="polite"><strong>{finished ? winner : ready ? t("{0}'s shot {1} of 6", labels[active], Math.floor(shot / 2) + 1) : t("Pass the device to {0}", labels[active])}</strong><span>{finished ? t("All twelve shots are complete.") : moving ? t("Wait for everything to settle…") : t(message, messagePoints)}</span><small className="fullscreen-score-summary">{labels[0]}: {scores[0]} · {labels[1]}: {scores[1]}</small></div>
-      {!finished && !ready && <button type="button" className="primary-button arcade-ready" onClick={() => setReady(true)}>{t("{0} is ready", labels[active])}</button>}
-      <canvas ref={canvas} className={carom ? "carom-board" : "can-scene"} role="img" aria-label={t(carom ? "Carom board with coins and four corner pockets" : "Tin can stack and throwing ball")} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={() => { drag.current = null; aimRef.current = null; setAim(null); }} />
+      <div className="arcade-status" role="status" aria-live="polite"><strong>{finished ? winner : ready ? casual ? t("{0}: {1} coins", labels[active], t(active === 0 ? "Light" : "Dark")) : t("{0}'s shot {1} of 6", labels[active], Math.floor(shot / 2) + 1) : t("Pass the device to {0}", labels[active])}</strong><span>{finished ? t(casual ? "Round complete." : "All twelve shots are complete.") : moving ? t("Wait for everything to settle…") : t(message, messagePoints)}</span><small className="fullscreen-score-summary">{labels[0]}: {scores[0]} · {labels[1]}: {scores[1]}</small></div>
+      <canvas ref={canvas} className={carom ? "carom-board" : "can-scene"} tabIndex={0} onKeyDown={event => { if (event.key === " " || event.key === "Enter") { event.preventDefault(); if (!event.repeat) shoot(); } }} aria-label={t(carom ? "Carom board with coins and four corner pockets" : "Tin can stack and throwing ball")} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={cancelDrag} onLostPointerCapture={cancelDrag} />
+      {casual && <p className="arcade-rule-hint">{t(match.current.queenPending !== null ? "Cover the queen with your own coin this shot." : "Own coin: play again. Queen: cover with your own coin. Striker: foul.")}</p>}
       <div className="arcade-controls">
+        <details className="shot-adjustments"><summary>{t("Adjust shot")}</summary><div className="shot-adjustment-fields">
         <label>{t(carom ? "Striker position" : "Aim height")}<input disabled={!canPlay} type="range" min={carom ? 115 : 190} max={carom ? 485 : 385} value={carom ? strikerX : targetY} onChange={event => carom ? setStrikerX(legalStrikerX(caromWorld.current, Number(event.target.value))) : setTargetY(Number(event.target.value))} /></label>
         {!carom && <label>{t("Aim left or right")}<input disabled={!canPlay} type="range" min="105" max="495" value={targetX} onChange={event => setTargetX(Number(event.target.value))} /></label>}
         {carom && <label>{t("Direction")}<input disabled={!canPlay} type="range" min="-160" max="-20" value={Math.max(-160, Math.min(-20, angle))} onChange={event => setAngle(Number(event.target.value))} /></label>}
         <label>{t("Strength")}: {power}%<input disabled={!canPlay} type="range" min="10" max="100" value={Math.max(10, power)} onChange={event => setPower(Number(event.target.value))} /></label>
-        <button type="button" className="primary-button arcade-shoot" disabled={!canPlay} onClick={() => shoot()}>{t(carom ? "Shoot striker" : "Throw ball")}</button>
-        <button type="button" className="arcade-mute" aria-pressed={muted} onClick={() => setMuted(value => !value)}>{muted ? <VolumeX size={20} /> : <Volume2 size={20} />}{t(muted ? "Sound off" : "Sound on")}</button>
+        {!competitionMode && <button type="button" className="secondary-button" onClick={restart}><RotateCcw size={20} />{t("Start new match")}</button>}
+        </div></details>
+        <button type="button" className="primary-button arcade-shoot" disabled={moving || finished} onClick={() => ready ? shoot() : setReady(true)}>{!ready && !finished ? t("{0} is ready", labels[active]) : t(carom ? "Shoot striker" : "Throw ball")}</button>
+        <button type="button" className="arcade-mute" aria-label={t(muted ? "Sound off" : "Sound on")} aria-pressed={muted} onClick={() => setMuted(value => !value)}>{muted ? <VolumeX size={20} /> : <Volume2 size={20} />}{t(muted ? "Sound off" : "Sound on")}</button>
       </div>
-      {finished && !competitionMode && <button type="button" className="primary-button arcade-ready" onClick={restart}><RotateCcw size={20} />{t("Play again")}</button>}
     </GamePlayArea>
   </div>;
 }

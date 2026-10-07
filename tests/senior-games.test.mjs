@@ -63,7 +63,7 @@ test("Carom edge rebounds lose speed and stopped discs stay still", () => {
 
 test("Can throws have an arc, cause distinct physical outcomes, and settle", () => {
   const miss = cans.createCanWorld();
-  assert.ok(cans.throwBall(miss, 105, 200, .8));
+  assert.ok(cans.throwBall(miss, -50, 200, .8));
   assert.equal(cans.throwBall(miss, 300, 315, .8), false);
   advance(miss, cans.stepCans, cans.cansSettled);
   assert.equal(miss.impacts, 0);
@@ -79,7 +79,7 @@ test("Can throws have an arc, cause distinct physical outcomes, and settle", () 
     assert.ok(can.y <= 405);
   }
   const fallen = hit.cans.filter(c => c.fallen).length;
-  assert.ok(cans.throwBall(hit, 105, 200, .8));
+  assert.ok(cans.throwBall(hit, -1000, 200, .8));
   advance(hit, cans.stepCans, cans.cansSettled);
   assert.equal(hit.cans.filter(c => c.fallen).length, fallen);
 });
@@ -111,7 +111,7 @@ test("Both physics loops finish twelve consecutive turns without duplicate event
     if (board.discs.every(d => d.pocketed)) board = carom.createCaromWorld();
 
     const beforeFallen = stack.cans.filter(c => c.fallen).length;
-    assert.ok(cans.throwBall(stack, turn % 2 ? 300 : 105, turn % 2 ? 315 : 200, .8));
+    assert.ok(cans.throwBall(stack, turn % 2 ? 300 : -50, turn % 2 ? 315 : 200, .8));
     advance(stack, cans.stepCans, cans.cansSettled);
     assert.equal(stack.falls, stack.cans.filter(c => c.fallen).length - beforeFallen);
     stack.cans.forEach(c => { c.vx = 0; c.vy = 0; c.spin = 0; });

@@ -11,21 +11,24 @@ export type Marble = {
 };
 
 export const MARBLES_WIDTH = 900;
-export const MARBLES_HEIGHT = 560;
-export const MARBLES_RING = { x: MARBLES_WIDTH / 2, y: MARBLES_HEIGHT / 2, radius: 200 };
+export const MARBLES_HEIGHT = 700;
+export const MARBLES_RING = { x: MARBLES_WIDTH / 2, y: 260, radius: 200 };
+
+export const MARBLES_LAUNCH = { x: MARBLES_WIDTH / 2, y: 570 };
+export const MARBLES_MAX_PULL = 110;
 
 export function returnShooterToStart(marbles: Marble[]) {
   const shooter = marbles.find((marble) => !marble.target);
   if (!shooter) return;
   shooter.x = MARBLES_RING.x;
   // A target still touching the ring cannot overlap this starting position.
-  shooter.y = MARBLES_HEIGHT - shooter.radius;
+  shooter.y = MARBLES_LAUNCH.y;
   shooter.vx = 0;
   shooter.vy = 0;
 }
 
 /** Advance one fixed physics step, banking targets as soon as they leave the ring. */
-export function advanceMarbles(marbles: Marble[], dt = 1) {
+function advanceSubstep(marbles: Marble[], dt: number) {
   let captured = 0;
   const captureOutside = (marble: Marble) => {
     if (!marble.target || marble.captured) return;
@@ -61,7 +64,7 @@ export function advanceMarbles(marbles: Marble[], dt = 1) {
     }
   }
 
-  for (let i = 0; i < marbles.length; i++) {
+  for (let pass = 0; pass < 4; pass++) for (let i = 0; i < marbles.length; i++) {
     for (let j = i + 1; j < marbles.length; j++) {
       const a = marbles[i], b = marbles[j];
       if (a.captured || b.captured) continue;
@@ -90,10 +93,29 @@ export function advanceMarbles(marbles: Marble[], dt = 1) {
 
   for (const marble of marbles) {
     captureOutside(marble);
+    if (!marble.captured) {
+      marble.x = Math.max(marble.radius, Math.min(MARBLES_WIDTH - marble.radius, marble.x));
+      marble.y = Math.max(marble.radius, Math.min(MARBLES_HEIGHT - marble.radius, marble.y));
+    }
     if (Math.hypot(marble.vx, marble.vy) < 0.07) {
       marble.vx = 0;
       marble.vy = 0;
     }
   }
   return { captured, moving: marbles.some((marble) => !marble.captured && (marble.vx !== 0 || marble.vy !== 0)) };
+}
+
+/** Adaptive substeps bound travel to a fraction of a marble radius. */
+export function advanceMarbles(marbles: Marble[], dt = 1) {
+  if (!Number.isFinite(dt) || dt <= 0) return { captured: 0, moving: false };
+  const duration = Math.min(dt, 2);
+  const speed = Math.max(0, ...marbles.map(m => Math.hypot(m.vx, m.vy)));
+  const radius = Math.min(13, ...marbles.map(m => m.radius));
+  const steps = Math.max(1, Math.ceil(speed * duration / (radius * .4)));
+  let captured = 0, moving = false;
+  for (let i = 0; i < steps; i++) {
+    const result = advanceSubstep(marbles, duration / steps);
+    captured += result.captured; moving = result.moving;
+  }
+  return { captured, moving };
 }

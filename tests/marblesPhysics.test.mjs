@@ -5,7 +5,7 @@ import ts from "typescript";
 
 const source = readFileSync(new URL("../src/games/marblesPhysics.ts", import.meta.url), "utf8");
 const { outputText } = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext } });
-const { advanceMarbles, returnShooterToStart, MARBLES_RING: ring } = await import(`data:text/javascript;base64,${Buffer.from(outputText).toString("base64")}`);
+const { advanceMarbles, returnShooterToStart, MARBLES_HEIGHT: height, MARBLES_RING: ring } = await import(`data:text/javascript;base64,${Buffer.from(outputText).toString("base64")}`);
 const marble = (overrides = {}) => ({ id: 0, x: ring.x, y: ring.y, vx: 0, vy: 0, radius: 18, target: true, captured: false, color: "teal", ...overrides });
 
 test("a target is banked exactly once when its whole marble crosses the ring", () => {
@@ -69,7 +69,7 @@ test("a missed maximum-power shot stays inside the board and settles", () => {
   do {
     result = advanceMarbles([shooter]);
     assert.ok(shooter.x >= 20 && shooter.x <= 880);
-    assert.ok(shooter.y >= 20 && shooter.y <= 540);
+    assert.ok(shooter.y >= 20 && shooter.y <= height - shooter.radius);
     steps += 1;
   } while (result.moving && steps < 1200);
   assert.equal(result.captured, 0);
