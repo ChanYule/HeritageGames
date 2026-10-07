@@ -55,7 +55,7 @@ test("own coin grants another turn while a miss passes the turn", () => {
 });
 test("queen can be covered on the following shot and returns on failed cover", () => {
   for(const cover of [true,false]) {
-    const w=c.createCaromWorld(), match=c.createCaromMatch(); w.pocketed=[1]; w.discs[0].pocketed=true;
+    const w=c.createCaromWorld(), match=c.createCaromMatch(); w.pocketed=[1]; w.discs[0].pocketed=true; w.discs.find(d=>d.id===4).pocketed=true;
     c.resolveCaromTurn(w,match); assert.equal(match.queenPending,0); assert.equal(match.active,0);
     w.pocketed=cover?[2]:[]; w.discs[1].pocketed=cover; c.resolveCaromTurn(w,match);
     assert.equal(match.queenPending,null); assert.equal(match.queenCovered,cover?0:null); assert.equal(w.discs[0].pocketed,cover);
@@ -66,8 +66,8 @@ test("last own coin wins only after queen is covered", () => {
     const w=c.createCaromWorld(), match=c.createCaromMatch();
     for(const d of w.discs) if(c.coinColour(d.id)==="light") d.pocketed=true;
     w.pocketed=[18]; match.queenCovered=covered?1:null;
-    c.resolveCaromTurn(w,match); assert.equal(match.winner,covered?0:null);
-    if(!covered)assert.equal(w.discs.find(d=>d.id===18).pocketed,false);
+    c.resolveCaromTurn(w,match); assert.equal(match.winner,covered?0:1);
+    assert.equal(match.points[covered?0:1], covered?9:3);
   }
 });
 test("carrom settling never truncates a still-moving disc", () => {
@@ -128,4 +128,82 @@ test("stronger throws have greater launch speed; invalid throws cannot corrupt a
   const weak=tin.ballVelocity(300,315,.2),strong=tin.ballVelocity(300,315,1);
   assert.ok(Math.hypot(strong.vx,strong.vy)>Math.hypot(weak.vx,weak.vy));
   const w=tin.createCanWorld(); assert.equal(tin.throwBall(w,NaN,300,1),false); assert.equal(w.ball,null);
+});
+
+const pocket = (w, ids) => { w.pocketed=ids; for(const id of ids) { const d=w.discs.find(d=>d.id===id); if(d)d.pocketed=true; } };
+test("opposite player launches from the top baseline with overlap protection",()=>{
+  const w=c.createCaromWorld(); assert.ok(c.shootCarom(w,300,0,400,1)); assert.equal(w.discs.at(-1).y,120);
+  const blocked=c.createCaromWorld(); blocked.discs.push(disc(20,300,120));
+  assert.equal(c.shootCarom(blocked,300,0,400,1),false); assert.notEqual(c.legalStrikerX(blocked,300,1),300);
+});
+test("queen alone before the first own coin is returned and loses the turn",()=>{
+  const w=c.createCaromWorld(), match=c.createCaromMatch(); pocket(w,[1]); c.resolveCaromTurn(w,match);
+  assert.equal(match.active,1); assert.equal(match.queenPending,null); assert.equal(w.discs[0].pocketed,false);
+});
+test("queen plus first own coin needs cover; two first own coins cover immediately",()=>{
+  for(const ids of [[1,2],[1,2,4]]) {
+    const w=c.createCaromWorld(), match=c.createCaromMatch(); pocket(w,ids); c.resolveCaromTurn(w,match);
+    assert.equal(match.active,0); assert.equal(match.queenPending,ids.length===2?0:null); assert.equal(match.queenCovered,ids.length===3?0:null);
+  }
+});
+test("striker plus own coins returns all plus a due and retains the turn",()=>{
+  const w=c.createCaromWorld(), match=c.createCaromMatch(); w.discs.find(d=>d.id===6).pocketed=true;
+  pocket(w,[0,2,4]); c.resolveCaromTurn(w,match);
+  assert.equal(match.active,0); assert.equal(match.dues[0],0);
+  for(const id of [2,4,6])assert.equal(w.discs.find(d=>d.id===id).pocketed,false);
+});
+test("unpaid dues survive handovers and are repaid by later own coins",()=>{
+  const w=c.createCaromWorld(), match=c.createCaromMatch(); match.breakComplete=true; pocket(w,[0]); c.resolveCaromTurn(w,match);
+  assert.deepEqual(match.dues,[1,0]); assert.equal(match.active,1);
+  pocket(w,[]); c.resolveCaromTurn(w,match); pocket(w,[2]); c.resolveCaromTurn(w,match);
+  assert.equal(match.dues[0],0); assert.equal(w.discs.find(d=>d.id===2).pocketed,false); assert.equal(match.active,0);
+});
+test("an outstanding due disallows queen even when an own coin is pocketed",()=>{
+  const w=c.createCaromWorld(), match=c.createCaromMatch(); match.dues[0]=1; pocket(w,[1,2]); c.resolveCaromTurn(w,match);
+  assert.equal(match.queenCovered,null); assert.equal(match.queenPending,null); assert.equal(w.discs[0].pocketed,false); assert.equal(match.active,1);
+});
+test("striker with own cover coin grants another cover attempt",()=>{
+  const w=c.createCaromWorld(), match=c.createCaromMatch(); w.discs.find(d=>d.id===6).pocketed=true;
+  pocket(w,[1]); c.resolveCaromTurn(w,match); pocket(w,[0,2]); c.resolveCaromTurn(w,match);
+  assert.equal(match.queenPending,0); assert.equal(match.active,0); assert.equal(w.discs[0].pocketed,true);
+  pocket(w,[4]); c.resolveCaromTurn(w,match); assert.equal(match.queenCovered,0);
+});
+test("pocketing opponent last coin loses board and credits their queen",()=>{
+  const w=c.createCaromWorld(), match=c.createCaromMatch();
+  for(const d of w.discs)if(c.coinColour(d.id)==="dark")d.pocketed=true;
+  pocket(w,[19]); c.resolveCaromTurn(w,match); assert.equal(match.winner,1); assert.equal(match.points[1],12);
+});
+test("board points credit remaining opponent coins and only winner's queen",()=>{
+  for(const queenOwner of [0,1]) {
+    const w=c.createCaromWorld(), match=c.createCaromMatch(); match.queenCovered=queenOwner; w.discs[0].pocketed=true;
+    for(const d of w.discs)if(c.coinColour(d.id)==="light")d.pocketed=true;
+    w.discs.find(d=>d.id===3).pocketed=true; pocket(w,[18]); c.resolveCaromTurn(w,match);
+    assert.equal(match.winner,0); assert.deepEqual(match.points,[8+(queenOwner===0?3:0),0]);
+  }
+});
+test("simultaneous last coins with queen cover wins; striker changes it to a loss",()=>{
+  for(const foul of [false,true]) {
+    const w=c.createCaromWorld(), match=c.createCaromMatch();
+    for(const d of w.discs)if(d.id!==1)d.pocketed=true;
+    pocket(w,foul?[1,18,19,0]:[1,18,19]); c.resolveCaromTurn(w,match);
+    assert.equal(match.winner,foul?1:0); assert.equal(match.points[foul?1:0],3);
+  }
+});
+
+test("opening rack has alternating inner coins and the white Y arms",()=>{
+  const w=c.createCaromWorld();
+  for(let i=1;i<=6;i++)assert.equal(c.coinColour(w.discs[i].id),i%2?"light":"dark");
+  for(const side of [0,2,4])assert.equal(c.coinColour(w.discs[7+side*2].id),"light");
+});
+test("break misses allow three tries and striker before break has no due",()=>{
+  const w=c.createCaromWorld(), match=c.createCaromMatch();
+  for(let i=0;i<3;i++) { pocket(w,[]); c.resolveCaromTurn(w,match); assert.equal(match.active,i<2?0:1); }
+  const other=c.createCaromMatch(); pocket(w,[0]); c.resolveCaromTurn(w,other); assert.equal(other.active,1); assert.equal(other.dues[0],0);
+});
+
+test("eligible queen with striker returns queen and a due but keeps the turn",()=>{
+  const w=c.createCaromWorld(), match=c.createCaromMatch(); w.discs.find(d=>d.id===2).pocketed=true;
+  pocket(w,[1,0]); const result=c.resolveCaromTurn(w,match);
+  assert.equal(match.active,0); assert.equal(match.queenPending,null); assert.equal(w.discs[0].pocketed,false);
+  assert.equal(w.discs.find(d=>d.id===2).pocketed,false); assert.match(result.message,/Play again/);
 });

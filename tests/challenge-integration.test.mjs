@@ -66,6 +66,29 @@ try {
         assert.doesNotMatch(html, /turn-ready-overlay/);
       });
   }
+  test("Carrom standalone and competition show single-board rules and coin/due progress", () => {
+    for (const competitionMode of [false, true]) {
+      const html = renderToString(createElement(Arcade, { kind: "carom", competitionMode, carromChallenge: competitionMode }));
+      assert.match(html, /How to play Carrom/);
+      assert.match(html, /White: 9 coins left; 0 due/);
+      assert.match(html, /Black: 9 coins left; 0 due/);
+      assert.match(html, /Single board/);
+      assert.doesNotMatch(html, /shot 1 of 6|All twelve shots/);
+    }
+  });
+  test("Carrom guide and live rule phrases have Chinese translations", () => {
+    const previousDocument = globalThis.document;
+    globalThis.document = { documentElement: { lang: "en" } };
+    setLanguage("zh");
+    try {
+      const html = renderToString(createElement(Arcade, { kind: "carom" }));
+      assert.doesNotMatch(html, /How to play Carrom|Single board:|coins left;|Queen available/);
+    } finally {
+      setLanguage("en");
+      if (previousDocument === undefined) delete globalThis.document;
+      else globalThis.document = previousDocument;
+    }
+  });
   test("seeded challenge layouts repeat fairly and standalone remains random", () => {
     const a = seededRandom(123),
       b = seededRandom(123),

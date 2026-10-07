@@ -20,3 +20,7 @@
 .arcade-layout button:not(:disabled):active{transform:scale(.98)}
 @media(max-width:600px){.arcade-intro{padding:13px 16px}.arcade-play-area{gap:9px}.arcade-controls{padding:9px}.arcade-controls label{min-width:125px}.arcade-shoot{flex:1 1 180px}}
 @media(max-height:650px) and (orientation:landscape){.arcade-intro{padding:10px 14px}.arcade-intro p:last-child{display:none}}
+
+.carrom-rules{padding:14px 20px;border:1px solid #dcc9a6;border-radius:14px;background:#fffaf0;color:#264238}
+.carrom-rules summary{font-size:1.15rem;font-weight:750;cursor:pointer;min-height:44px;display:flex;align-items:center}
+.carrom-rules li{margin:10px 0;line-height:1.5}

@@ -1,7 +1,8 @@
 import type { CaromWorld } from "./caromPhysics";
 import { ballVelocity, type CanWorld } from "./canPhysics";
 
-export function drawCarom(ctx: CanvasRenderingContext2D, world: CaromWorld, strikerX: number, aim: { x: number; y: number; power: number } | null, ready: boolean) {
+export function drawCarom(ctx: CanvasRenderingContext2D, world: CaromWorld, strikerX: number, aim: { x: number; y: number; power: number } | null, ready: boolean, player: 0 | 1 = 0) {
+  const baseline = player === 0 ? 480 : 120;
   ctx.clearRect(0, 0, 600, 600);
   ctx.fillStyle = "#82512e"; ctx.fillRect(0, 0, 600, 600);
   ctx.fillStyle = "#c89457"; ctx.fillRect(12, 12, 576, 576);
@@ -22,15 +23,15 @@ export function drawCarom(ctx: CanvasRenderingContext2D, world: CaromWorld, stri
   }
   if (ready && !world.discs.some(d => d.id === 0)) {
     ctx.strokeStyle = "#276550"; ctx.lineWidth = 6; ctx.lineCap = "round";
-    ctx.beginPath(); ctx.moveTo(115, 480); ctx.lineTo(485, 480); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(115, baseline); ctx.lineTo(485, baseline); ctx.stroke();
     if (aim) {
       ctx.strokeStyle = "#276550"; ctx.lineWidth = 2; ctx.setLineDash([5, 7]);
-      ctx.beginPath(); ctx.arc(strikerX, 480, 85, 0, Math.PI); ctx.stroke(); ctx.setLineDash([]);
-      ctx.fillStyle = "#d8c49a"; ctx.fillRect(strikerX - 40, 580, 80, 8);
-      ctx.fillStyle = "#255a4a"; ctx.fillRect(strikerX - 40, 580, 80 * aim.power, 8);
+      ctx.beginPath(); ctx.arc(strikerX, baseline, 85, player === 0 ? 0 : Math.PI, player === 0 ? Math.PI : Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = "#d8c49a"; ctx.fillRect(strikerX - 40, player === 0 ? 580 : 12, 80, 8);
+      ctx.fillStyle = "#255a4a"; ctx.fillRect(strikerX - 40, player === 0 ? 580 : 12, 80 * aim.power, 8);
       ctx.strokeStyle = "#255a4a"; ctx.lineWidth = 4; ctx.setLineDash([10, 8]);
-      ctx.beginPath(); ctx.moveTo(strikerX, 480); ctx.lineTo(strikerX + aim.x * (90 + aim.power * 170), 480 + aim.y * (90 + aim.power * 170)); ctx.stroke(); ctx.setLineDash([]);
-      ctx.fillStyle = "#255a4a"; ctx.beginPath(); ctx.arc(strikerX + aim.x * 180, 480 + aim.y * 180, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(strikerX, baseline); ctx.lineTo(strikerX + aim.x * (90 + aim.power * 170), baseline + aim.y * (90 + aim.power * 170)); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = "#255a4a"; ctx.beginPath(); ctx.arc(strikerX + aim.x * 180, baseline + aim.y * 180, 6, 0, Math.PI * 2); ctx.fill();
     }
   }
   for (const disc of world.discs) {
@@ -54,7 +55,7 @@ export function drawCarom(ctx: CanvasRenderingContext2D, world: CaromWorld, stri
     ctx.beginPath(); ctx.arc(flash.x, flash.y, 27 + (1 - flash.life / .28) * 7, 0, Math.PI * 2); ctx.stroke();
   }
   if (ready && !world.discs.some(d => d.id === 0)) {
-    ctx.fillStyle = "#f5e9bf"; ctx.beginPath(); ctx.arc(strikerX, 480, 20, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#f5e9bf"; ctx.beginPath(); ctx.arc(strikerX, baseline, 20, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = "#9b6234"; ctx.lineWidth = 5; ctx.stroke();
   }
 }
