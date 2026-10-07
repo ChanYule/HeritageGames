@@ -214,8 +214,8 @@ export default function Competition({ onExit, onSoloPlay, initialGame = "marbles
   const matchGuidance = {
     marbles: [t("45 seconds for each shot"), t("Tap the ring to aim, then press Shoot marble."), t("Controlled shots are often easier than full power")],
     "pick-up-sticks": [t("45 seconds for the whole turn"), t("A clean pickup lets you continue"), t("Lifting a blocked stick passes the turn. Tapping to select a stick is safe.")],
-    carom: [t("Six shots for each player"), t("Tap a coin, choose a corner pocket and set the strength"), t("Each pocketed coin scores 100 points")],
-    "tin-can-knockdown": [t("Six throws for each player"), t("Choose an aiming lane and strength"), t("Each fallen can scores 100 points")],
+    carom: [t("Six shots for each player"), t("Move the striker along the baseline, then drag back and release"), t("Each pocketed coin scores 100 points")],
+    "tin-can-knockdown": [t("Six throws for each player"), t("Drag the ball toward the stack and release"), t("Each fallen can scores 100 points")],
   }[currentMatch.game];
 
   if (stage === "playing") {

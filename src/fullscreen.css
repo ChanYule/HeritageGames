@@ -142,3 +142,27 @@
   .game-play-area.is-fullscreen .mobile-game-control { min-height: 38px; }
   .game-play-area.is-fullscreen .marble-shot-controls input[type="range"] { min-height: 30px; }
 }
+
+/* Arcade canvases keep their drawing coordinates when fullscreen changes size. */
+.arcade-play-area.is-fullscreen .carom-board,
+.arcade-play-area.is-fullscreen .can-scene { padding:0; border:0; min-height:0; object-fit:contain; }
+.arcade-play-area.is-fullscreen .carom-board { aspect-ratio:1; }
+.arcade-play-area.is-fullscreen .can-scene { width:min(100%,640px,54dvh); aspect-ratio:6/5; height:auto; max-height:none; }
+.arcade-play-area.is-fullscreen .arcade-controls { display:flex; flex-wrap:wrap; gap:5px; }
+.arcade-play-area.is-fullscreen .arcade-controls label { min-width:110px; font-size:.78rem; }
+.arcade-play-area.is-fullscreen .arcade-controls input { height:27px; }
+.arcade-play-area.is-fullscreen .arcade-mute { min-height:40px; }
+@media (orientation:portrait) and (max-height:700px) {
+  .arcade-play-area.is-fullscreen { overflow-y:auto !important; }
+  .arcade-play-area.is-fullscreen .carom-board { flex:0 0 auto; width:min(100%,570px,max(200px,calc(100dvh - 350px))); }
+  .arcade-play-area.is-fullscreen .can-scene { flex:0 0 auto; }
+}
+@media (max-height:600px) and (orientation:landscape) {
+  .arcade-play-area.is-fullscreen .carom-board,
+  .arcade-play-area.is-fullscreen .can-scene { position:absolute; top:50%; left:max(7px,env(safe-area-inset-left)); width:min(calc(100vw - min(270px,32vw) - 20px),calc(100dvh - 12px)); height:auto; max-height:calc(100dvh - 12px); transform:translateY(-50%); }
+  .arcade-play-area.is-fullscreen .can-scene { width:min(calc(100vw - min(270px,32vw) - 20px),calc((100dvh - 12px) * 1.2)); }
+  .arcade-play-area.is-fullscreen .arcade-controls { position:absolute; right:max(7px,env(safe-area-inset-right)); bottom:max(5px,env(safe-area-inset-bottom)); width:min(250px,31vw); display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .arcade-play-area.is-fullscreen .arcade-controls label { min-width:0; font-size:.7rem; }
+  .arcade-play-area.is-fullscreen .arcade-controls label:nth-of-type(3) { grid-column:1/-1; }
+  .arcade-play-area.is-fullscreen .arcade-controls :is(.arcade-shoot,.arcade-mute) { width:100%; min-width:0; min-height:42px; padding:3px; font-size:.8rem; }
+}

@@ -35,10 +35,10 @@ Choose **Play a competition** on Home, enter distinct player names, and choose Q
 | --- | --- | --- |
 | Marbles | Tap the ring to aim, adjust power, then press Shoot marble. Dragging the shooter backwards and releasing also works. On a focused board, use arrows to aim and set power, and Space to shoot. | Alternate shots. A marble must fully cross the ring to score 100. Capturing two or more in one shot adds 50 per marble. The higher score wins when all targets are out. |
 | Pick-Up Sticks | Tap a stick, then press Lift selected stick, or drag it away. Tab to a stick and press Enter/Space for keyboard play. Show a free stick selects an available stick. | A clean lift earns its colour's points and keeps the turn. Lifting a blocked stick or running out of time passes the turn. Selecting a stick alone is safe. |
-| Five Stones | Press Toss stone, tap the required numbered stones, then use the large Catch now button during the falling phase. Number keys 1–4 collect stones; Space tosses/catches when the board is focused. | Complete patterns 1+1+1+1, 2+2, 3+1, then 4. Each collected stone earns 120 points plus up to 100 per catch for timing. Practice allows 8 seconds per toss; Challenge allows 4.8 seconds. |
-| Chapteh | Share the screen: left player uses A/Left Arrow; right player uses D/Right Arrow. Tap either side or its large kick button when Kick now appears. | Send the chapteh to the other side. Landing on a player's side gives the opponent a point. The scorer serves next; first to 7 wins. |
+| Carom | Press Ready, move the striker along the marked baseline, then drag back from it and release. Sliders and Shoot striker offer keyboard control. | A pocketed coin earns 100 points. Pocketing the striker is a 100 point foul. Each player has six shots. |
+| Tin Can Knockdown | Press Ready, then drag from the ball toward the stack and release. Aim and strength sliders offer keyboard control. | Each newly fallen can earns 100 points. Each player has six throws. |
 
-Five Stones is solo in practice. In competition, players take separate attempts with the same practice timing and a maximum of 12 tosses each. Nine successful catches complete all patterns. An attempt can be ended early between tosses with score confirmation.
+Carom and Tin Can Knockdown use the same turn handover in practice and competition. Sound can be muted in each game.
 
 ## Timing and accessibility
 
@@ -52,11 +52,11 @@ Five Stones is solo in practice. In competition, players take separate attempts 
 
 ## Verification
 
-`npm test` covers competition schedules for 2–8 players, balanced starting duties, shared standings, invalid saved data, duplicate results, Five Stones handovers and toss limits, marble physics, stick overlap geometry and Chapteh returns.
+`npm test` covers competition schedules, balanced starting duties, shared standings, invalid saved data, marble physics, stick overlap geometry, and Carom and Tin Can physics across repeated turns.
 
 The senior UI pass was checked with TypeScript, the production build, 32 automated tests, translation coverage, and server rendering of every initial route in both languages. Server rendering checks markup; it does not verify browser interaction or layout.
 
-A connected browser was unavailable during this pass. Before a live event, run a complete competition on the intended device and check touch input, pause/resume, fullscreen, English/Chinese, larger text, portrait/landscape layout, result confirmation and saved progress after reload.
+A connected browser was unavailable during this pass. Before a live event, run both arcade games on the intended device and check touch input, fullscreen, English/Chinese, larger text, portrait/landscape layout, result confirmation and saved progress after reload.
 
 ## Technology
 
