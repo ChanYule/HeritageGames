@@ -13,7 +13,7 @@ import "./arcade.css";
 type Props = CompetitionGameProps & { kind: "carom" | "tin-can-knockdown" };
 type Aim = { x: number; y: number; power: number };
 
-export default function ArcadeTargetGame({ kind, playerNames, competitionMode = false, onComplete }: Props) {
+export default function ArcadeTargetGame({ kind, playerNames, competitionMode = false, onComplete, individualAttempt, playerColours, carromChallenge }: Props) {
   useLanguage();
   const carom = kind === "carom";
   const labels: [string, string] = playerNames ?? [t("Player 1"), t("Player 2")];
@@ -22,7 +22,7 @@ export default function ArcadeTargetGame({ kind, playerNames, competitionMode = 
   const [casualActive, setCasualActive] = useState<0 | 1>(0);
   const [casualWinner, setCasualWinner] = useState<0 | 1 | null>(null);
   const match = useRef(createCaromMatch());
-  const [ready, setReady] = useState(false);
+  const [ready, setReady] = useState(Boolean(individualAttempt || carromChallenge));
   const [moving, setMoving] = useState(false);
   const [message, setMessage] = useState(carom ? "Move the striker, then drag back to shoot." : "Drag the ball toward the cans and release.");
   const [messagePoints, setMessagePoints] = useState(0);
@@ -48,9 +48,9 @@ export default function ArcadeTargetGame({ kind, playerNames, competitionMode = 
   const previousImpact = useRef(0);
   const previousEdge = useRef(0);
   const previousFall = useRef(0);
-  const casual = carom && !competitionMode;
-  const active = casual ? casualActive : (shot % 2) as 0 | 1;
-  const finished = casual ? casualWinner !== null : shot >= 12;
+  const casual = carom && (!competitionMode || carromChallenge);
+  const active = casual ? casualActive : individualAttempt ? 0 : (shot % 2) as 0 | 1;
+  const finished = casual ? casualWinner !== null : shot >= (individualAttempt?.shots ?? 12);
   const canPlay = ready && !moving && !finished;
 
   const render = useCallback((preview: Aim | null, showStriker = ready && !moving) => {
@@ -84,12 +84,12 @@ export default function ArcadeTargetGame({ kind, playerNames, competitionMode = 
     previewFrame.current = requestAnimationFrame(() => { previewFrame.current = 0; if (!locked.current) renderRef.current(aimRef.current); });
   };
   useEffect(() => {
-    if (finished && onComplete && !reported.current) { reported.current = true; onComplete({ scores }); }
+    if (finished && onComplete && !reported.current) { reported.current = true; onComplete({ scores, ...(casual ? { winner: casualWinner } : {}) }); }
   }, [finished, onComplete, scores]);
 
   const finishShot = (scored: number, foul: boolean) => {
     locked.current = false;
-    setMoving(false); setReady(false); setAim(null); setShot(current => current + 1);
+    setMoving(false); setReady(Boolean(individualAttempt)); setAim(null); setShot(current => current + 1);
     if (casual) {
       const ownCount = caromWorld.current.pocketed.filter(id => id !== 0 && coinColour(id) === (active === 0 ? "light" : "dark")).length;
       scored = ownCount;
@@ -230,8 +230,8 @@ export default function ArcadeTargetGame({ kind, playerNames, competitionMode = 
   return <div className="arcade-layout">
     <div className="arcade-intro"><p className="eyebrow">{t(carom ? "CAROM" : "TIN CAN KNOCKDOWN")}</p><h2>{t(carom ? "Pocket the coins" : "Topple the cans")}</h2><p>{t(carom ? "Move the striker on the baseline. Drag back and release to shoot." : "Drag the ball toward the cans. Aim higher or lower on the stack.")}</p></div>
     <GamePlayArea className="arcade-play-area">
-      <PlayerScoreboard activePlayer={active} scores={scores} labels={labels} gameOver={finished} />
-      <div className="arcade-status" role="status" aria-live="polite"><strong>{finished ? winner : ready ? casual ? t("{0}: {1} coins", labels[active], t(active === 0 ? "Light" : "Dark")) : t("{0}'s shot {1} of 6", labels[active], Math.floor(shot / 2) + 1) : t("Pass the device to {0}", labels[active])}</strong><span>{finished ? t(casual ? "Round complete." : "All twelve shots are complete.") : moving ? t("Wait for everything to settle…") : t(message, messagePoints)}</span><small className="fullscreen-score-summary">{labels[0]}: {scores[0]} · {labels[1]}: {scores[1]}</small></div>
+      <PlayerScoreboard individual={Boolean(individualAttempt)} colours={playerColours} activePlayer={active} scores={scores} labels={labels} gameOver={finished} />
+      <div className="arcade-status" role="status" aria-live="polite"><strong>{finished ? winner : ready ? casual ? t("{0}: {1} coins", labels[active], t(active === 0 ? "Light" : "Dark")) : t("{0}'s shot {1} of {2}", labels[active], individualAttempt ? shot + 1 : Math.floor(shot / 2) + 1, individualAttempt?.shots ?? 6) : t("Pass the device to {0}", labels[active])}</strong><span>{finished ? t(casual || individualAttempt ? "Round complete." : "All twelve shots are complete.") : moving ? t("Wait for everything to settle…") : t(message, messagePoints)}</span><small className="fullscreen-score-summary">{labels[0]}: {scores[0]} · {labels[1]}: {scores[1]}</small></div>
       <canvas ref={canvas} className={carom ? "carom-board" : "can-scene"} tabIndex={0} onKeyDown={event => { if (event.key === " " || event.key === "Enter") { event.preventDefault(); if (!event.repeat) shoot(); } }} aria-label={t(carom ? "Carom board with coins and four corner pockets" : "Tin can stack and throwing ball")} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={cancelDrag} onLostPointerCapture={cancelDrag} />
       {casual && <p className="arcade-rule-hint">{t(match.current.queenPending !== null ? "Cover the queen with your own coin this shot." : "Own coin: play again. Queen: cover with your own coin. Striker: foul.")}</p>}
       <div className="arcade-controls">

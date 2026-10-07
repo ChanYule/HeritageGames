@@ -81,3 +81,9 @@ export function randomMarblePositions(random = Math.random, difficulty: Difficul
 
   return positions;
 }
+
+/** Identical challenge layouts for each player; standalone games keep Math.random. */
+export function seededRandom(seed: number) {
+  let state = seed >>> 0;
+  return () => { state = (Math.imul(state, 1664525) + 1013904223) >>> 0; return state / 4294967296; };
+}

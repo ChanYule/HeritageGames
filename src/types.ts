@@ -12,10 +12,15 @@ export type GameDefinition = {
 
 export type GameResult = {
   scores: [number, number];
+  winner?: 0 | 1 | null;
 };
 
 export type CompetitionGameProps = {
   playerNames?: [string, string];
   competitionMode?: boolean;
+  individualAttempt?: { seed: number; shots: number };
+  fixedDifficulty?: "easy" | "medium" | "difficult";
+  playerColours?: [string, string];
+  carromChallenge?: boolean;
   onComplete?: (result: GameResult) => void;
 };

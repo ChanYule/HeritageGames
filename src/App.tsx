@@ -21,7 +21,7 @@ function gameFromLocation(): GameKey | null {
 export default function App() {
   const language = useLanguage();
   const [currentGame, setCurrentGame] = useState<GameKey | null>(() => gameFromLocation());
-  const [competitionOpen, setCompetitionOpen] = useState(() => new URLSearchParams(window.location.search).get("mode") === "competition");
+  const [competitionOpen, setCompetitionOpen] = useState(() => ["challenge", "competition"].includes(new URLSearchParams(window.location.search).get("mode") ?? ""));
   const [startInSetup, setStartInSetup] = useState(false);
   const [soloPlayerName, setSoloPlayerName] = useState<string | null>(() => new URLSearchParams(window.location.search).get("mode") === "solo" ? window.history.state?.soloPlayerName ?? t("Player 1") : null);
 
@@ -29,7 +29,7 @@ export default function App() {
     const handleHistory = () => {
       setStartInSetup(Boolean(window.history.state?.setup));
       setCurrentGame(gameFromLocation());
-      setCompetitionOpen(new URLSearchParams(window.location.search).get("mode") === "competition");
+      setCompetitionOpen(["challenge", "competition"].includes(new URLSearchParams(window.location.search).get("mode") ?? ""));
       setSoloPlayerName(new URLSearchParams(window.location.search).get("mode") === "solo" ? window.history.state?.soloPlayerName ?? t("Player 1") : null);
     };
     window.addEventListener("popstate", handleHistory);
@@ -38,7 +38,7 @@ export default function App() {
 
   useEffect(() => {
     document.title = competitionOpen
-      ? t("Heritage Games Competition · Singapore Heritage Games")
+      ? t("Heritage Games Challenge · Singapore Heritage Games")
       : currentGame
       ? t("{0} · Singapore Heritage Games", t(games.find((item) => item.key === currentGame)?.title ?? "Game"))
       : t("Singapore Heritage Games · Void Deck Edition");
@@ -81,7 +81,7 @@ export default function App() {
     url.searchParams.delete("game");
     if (selectedGame) url.searchParams.set("game", selectedGame);
     url.hash = "";
-    url.searchParams.set("mode", "competition");
+    url.searchParams.set("mode", "challenge");
     window.history.pushState({ heritageCompetition: true, setup: Boolean(selectedGame) }, "", url);
     setCurrentGame(selectedGame ?? null);
     setSoloPlayerName(null);
@@ -99,24 +99,13 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: "instant" });
   };
 
-  const openSoloPractice = (key: GameKey, name: string) => {
-    window.history.replaceState({ ...window.history.state, setup: true }, "", window.location.href);
-    const url = new URL(window.location.href);
-    url.searchParams.set("game", key);
-    url.searchParams.set("mode", "solo");
-    window.history.pushState({ heritageGame: key, soloPlayerName: name }, "", url);
-    setCompetitionOpen(false);
-    setCurrentGame(key);
-    setSoloPlayerName(name);
-    window.scrollTo({ top: 0, behavior: "instant" });
-  };
 
   return (
     <>
     <DisplaySettings />
     <AnimatePresence mode="wait" initial={false}>
       {competitionOpen ? (
-        <Competition key="competition" onExit={closeCompetition} onSoloPlay={openSoloPractice} initialGame={currentGame ?? undefined} startInSetup={startInSetup} />
+        <Competition key="competition" onExit={closeCompetition} initialGame={currentGame ?? undefined} startInSetup={startInSetup} />
       ) : !currentGame || !game ? (
         <Home key="home" onPlay={openGame} onCompetition={openCompetition} />
       ) : (

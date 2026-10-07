@@ -7,7 +7,7 @@ import DifficultyPicker from "../components/DifficultyPicker";
 import InstructionSteps from "../components/InstructionSteps";
 import PlayerScoreboard from "../components/PlayerScoreboard";
 import TurnTimerPanel from "../components/TurnTimerPanel";
-import { difficultySettings, type Difficulty, segmentsOverlap } from "./mechanics";
+import { difficultySettings, type Difficulty, segmentsOverlap, seededRandom } from "./mechanics";
 import type { CompetitionGameProps } from "../types";
 
 type Stick = {
@@ -34,29 +34,30 @@ const palette = [
   { color: "#7b5e8b", points: 50 },
 ];
 
-function createSticks(difficulty: Difficulty): Stick[] {
+function createSticks(difficulty: Difficulty, seed?: number): Stick[] {
+  const random = seed === undefined ? Math.random : seededRandom(seed);
   const settings = difficultySettings[difficulty];
   const tones = Array.from({ length: settings.sticks }, (_, i) => palette[i % palette.length]);
   for (let i = tones.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(random() * (i + 1));
     [tones[i], tones[j]] = [tones[j], tones[i]];
   }
 
   return tones.map((tone, i) => ({
     id: i,
-    x: 50 + (Math.random() - 0.5) * settings.stickSpread,
-    y: 40 + Math.random() * 20,
-    length: settings.stickLength + Math.random() * 9,
-    angle: Math.random() * 180,
+    x: 50 + (random() - 0.5) * settings.stickSpread,
+    y: 40 + random() * 20,
+    length: settings.stickLength + random() * 9,
+    angle: random() * 180,
     color: tone.color,
     points: tone.points,
     removed: false,
   }));
 }
 
-export default function PickUpSticksGame({ playerNames, competitionMode = false, onComplete }: CompetitionGameProps = {}) {
+export default function PickUpSticksGame({ playerNames, competitionMode = false, onComplete, individualAttempt, fixedDifficulty, playerColours }: CompetitionGameProps = {}) {
   useLanguage();
-  const [difficulty, setDifficulty] = useState<Difficulty>("easy");
+  const [difficulty, setDifficulty] = useState<Difficulty>(fixedDifficulty ?? "easy");
   const [difficultyLocked, setDifficultyLocked] = useState(false);
   const settings = difficultySettings[difficulty];
 
@@ -65,15 +66,15 @@ export default function PickUpSticksGame({ playerNames, competitionMode = false,
       <DifficultyPicker
         value={difficulty}
         onChange={setDifficulty}
-        disabled={competitionMode && difficultyLocked}
+        disabled={Boolean(fixedDifficulty) || (competitionMode && difficultyLocked)}
         description={t("{0} sticks. A clean pickup lets you continue. Lifting a blocked stick ends your turn.", settings.sticks)}
       />
-      <SticksRound difficulty={difficulty} playerNames={playerNames} competitionMode={competitionMode} onComplete={onComplete} onRoundStart={() => { if (competitionMode) setDifficultyLocked(true); }} onDifficultyChange={setDifficulty} canChangeDifficulty={!difficultyLocked} />
+      <SticksRound individualAttempt={individualAttempt} playerColours={playerColours} difficulty={difficulty} playerNames={playerNames} competitionMode={competitionMode} onComplete={onComplete} onRoundStart={() => { if (competitionMode) setDifficultyLocked(true); }} onDifficultyChange={setDifficulty} canChangeDifficulty={!fixedDifficulty && !difficultyLocked} />
     </>
   );
 }
 
-function SticksRound({ difficulty, playerNames, competitionMode = false, onComplete, onRoundStart, onDifficultyChange, canChangeDifficulty }: { difficulty: Difficulty; onRoundStart: () => void; onDifficultyChange: (difficulty: Difficulty) => void; canChangeDifficulty: boolean } & CompetitionGameProps) {
+function SticksRound({ difficulty, playerNames, competitionMode = false, onComplete, individualAttempt, playerColours, onRoundStart, onDifficultyChange, canChangeDifficulty }: { difficulty: Difficulty; onRoundStart: () => void; onDifficultyChange: (difficulty: Difficulty) => void; canChangeDifficulty: boolean } & CompetitionGameProps) {
   useLanguage();
   const turnSeconds = competitionMode ? COMPETITION_TURN_SECONDS : TURN_SECONDS;
   const playerLabel = (player: Player) => playerNames?.[player] ?? t("Player {0}", player + 1);
@@ -82,7 +83,7 @@ function SticksRound({ difficulty, playerNames, competitionMode = false, onCompl
   const mistakeRef = useRef<[number, number]>([0, 0]);
   const activePlayerRef = useRef<Player>(0);
   const pausedRef = useRef(false);
-  const awaitingReadyRef = useRef(true);
+  const awaitingReadyRef = useRef(!individualAttempt);
   const gameOverRef = useRef(false);
   const dragSessionRef = useRef<{ id: number; x: number; y: number; pointerId: number } | null>(null);
   const pointPopupTimerRef = useRef<number | null>(null);
@@ -91,7 +92,7 @@ function SticksRound({ difficulty, playerNames, competitionMode = false, onCompl
   const previousDifficultyRef = useRef(difficulty);
 
   const [hint, setHint] = useState<number | null>(null);
-  const [sticks, setSticks] = useState<Stick[]>(() => createSticks(difficulty));
+  const [sticks, setSticks] = useState<Stick[]>(() => createSticks(difficulty, individualAttempt?.seed));
   const sticksRef = useRef(sticks);
   const [boardSize, setBoardSize] = useState({ width: 900, height: 520 });
   const [scores, setScores] = useState<[number, number]>([0, 0]);
@@ -104,7 +105,7 @@ function SticksRound({ difficulty, playerNames, competitionMode = false, onCompl
   const [timerEnabled, setTimerEnabled] = useState(true);
   const [timeLeft, setTimeLeft] = useState(turnSeconds);
   const [paused, setPaused] = useState(false);
-  const [awaitingReady, setAwaitingReady] = useState(true);
+  const [awaitingReady, setAwaitingReady] = useState(!individualAttempt);
   const [pointPopup, setPointPopup] = useState<{ id: number; points: number; x: number; y: number } | null>(null);
   const [feedbackTone, setFeedbackTone] = useState<"success" | "mistake" | null>(null);
 
@@ -122,8 +123,8 @@ function SticksRound({ difficulty, playerNames, competitionMode = false, onCompl
   }, []);
 
   const waitForPlayer = () => {
-    awaitingReadyRef.current = true;
-    setAwaitingReady(true);
+    awaitingReadyRef.current = !individualAttempt;
+    setAwaitingReady(!individualAttempt);
     setSelected(null);
   };
 
@@ -161,7 +162,7 @@ function SticksRound({ difficulty, playerNames, competitionMode = false, onCompl
     if (pointPopupTimerRef.current !== null) window.clearTimeout(pointPopupTimerRef.current);
     pointPopupTimerRef.current = null;
     resetDraggedStickVisual();
-    const freshSticks = createSticks(difficulty);
+    const freshSticks = createSticks(difficulty, individualAttempt?.seed);
     sticksRef.current = freshSticks;
     setSticks(freshSticks);
     setHint(null);
@@ -215,6 +216,7 @@ function SticksRound({ difficulty, playerNames, competitionMode = false, onCompl
 
   const switchTurnOnTimeout = () => {
     if (gameOverRef.current || pausedRef.current || awaitingReadyRef.current) return;
+    if (individualAttempt) { finishGame(scoreRef.current); return; }
     const current = activePlayerRef.current;
     const next = (current === 0 ? 1 : 0) as Player;
     resetDraggedStickVisual();
@@ -297,6 +299,7 @@ function SticksRound({ difficulty, playerNames, competitionMode = false, onCompl
   };
 
   const switchTurnAfterMistake = (reason: () => string) => {
+    if (individualAttempt) { resetDraggedStickVisual(); finishGame(scoreRef.current); return; }
     const current = activePlayerRef.current;
     const next = (current === 0 ? 1 : 0) as Player;
     const nextMistakes: [number, number] = [...mistakeRef.current] as [number, number];
@@ -401,12 +404,12 @@ function SticksRound({ difficulty, playerNames, competitionMode = false, onCompl
       <aside className="game-panel">
         <InstructionSteps
           title={t("Lift the top sticks without a mistake")}
-          objective={t("Players share one pile. Score points by safely removing exposed sticks.")}
+          objective={individualAttempt ? t("Lift top sticks for 45 seconds. A blocked lift ends your attempt.") : t("Players share one pile. Score points by safely removing exposed sticks.")}
           steps={[
             t("Tap a stick on top of the pile, then press Lift selected stick. You can also drag it away."),
             t("A clean pickup scores points and you keep your turn. Each colour has a point value."),
-            t("Lifting a blocked stick passes the turn. Tapping to select a stick is safe."),
-            t("Pass the device when your turn ends. The next player presses I am ready to start."),
+            individualAttempt ? t("Lifting a blocked stick ends your attempt. Selecting a stick is safe.") : t("Lifting a blocked stick passes the turn. Tapping to select a stick is safe."),
+            individualAttempt ? t("Your result is saved before the next player presses Ready.") : t("Pass the device when your turn ends. The next player presses I am ready to start."),
           ]}
           tip={t("Use Show a free stick if the pile is difficult to read. Purple sticks are worth 50 points.")}
         />
@@ -445,7 +448,7 @@ function SticksRound({ difficulty, playerNames, competitionMode = false, onCompl
       </aside>
 
       <GamePlayArea className="sticks-play-area">
-        <PlayerScoreboard
+        <PlayerScoreboard individual={Boolean(individualAttempt)} colours={playerColours}
           activePlayer={activePlayer}
           scores={scores}
           labels={playerNames}

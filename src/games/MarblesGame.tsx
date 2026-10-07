@@ -7,7 +7,7 @@ import DifficultyPicker from "../components/DifficultyPicker";
 import InstructionSteps from "../components/InstructionSteps";
 import PlayerScoreboard from "../components/PlayerScoreboard";
 import TurnTimerPanel from "../components/TurnTimerPanel";
-import { difficultySettings, type Difficulty, randomMarblePositions, shotVelocity } from "./mechanics";
+import { difficultySettings, type Difficulty, randomMarblePositions, seededRandom, shotVelocity } from "./mechanics";
 import type { CompetitionGameProps } from "../types";
 import { advanceMarbles, returnShooterToStart, type Marble, MARBLES_LAUNCH, MARBLES_MAX_PULL, MARBLES_WIDTH as WIDTH, MARBLES_HEIGHT as HEIGHT, MARBLES_RING as RING } from "./marblesPhysics";
 
@@ -21,10 +21,10 @@ const PLAYER_DETAILS = [
 const TURN_SECONDS = 30;
 const COMPETITION_TURN_SECONDS = 45;
 
-function createMarbles(difficulty: Difficulty): Marble[] {
+function createMarbles(difficulty: Difficulty, seed?: number, colour?: string): Marble[] {
   const targets: Marble[] = [];
   const colors = ["#d96f46", "#2f7282", "#d6a23d", "#7c6355", "#67864a", "#bd5c72", "#8f78c8", "#3f8c72"];
-  const positions = randomMarblePositions(Math.random, difficulty);
+  const positions = randomMarblePositions(seed === undefined ? Math.random : seededRandom(seed), difficulty);
 
   for (let i = 0; i < positions.length; i++) {
     targets.push({
@@ -51,14 +51,14 @@ function createMarbles(difficulty: Difficulty): Marble[] {
       radius: 20,
       target: false,
       captured: false,
-      color: PLAYER_COLORS[0],
+      color: colour ?? PLAYER_COLORS[0],
     },
   ];
 }
 
-export default function MarblesGame({ playerNames, competitionMode = false, onComplete }: CompetitionGameProps = {}) {
+export default function MarblesGame({ playerNames, competitionMode = false, onComplete, individualAttempt, fixedDifficulty, playerColours }: CompetitionGameProps = {}) {
   useLanguage();
-  const [difficulty, setDifficulty] = useState<Difficulty>("easy");
+  const [difficulty, setDifficulty] = useState<Difficulty>(fixedDifficulty ?? "easy");
   const [difficultyLocked, setDifficultyLocked] = useState(false);
   const settings = difficultySettings[difficulty];
 
@@ -67,21 +67,22 @@ export default function MarblesGame({ playerNames, competitionMode = false, onCo
       <DifficultyPicker
         value={difficulty}
         onChange={setDifficulty}
-        disabled={competitionMode && difficultyLocked}
-        description={t("{0} targets. {1} and {2} alternate after every shot. Highest score wins when the ring is empty.", settings.marbles, playerNames?.[0] ?? t("Player 1"), playerNames?.[1] ?? t("Player 2"))}
+        disabled={Boolean(fixedDifficulty) || (competitionMode && difficultyLocked)}
+        description={individualAttempt ? t("{0} shots. Knock marbles out of the ring.", individualAttempt.shots) : t("{0} targets. {1} and {2} alternate after every shot. Highest score wins when the ring is empty.", settings.marbles, playerNames?.[0] ?? t("Player 1"), playerNames?.[1] ?? t("Player 2"))}
       />
-      <MarblesRound difficulty={difficulty} playerNames={playerNames} competitionMode={competitionMode} onComplete={onComplete} onRoundStart={() => { if (competitionMode) setDifficultyLocked(true); }} onDifficultyChange={setDifficulty} canChangeDifficulty={!difficultyLocked} />
+      <MarblesRound individualAttempt={individualAttempt} playerColours={playerColours} difficulty={difficulty} playerNames={playerNames} competitionMode={competitionMode} onComplete={onComplete} onRoundStart={() => { if (competitionMode) setDifficultyLocked(true); }} onDifficultyChange={setDifficulty} canChangeDifficulty={!fixedDifficulty && !difficultyLocked} />
     </>
   );
 }
 
-function MarblesRound({ difficulty, playerNames, competitionMode = false, onComplete, onRoundStart, onDifficultyChange, canChangeDifficulty }: { difficulty: Difficulty; onRoundStart: () => void; onDifficultyChange: (difficulty: Difficulty) => void; canChangeDifficulty: boolean } & CompetitionGameProps) {
+function MarblesRound({ difficulty, playerNames, competitionMode = false, onComplete, individualAttempt, playerColours, onRoundStart, onDifficultyChange, canChangeDifficulty }: { difficulty: Difficulty; onRoundStart: () => void; onDifficultyChange: (difficulty: Difficulty) => void; canChangeDifficulty: boolean } & CompetitionGameProps) {
   useLanguage();
+  const PLAYER_COLORS = playerColours ?? ["#2d6d79", "#a84f3e"];
   const targetCount = difficultySettings[difficulty].marbles;
   const turnSeconds = competitionMode ? COMPETITION_TURN_SECONDS : TURN_SECONDS;
   const playerLabel = (player: Player) => playerNames?.[player] ?? t("Player {0}", player + 1);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const marblesRef = useRef<Marble[]>(createMarbles(difficulty));
+  const marblesRef = useRef<Marble[]>(createMarbles(difficulty, individualAttempt?.seed, playerColours?.[0]));
   const draggingRef = useRef(false);
   const movingRef = useRef(false);
   const dragStartRef = useRef({ x: 0, y: 0 });
@@ -94,7 +95,7 @@ function MarblesRound({ difficulty, playerNames, competitionMode = false, onComp
   const totalCapturedRef = useRef(0);
   const gameOverRef = useRef(false);
   const pausedRef = useRef(false);
-  const awaitingReadyRef = useRef(true);
+  const awaitingReadyRef = useRef(!individualAttempt);
   const capturesThisShotRef = useRef(0);
   const dragPointerRef = useRef<number | null>(null);
   const aimRef = useRef(-90);
@@ -112,15 +113,15 @@ function MarblesRound({ difficulty, playerNames, competitionMode = false, onComp
   const [timerEnabled, setTimerEnabled] = useState(true);
   const [timeLeft, setTimeLeft] = useState(turnSeconds);
   const [paused, setPaused] = useState(false);
-  const [awaitingReady, setAwaitingReady] = useState(true);
+  const [awaitingReady, setAwaitingReady] = useState(!individualAttempt);
   const [captureFeedback, setCaptureFeedback] = useState<{ id: number; text: () => string; player: Player } | null>(null);
   const [keyboardAim, setKeyboardAim] = useState(-90);
   const [keyboardPower, setKeyboardPower] = useState(75);
   aimRef.current = keyboardAim;
 
   const waitForPlayer = () => {
-    awaitingReadyRef.current = true;
-    setAwaitingReady(true);
+    awaitingReadyRef.current = !individualAttempt;
+    setAwaitingReady(!individualAttempt);
     draggingRef.current = false;
     dragPointerRef.current = null;
   };
@@ -163,7 +164,7 @@ function MarblesRound({ difficulty, playerNames, competitionMode = false, onComp
   const reset = () => {
     if (captureFeedbackTimerRef.current !== null) window.clearTimeout(captureFeedbackTimerRef.current);
     captureFeedbackTimerRef.current = null;
-    marblesRef.current = createMarbles(difficulty);
+    marblesRef.current = createMarbles(difficulty, individualAttempt?.seed, playerColours?.[0]);
     draggingRef.current = false;
     movingRef.current = false;
     scoresRef.current = [0, 0];
@@ -197,6 +198,7 @@ function MarblesRound({ difficulty, playerNames, competitionMode = false, onComp
 
   const switchTurnOnTimeout = () => {
     if (gameOverRef.current || movingRef.current || pausedRef.current || awaitingReadyRef.current) return;
+    if (individualAttempt) { gameOverRef.current = true; setGameOver(true); return; }
     const current = activePlayerRef.current;
     const next = (current === 0 ? 1 : 0) as Player;
     draggingRef.current = false;
@@ -264,7 +266,7 @@ function MarblesRound({ difficulty, playerNames, competitionMode = false, onComp
     ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
 
     const drawShooterDetails = (marble: Marble) => {
-      const detail = PLAYER_DETAILS[activePlayerRef.current];
+      const detail = { ...PLAYER_DETAILS[activePlayerRef.current], base: PLAYER_COLORS[activePlayerRef.current] };
       ctx.shadowColor = "transparent";
       ctx.lineWidth = 4;
       ctx.strokeStyle = detail.glow;
@@ -370,7 +372,7 @@ function MarblesRound({ difficulty, playerNames, competitionMode = false, onComp
       ctx.fill();
 
       ctx.font = "800 13px 'Plus Jakarta Sans', system-ui, sans-serif";
-      ctx.fillText(gameOverRef.current ? t("ROUND COMPLETE") : t("PLAYER {0} TURN", activePlayerRef.current + 1), 46, 42);
+      ctx.fillText(gameOverRef.current ? t("ROUND COMPLETE") : playerLabel(activePlayerRef.current), 46, 42);
       ctx.restore();
 
       const marbles = marblesRef.current;
@@ -564,10 +566,10 @@ function MarblesRound({ difficulty, playerNames, competitionMode = false, onComp
             ? t("{0} captures {1} marbles and earns a combo bonus.", playerLabel(player), capturedThisTurn)
             : t("{0} captures 1 marble.", playerLabel(player)));
       } else {
-        setMessage(() => () => t("No capture this turn. Pass to {0}.", playerLabel(activePlayerRef.current === 0 ? 1 : 0)));
+        setMessage(() => () => individualAttempt ? t("No capture. Try your next shot.") : t("No capture this turn. Pass to {0}.", playerLabel(activePlayerRef.current === 0 ? 1 : 0)));
       }
 
-      if (totalCapturedRef.current >= targetCount) {
+      if (totalCapturedRef.current >= targetCount || (individualAttempt && shotsRef.current[0] >= individualAttempt.shots)) {
         gameOverRef.current = true;
         setGameOver(true);
         const [firstScore, secondScore] = scoresRef.current;
@@ -580,7 +582,7 @@ function MarblesRound({ difficulty, playerNames, competitionMode = false, onComp
         return;
       }
 
-      const next = (activePlayerRef.current === 0 ? 1 : 0) as Player;
+      const next = (individualAttempt ? 0 : activePlayerRef.current === 0 ? 1 : 0) as Player;
       syncPlayer(next);
       returnShooterToStart(marblesRef.current);
       setKeyboardAim(-90);
@@ -711,14 +713,14 @@ function MarblesRound({ difficulty, playerNames, competitionMode = false, onComp
       <aside className="game-panel">
         <InstructionSteps
           title={t("Knock marbles out of the ring")}
-          objective={t("Take turns using one shooter marble. A target scores only after it fully crosses the ring line.")}
+          objective={individualAttempt ? t("Six shots to knock marbles out. The same layout and level for everyone.") : t("Take turns using one shooter marble. A target scores only after it fully crosses the ring line.")}
           steps={[
-            t("Press I am ready. Drag back and release to shoot."),
+            individualAttempt ? t("Drag back and release to shoot.") : t("Press I am ready. Drag back and release to shoot."),
             t("You can also tap to aim, then press Shoot marble."),
             t("Each marble out scores 100 points. Two or more in one shot earn 50 extra points each."),
-            t("Take one shot each, then pass the device. The next player starts the timer when ready."),
+            individualAttempt ? t("45 seconds per shot. Running out of time ends your attempt.") : t("Take one shot each, then pass the device. The next player starts the timer when ready."),
           ]}
-          tip={t("Blue swirl marble = {0}. Red cross marble = {1}. Controlled shots often work better than maximum power.", playerLabel(0), playerLabel(1))}
+          tip={individualAttempt ? t("Controlled shots are often easier than full power") : t("Blue swirl marble = {0}. Red cross marble = {1}. Controlled shots often work better than maximum power.", playerLabel(0), playerLabel(1))}
         />
 
 
@@ -753,7 +755,7 @@ function MarblesRound({ difficulty, playerNames, competitionMode = false, onComp
       </aside>
 
       <GamePlayArea className="marbles-play-area">
-        <PlayerScoreboard
+        <PlayerScoreboard individual={Boolean(individualAttempt)} colours={playerColours}
           activePlayer={activePlayer}
           scores={scores}
           labels={playerNames}
@@ -845,8 +847,7 @@ function MarblesRound({ difficulty, playerNames, competitionMode = false, onComp
           <button type="button" className="primary-button" onClick={shootWithControls}>{moving ? t("Shot rolling") : t("Shoot marble")}</button>
         </fieldset>
 
-        <p className="control-hint"> {t("Drag backwards and release, or focus the board and use Arrow keys plus Space. Blue swirl marble is")} {playerLabel(0)} {t("and red cross marble is")} {playerLabel(1)}.
-        </p>
+        <p className="control-hint">{individualAttempt ? t("Drag back and release to shoot.") : <>{t("Drag backwards and release, or focus the board and use Arrow keys plus Space. Blue swirl marble is")} {playerLabel(0)} {t("and red cross marble is")} {playerLabel(1)}.</>}</p>
       </GamePlayArea>
     </section>
   );

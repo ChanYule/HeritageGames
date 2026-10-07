@@ -3,6 +3,8 @@ import { createContext, useContext, useEffect, useRef, type ReactNode, type RefO
 import { Minimize2 } from "lucide-react";
 import LanguageSwitcher from "./LanguageSwitcher";
 
+export const ChallengeFullscreenContext = createContext<ReactNode>(null);
+
 export const GameFullscreenContext = createContext<{
   playAreaRef: RefObject<HTMLDivElement>;
   fullscreenActive: boolean;
@@ -12,6 +14,7 @@ export const GameFullscreenContext = createContext<{
 
 export default function GamePlayArea({ children, className = "" }: { children: ReactNode; className?: string }) {
   useLanguage();
+  const challengeProgress = useContext(ChallengeFullscreenContext);
   const fullscreen = useContext(GameFullscreenContext);
   const exitRef = useRef<HTMLButtonElement>(null);
   const active = fullscreen?.fullscreenActive ?? false;
@@ -54,8 +57,9 @@ export default function GamePlayArea({ children, className = "" }: { children: R
       {active && (
         <div className="game-fullscreen-toolbar">
           <LanguageSwitcher />
-          <button ref={exitRef} type="button" className="game-fullscreen-button" onClick={fullscreen?.toggleFullscreen}>
-            <Minimize2 size={17} /> {t("Exit fullscreen")} </button>
+          {challengeProgress}
+          <button ref={exitRef} type="button" className="game-fullscreen-button" aria-label={t("Exit fullscreen")} onClick={fullscreen?.toggleFullscreen}>
+            <Minimize2 size={17} aria-hidden="true" /> <span className="fullscreen-exit-label">{t("Exit fullscreen")}</span><span className="fullscreen-exit-short">{t("Exit")}</span></button>
         </div>
       )}
       {children}

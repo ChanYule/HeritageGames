@@ -4,6 +4,8 @@ import { Pause, Trophy } from "lucide-react";
 
 type Props = {
   activePlayer: 0 | 1;
+  individual?: boolean;
+  colours?: [string, string];
   scores: [number, number];
   labels?: [string, string];
   gameOver?: boolean;
@@ -14,6 +16,8 @@ type Props = {
 
 export default function PlayerScoreboard({
   activePlayer,
+  individual = false,
+  colours,
   scores,
   labels = [t("Player 1"), t("Player 2")],
   gameOver = false,
@@ -26,8 +30,8 @@ export default function PlayerScoreboard({
 
   return (
     <motion.div
-      className={`player-scoreboard premium-scoreboard ${paused ? "is-paused" : ""}`}
-      aria-label={t("Two player scoreboard")}
+      className={`player-scoreboard premium-scoreboard ${individual ? "individual-scoreboard" : ""} ${paused ? "is-paused" : ""}`}
+      aria-label={t(individual ? "Player score" : "Two player scoreboard")}
       layout
     >
       <AnimatePresence initial={false}>
@@ -58,13 +62,14 @@ export default function PlayerScoreboard({
         <motion.span layoutId="scoreboard-active-rail" />
       </motion.div>
 
-      {[0, 1].map((index) => {
+      {(individual ? [0] : [0, 1]).map((index) => {
         const player = index as 0 | 1;
         const isActive = !gameOver && activePlayer === player;
 
         return (
           <motion.div
             key={player}
+            style={colours ? { borderColor: colours[player], color: colours[player] } : undefined}
             className={`player-score player-${player + 1} ${isActive ? "active" : ""} ${
               paused && isActive ? "paused-active" : ""
             }`}
@@ -75,7 +80,7 @@ export default function PlayerScoreboard({
             aria-label={t("{0}, {1} points{2}", labels[player], scores[player], isActive ? t(", current turn") : "")}
           >
             <div className="player-score-name">
-              <span className="player-dot" />
+              <span className="player-dot" style={colours ? { background: colours[player] } : undefined} />
               <strong>{labels[player]}</strong>
               {isActive && (
                 <motion.span
