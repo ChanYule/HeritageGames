@@ -176,3 +176,23 @@
   .home-page .section-block { margin-block: 58px; }
   .home-page .section-heading { align-items: start; }
 }
+
+/* Arcade is a separate catalogue, retaining the existing card and colour language. */
+.game-category-nav { display:flex; gap:10px; flex-wrap:wrap; margin:24px 0; }
+.game-category-nav a { display:inline-flex; align-items:center; min-height:48px; border:1px solid #65796a; border-radius:30px; padding:10px 20px; color:#294939; background:#fffaf0; font-weight:750; }
+#games,#retro-arcade { scroll-margin-top:100px; }
+.retro-section { margin-top:40px; border-top:1px solid #c8c7b5; padding-top:32px; }
+.heritage-game-grid.retro-game-grid { grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr)); max-width:1000px; }
+.retro-game-card { max-width:460px; }
+.sky-card-art { background:#214652!important; position:relative; overflow:hidden; }
+.sky-card-art>svg { width:130px; height:150px; margin:auto; transform:rotate(-12deg); transition:transform .25s ease; }
+.sky-card-badge { position:absolute; left:14px; top:14px; background:#ffedb5; color:#233f42; padding:6px 12px; border-radius:20px; font-size:.8rem; font-weight:800; }
+.sky-card-cloud { position:absolute; width:70px; height:15px; left:15%; top:65%; background:#d8ecea33; box-shadow:170px -55px 0 2px #d8ecea22; }
+.sky-card-subtitle { color:#476d72; font-family:ui-monospace,monospace; letter-spacing:.1em; font-size:.85rem; }
+.galaxy-card-art { background:#030509!important; position:relative; overflow:hidden; }
+.galaxy-card-art>svg { width:100%; height:100%; transition:transform .25s ease; }
+@media(hover:hover) { .retro-game-card:hover .galaxy-card-art>svg { transform:translateY(-3px); } }
+@media(prefers-reduced-motion:reduce) { .galaxy-card-art>svg { transition:none; } }
+@media(hover:hover) { .retro-game-card:hover .sky-card-art>svg { transform:rotate(-6deg) translateY(-5px); } }
+.retro-game-card button:active { transform:scale(.97); }
+@media(prefers-reduced-motion:reduce) { .sky-card-art>svg { transition:none; } }

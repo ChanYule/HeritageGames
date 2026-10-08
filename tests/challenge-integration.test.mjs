@@ -89,6 +89,17 @@ try {
       else globalThis.document = previousDocument;
     }
   });
+  test("Tin cans uses the 3D guide and accessible aim controls in standalone and Challenge", () => {
+    for (const individualAttempt of [undefined, { seed: 123, shots: 6 }]) {
+      const html = renderToString(createElement(Arcade, { kind: "tin-can-knockdown", competitionMode: Boolean(individualAttempt), individualAttempt }));
+      assert.match(html, /3D throwing/);
+      assert.match(html, /tin-3d-scene/);
+      assert.match(html, /Aim height/);
+      assert.match(html, /Aim left or right/);
+      assert.match(html, /Throw ball|is ready/);
+      assert.match(html, /Loading 3D scene/);
+    }
+  });
   test("seeded challenge layouts repeat fairly and standalone remains random", () => {
     const a = seededRandom(123),
       b = seededRandom(123),

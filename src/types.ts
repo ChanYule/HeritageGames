@@ -1,4 +1,6 @@
-export type GameKey = "marbles" | "pick-up-sticks" | "carom" | "tin-can-knockdown";
+export type ArcadeGameKey = "sky-1942" | "galaxy-defenders";
+export type GameKey = HeritageGameKey | ArcadeGameKey;
+export type HeritageGameKey = "marbles" | "pick-up-sticks" | "carom" | "tin-can-knockdown";
 
 export type GameDefinition = {
   key: GameKey;

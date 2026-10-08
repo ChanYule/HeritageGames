@@ -1,0 +1,81 @@
+.sky-play-area { --sky-ink:#eff5ed; --sky-gold:#ffe59c; width:min(100%,900px); margin:auto; padding:clamp(8px,2vw,20px); border-radius:18px; background:#142b34; color:var(--sky-ink); display:flex; flex-direction:column; align-items:center; gap:8px; }
+.sky-play-area button,.sky-play-area select,.sky-play-area input { font:inherit; }
+.sky-play-area button { border:1px solid #64818b; border-radius:10px; min-height:48px; padding:8px 16px; background:#294650; color:#fff; cursor:pointer; font-weight:750; touch-action:manipulation; }
+.sky-play-area button:active,.sky-play-area button.is-held { background:#426673; transform:scale(.96); }
+.sky-play-area button:disabled { opacity:.5; cursor:default; }
+.sky-play-area :is(button,input,select):focus-visible { outline:3px solid #ffe59c; outline-offset:3px; }
+.sky-hud { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); width:100%; max-width:640px; gap:6px; }
+.sky-hud div { padding:4px; display:flex; flex-direction:column; align-items:center; }
+.sky-hud span { font-size:clamp(.72rem,2.8vw,.9rem); color:#c4d4d8; }
+.sky-hud strong { color:#ffe59c; font:800 clamp(.9rem,3.3vw,1.3rem)/1.4 ui-monospace,monospace; }
+.sky-toolbar { display:flex; justify-content:center; align-items:center; gap:6px; width:100%; flex-wrap:wrap; }
+.sky-toolbar button { min-height:44px; padding:5px 10px; font-size:.9rem; }
+.sky-toolbar>span { font-size:.8rem; color:#cededc; }
+.sky-cabinet { width:100%; max-width:660px; position:relative; display:flex; flex-direction:column; align-items:center; gap:8px; }
+.sky-screen { position:relative; width:min(100%,480px,calc((100dvh - 310px)*2/3)); aspect-ratio:2/3; background:#123849; border:3px solid #668088; border-radius:8px; overflow:hidden; flex-shrink:0; }
+.sky-screen canvas { width:100%; height:100%; display:block; image-rendering:pixelated; }
+.sky-screen canvas.sky-drag { touch-action:none; }
+.sky-boss { position:absolute; inset:8px 16px auto; display:grid; text-align:center; gap:3px; font-size:.8rem; background:#112934dc; border-radius:4px; padding:4px; }
+.sky-boss progress { width:100%; height:10px; accent-color:#ffac68; }
+.sky-notice { position:absolute; top:20%; left:4%; right:4%; text-align:center; color:#ffe59c; background:#0b2437df; border:1px solid #b8a575; border-radius:6px; padding:10px; font-weight:800; pointer-events:none; }
+.sky-controls { display:flex; justify-content:space-between; align-items:center; gap:16px; width:100%; max-width:480px; padding:0 max(4px,env(safe-area-inset-right)) max(4px,env(safe-area-inset-bottom)) max(4px,env(safe-area-inset-left)); }
+.sky-movement { display:flex; flex-direction:column; align-items:center; gap:2px; font-size:.8rem; }
+.sky-joystick { width:112px; height:112px; border:2px solid #6e8f99; background:radial-gradient(circle,#325663 0 45%,#1a3540 46%); border-radius:50%; display:grid; place-items:center; touch-action:none; user-select:none; }
+.sky-stick { display:grid; place-items:center; border-radius:50%; background:#9ebabe; color:#152c36; width:48px; height:48px; font-size:2rem; pointer-events:none; }
+.sky-actions { display:flex; align-items:center; gap:12px; }
+.sky-play-area .sky-fire { width:90px; height:90px; border-radius:50%; color:#2e2819; background:#ffe59c; border:3px solid #9e8552; }
+.sky-play-area .sky-fire.is-held { background:#f6b96c; }
+.sky-play-area .sky-roll { width:72px; height:72px; border-radius:50%; padding:4px; border:2px solid #72b1ba; background:#1d5660; }
+.sky-roll small { display:block; font-size:.9rem; }
+.sky-play-area :is(.sky-fire,.sky-roll) { touch-action:none; user-select:none; }
+.sky-overlay { position:absolute; inset:0; z-index:3; display:flex; align-items:center; justify-content:center; background:#0c2430ed; border-radius:8px; overflow:auto; overscroll-behavior:contain; padding:12px; }
+.sky-menu { width:min(100%,420px); max-height:100%; overflow:auto; display:flex; flex-direction:column; align-items:stretch; text-align:center; gap:10px; padding:clamp(10px,3vw,24px); background:#1c3640; border:1px solid #71929a; border-radius:16px; }
+.sky-menu h2 { margin:0; color:#ffe59c; font:800 clamp(1.3rem,5vw,2.2rem)/1.25 ui-monospace,monospace; }
+.sky-menu p { margin:0; line-height:1.45; font-size:clamp(.88rem,2.9vw,1rem); color:#e0ebe8; }
+.sky-menu>svg { width:70px; height:70px; align-self:center; }
+.sky-brand svg { width:88px; height:88px; }
+.sky-brand>span { font-weight:700; letter-spacing:.1em; color:#adcfce; }
+.sky-play-area .sky-primary { background:#ffe59c; color:#2f3227; border-color:#ffe59c; min-height:52px; }
+.sky-menu-links { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+.sky-menu-links button { flex:1 1 100px; }
+.sky-menu label { display:flex; align-items:center; gap:12px; text-align:left; min-height:48px; flex-wrap:wrap; }
+.sky-menu input[type=checkbox] { width:24px; height:24px; accent-color:#f2c975; }
+.sky-menu select,.sky-menu input:not([type=checkbox]) { max-width:100%; min-width:0; min-height:48px; border:1px solid #71929a; border-radius:6px; padding:8px; background:#fcf7e9; color:#17333a; }
+.sky-menu form { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:6px; }
+.sky-menu form label { grid-column:1/-1; }
+.sky-results { margin:0; display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.sky-results dt { font-size:.85rem; color:#c4d7d8; }
+.sky-results dd { margin:0; font-size:1.5rem; font-weight:800; }
+.sky-scores { margin:0; padding-left:22px; text-align:left; }
+.sky-scores li { padding:8px 0; }
+.sky-scores li span { float:right; font-size:.85rem; }
+.sky-pickup-guide { display:grid; grid-template-columns:repeat(4,1fr); gap:5px; }
+.sky-pickup-guide svg { width:48px; height:48px; }
+.sky-pickup-guide span { display:block; font-size:.8rem; }
+.sky-record { color:#ffe59c!important; }
+.sky-key-legend { margin:0; max-width:560px; font-size:.85rem; text-align:center; color:#c4d4d8; }
+.sky-play-area.game-play-area.is-fullscreen { display:flex!important; background:#142b34; }
+.sky-play-area.game-play-area.is-fullscreen .game-fullscreen-toolbar { position:relative; inset:auto; width:100%; max-width:640px; min-height:40px; flex:0 0 auto; padding:0; }
+.sky-play-area.game-play-area.is-fullscreen .game-fullscreen-toolbar .language-switcher { display:flex; }
+.sky-play-area.game-play-area.is-fullscreen .game-fullscreen-toolbar .game-fullscreen-button { color:#17343d; }
+.sky-play-area::before { content:none; }
+.sky-play-area.is-fullscreen .sky-cabinet { flex:1; min-height:0; justify-content:center; }
+.sky-play-area.is-fullscreen .sky-screen { width:min(100%,480px,calc((100dvh - 325px)*2/3)); }
+.sky-play-area.is-fullscreen .sky-key-legend { display:none; }
+@media(max-width:420px) { .sky-play-area { padding:8px; gap:4px; } .sky-controls { gap:8px; } .sky-actions { gap:8px; } .sky-joystick { width:98px; height:98px; } .sky-play-area .sky-fire { width:78px; height:78px; } .sky-play-area .sky-roll { width:65px; height:65px; } .sky-toolbar>span { display:none; } }
+@media(orientation:landscape) and (max-height:600px) {
+  .sky-cabinet { flex-direction:row; max-width:900px; justify-content:center; min-height:0; }
+  .sky-screen { width:min(45%,calc((100dvh - 160px)*2/3)); }
+  .sky-controls { position:absolute; inset:0; max-width:none; pointer-events:none; }
+  .sky-movement,.sky-actions { pointer-events:auto; }
+  .sky-actions { flex-direction:column; gap:6px; }
+  .sky-key-legend { display:none; }
+  .sky-play-area.is-fullscreen .sky-screen { width:min(45%,calc((100dvh - 175px)*2/3)); }
+  .sky-overlay { inset:0 110px; }
+  .sky-joystick { width:90px; height:90px; }
+  .sky-play-area .sky-fire { width:72px; height:72px; }
+  .sky-play-area .sky-roll { width:60px; height:60px; }
+}
+@media(prefers-reduced-motion:reduce) { .sky-play-area button { transform:none!important; } }
+
+@media(pointer:coarse) { .sky-key-legend { display:none; } }

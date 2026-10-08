@@ -1,0 +1,12 @@
+export type Phase = "menu" | "playing" | "paused" | "transition" | "gameover";
+export type EnemyKind = "straight" | "zigzag" | "diver";
+export type PickupKind = "gun" | "shield" | "life" | "loop";
+export type Point = { x: number; y: number };
+export type Input = { x: number; y: number; fire: boolean; roll: boolean; target: Point | null };
+export type Player = Point & { lives: number; loops: number; weapon: number; cooldown: number; invincible: number; roll: number; shield: number; muzzle: number };
+export type Bullet = Point & { px: number; py: number; vx: number; vy: number; friendly: boolean; dead: boolean };
+export type Enemy = Point & { px: number; py: number; origin: number; kind: EnemyKind; time: number; fire: number; target: number | null; dead: boolean; formation: number };
+export type Boss = Point & { hp: number; maxHp: number; entering: boolean; fire: number; time: number; pattern: number; flash: number };
+export type Pickup = Point & { kind: PickupKind; dead: boolean };
+export type Particle = Point & { vx: number; vy: number; life: number; color: string; size: number };
+export type SoundName = "shoot" | "enemyShoot" | "explosion" | "bossExplosion" | "hit" | "powerup" | "loop" | "levelUp" | "gameOver";

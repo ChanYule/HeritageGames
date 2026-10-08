@@ -42,7 +42,7 @@ import {
   type ChallengePlayer,
   type ChallengeType,
 } from "../competition";
-import type { GameKey, GameResult } from "../types";
+import type { HeritageGameKey, GameResult } from "../types";
 import "../challenge.css";
 
 function loadChallenge() {
@@ -70,7 +70,7 @@ function loadChallenge() {
     return { session: null, unavailable: true, invalid: false, legacy: false };
   }
 }
-const GameIcon = ({ game }: { game: GameKey }) =>
+const GameIcon = ({ game }: { game: HeritageGameKey }) =>
   game === "marbles" ? (
     <Gem aria-hidden="true" />
   ) : game === "pick-up-sticks" ? (
@@ -141,7 +141,7 @@ function Overall({ session }: { session: Challenge }) {
     </ol>
   );
 }
-const attemptHint = (game: GameKey) =>
+const attemptHint = (game: HeritageGameKey) =>
   ({
     marbles:
       "Six shots to knock marbles out. The same layout and level for everyone.",
@@ -159,7 +159,7 @@ export default function Competition({
   startInSetup = false,
 }: {
   onExit: () => void;
-  initialGame?: GameKey;
+  initialGame?: HeritageGameKey;
   startInSetup?: boolean;
 }) {
   useLanguage();
@@ -169,7 +169,7 @@ export default function Competition({
     "resume" | "choose" | "players" | "event"
   >(loaded.session && !startInSetup ? "resume" : "choose");
   const [type, setType] = useState<ChallengeType>("quick");
-  const [selectedGames, setGames] = useState<GameKey[]>(
+  const [selectedGames, setGames] = useState<HeritageGameKey[]>(
     initialGame
       ? [initialGame, challengeGames.find((g) => g !== initialGame)!]
       : ["marbles", "tin-can-knockdown"],

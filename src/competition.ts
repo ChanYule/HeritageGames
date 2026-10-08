@@ -1,8 +1,8 @@
-import type { GameKey, GameResult } from "./types";
+import type { HeritageGameKey, GameResult } from "./types";
 
 export const challengeStorageKey = "heritage-games-challenge-v2";
 export const legacyCompetitionStorageKey = "heritage-games-competition-v1";
-export const challengeGames: GameKey[] = [
+export const challengeGames: HeritageGameKey[] = [
   "marbles",
   "pick-up-sticks",
   "carom",
@@ -32,7 +32,7 @@ export type Placement = {
   performance: number;
 };
 export type ChallengeRound = {
-  game: GameKey;
+  game: HeritageGameKey;
   attempts: Attempt[];
   replays: number;
   placements: Placement[];
@@ -43,7 +43,7 @@ export type Challenge = {
   createdAt: string;
   type: ChallengeType;
   difficulty: "easy" | "medium" | "difficult";
-  games: GameKey[];
+  games: HeritageGameKey[];
   players: ChallengePlayer[];
   currentGameIndex: number;
   status: ChallengeStatus;
@@ -67,7 +67,7 @@ export const validPlayerNames = (names: string[]) =>
   names.every((n) => n.trim().length > 0 && n.trim().length <= 24) &&
   new Set(names.map((n) => n.trim().normalize("NFKC").toLocaleLowerCase()))
     .size === names.length;
-export const gameTitle = (game: GameKey) =>
+export const gameTitle = (game: HeritageGameKey) =>
   ({
     marbles: "Marbles",
     "pick-up-sticks": "Pick-Up Sticks",
@@ -80,7 +80,7 @@ export const challengeDuration = (type: ChallengeType) =>
 export function createChallenge(
   type: ChallengeType,
   names: string[],
-  games: GameKey[] = challengeGames,
+  games: HeritageGameKey[] = challengeGames,
   difficulty: Challenge["difficulty"] = "easy",
 ): Challenge {
   if (!validPlayerNames(names))
@@ -426,7 +426,7 @@ export function restoreChallenge(value: unknown): Challenge | null {
     games.length !== (value.type === "quick" ? 2 : 4) ||
     new Set(games).size !== games.length ||
     !games.every(
-      (g) => typeof g === "string" && challengeGames.includes(g as GameKey),
+      (g) => typeof g === "string" && challengeGames.includes(g as HeritageGameKey),
     )
   )
     return null;
@@ -446,7 +446,7 @@ export function restoreChallenge(value: unknown): Challenge | null {
   let state = createChallenge(
     value.type,
     names,
-    games as GameKey[],
+    games as HeritageGameKey[],
     value.difficulty,
   );
   state = { ...state, id: value.id, createdAt: value.createdAt };

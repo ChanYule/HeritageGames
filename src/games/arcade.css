@@ -24,3 +24,7 @@
 .carrom-rules{padding:14px 20px;border:1px solid #dcc9a6;border-radius:14px;background:#fffaf0;color:#264238}
 .carrom-rules summary{font-size:1.15rem;font-weight:750;cursor:pointer;min-height:44px;display:flex;align-items:center}
 .carrom-rules li{margin:10px 0;line-height:1.5}
+
+.tin-3d-scene{aspect-ratio:30/31;background:#c8d9cf;border:0;overflow:hidden}
+.arcade-play-area.is-fullscreen .tin-3d-scene{aspect-ratio:30/31}
+@media(max-height:600px) and (orientation:landscape){.arcade-play-area.is-fullscreen .tin-3d-scene{width:min(calc(100vw - min(270px,32vw) - 20px),calc((100dvh - 12px) * 30 / 31))}}

@@ -9,16 +9,22 @@ import { cansSettled, createCanWorld, stepCans, throwBall } from "./canPhysics";
 import { drawCans, drawCarom } from "./arcadeRendering";
 import { playArcadeSound, vibrateArcade } from "./arcadeSound";
 import "./arcade.css";
+import TinCan3DGame from "./TinCan3DGame";
 
-type Props = CompetitionGameProps & { kind: "carom" | "tin-can-knockdown" };
+type TinProgress = { scores: [number, number]; shot: number; fallenIds: number[] };
+type Props = CompetitionGameProps & { kind: "carom" | "tin-can-knockdown"; initialProgress?: TinProgress };
 type Aim = { x: number; y: number; power: number };
 
-export default function ArcadeTargetGame({ kind, playerNames, competitionMode = false, onComplete, individualAttempt, playerColours, carromChallenge }: Props) {
+export default function ArcadeTargetGame(props: Props) {
+  return props.kind === "tin-can-knockdown" ? <TinCan3DGame {...props} fallback={progress => <ArcadeTarget2D {...props} initialProgress={progress} />} /> : <ArcadeTarget2D {...props} />;
+}
+
+function ArcadeTarget2D({ kind, playerNames, competitionMode = false, onComplete, individualAttempt, playerColours, carromChallenge, initialProgress }: Props) {
   useLanguage();
   const carom = kind === "carom";
   const labels: [string, string] = playerNames ?? [t("Player 1"), t("Player 2")];
-  const [scores, setScores] = useState<[number, number]>([0, 0]);
-  const [shot, setShot] = useState(0);
+  const [scores, setScores] = useState<[number, number]>(initialProgress?.scores ?? [0, 0]);
+  const [shot, setShot] = useState(initialProgress?.shot ?? 0);
   const [casualActive, setCasualActive] = useState<0 | 1>(0);
   const [casualWinner, setCasualWinner] = useState<0 | 1 | null>(null);
   const match = useRef(createCaromMatch());
@@ -38,7 +44,12 @@ export default function ArcadeTargetGame({ kind, playerNames, competitionMode = 
   const aimRef = useRef<Aim | null>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
   const caromWorld = useRef(createCaromWorld());
-  const canWorld = useRef(createCanWorld());
+  const [initialCanWorld] = useState(() => {
+    const world = createCanWorld();
+    if (initialProgress) world.cans = world.cans.filter(can => !initialProgress.fallenIds.includes(can.id));
+    return world;
+  });
+  const canWorld = useRef(initialCanWorld);
   const drag = useRef<{ id: number; x: number; y: number; mode: "place" | "aim"; lastX: number; lastY: number; time: number; speed: number } | null>(null);
   const raf = useRef(0);
   const previewFrame = useRef(0);

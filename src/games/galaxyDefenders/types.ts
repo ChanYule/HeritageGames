@@ -1,0 +1,10 @@
+export type Mode = "beginner" | "classic";
+export type Phase = "menu" | "playing" | "paused" | "transition" | "gameover";
+export type AlienKind = "red" | "green" | "purple";
+export type Point = { x: number; y: number };
+export type Alien = Point & { id: number; column: number; row: number; kind: AlienKind; px: number; py: number; alive: boolean };
+export type Laser = Point & { px: number; py: number; vx: number; vy: number; friendly: boolean; dead: boolean };
+export type Player = Point & { lives: number; invincible: number; flash: number; muzzle: number; cooldown: number; lean: number };
+export type Particle = Point & { vx: number; vy: number; life: number; color: string };
+export type Input = { x: number; fire: boolean; targetX: number | null };
+export type Sound = "shoot" | "destroy" | "hit" | "complete" | "wave" | "gameover" | "record";

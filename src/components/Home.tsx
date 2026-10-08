@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowDown, ArrowRight, Check, Heart, Trophy, Users2 } from "lucide-react";
-import { games } from "../gameCatalog";
+import { games, arcadeGames } from "../gameCatalog";
 import { t, useLanguage } from "../i18n";
-import type { GameKey } from "../types";
+import type { GameKey, HeritageGameKey } from "../types";
+import { SkyArtwork } from "../games/sky1942/SkyArtwork";
+import { GalaxyArtwork } from "../games/galaxyDefenders/GalaxyArtwork";
 import LanguageSwitcher from "./LanguageSwitcher";
 import { challengeStorageKey, restoreChallenge } from "../competition";
 
-function GameArtwork({ game }: { game: GameKey }) {
+function GameArtwork({ game }: { game: HeritageGameKey }) {
   return <svg viewBox="0 0 360 200" aria-hidden="true" focusable="false">
     {game === "marbles" && <>
       <ellipse cx="181" cy="103" rx="107" ry="70" fill="#e9dcc3" stroke="#a27f52" strokeWidth="3" strokeDasharray="5 6" />
@@ -20,7 +22,7 @@ function GameArtwork({ game }: { game: GameKey }) {
   </svg>;
 }
 
-export default function Home({ onPlay, onCompetition }: { onPlay: (key: GameKey) => void; onCompetition: (game?: GameKey) => void }) {
+export default function Home({ onPlay, onCompetition }: { onPlay: (key: GameKey) => void; onCompetition: (game?: HeritageGameKey) => void }) {
   useLanguage();
   const heading = useRef<HTMLHeadingElement>(null);
   const [savedCompetition] = useState(() => {
@@ -28,7 +30,7 @@ export default function Home({ onPlay, onCompetition }: { onPlay: (key: GameKey)
     catch { return null; }
   });
   const competitionLabel = savedCompetition ? savedCompetition.status === "final_results" ? t("View Challenge Results") : t("Continue Challenge") : t("Start Challenge");
-  useEffect(() => { heading.current?.focus({ preventScroll: true }); }, []);
+  useEffect(() => { heading.current?.focus({ preventScroll: true }); if (window.location.hash === "#retro-arcade") document.getElementById("retro-arcade")?.scrollIntoView(); }, []);
   return <main className="heritage-home" id="main-content">
     <a className="skip-link" href="#games">{t("Skip to games")}</a>
     <header className="heritage-nav">
@@ -54,11 +56,19 @@ export default function Home({ onPlay, onCompetition }: { onPlay: (key: GameKey)
       <li><span>2</span><div><h3>{t("Get comfortable")}</h3><p>{t("Read the instructions and press Ready when you are settled.")}</p></div></li>
       <li><span>3</span><div><h3>{t("Play and cheer")}</h3><p>{t("Follow the names on screen. Scores are saved after every attempt.")}</p></div></li>
     </ol><button className="heritage-primary" onClick={() => onCompetition()}><Trophy size={21}/>{savedCompetition ? competitionLabel : t("Start Challenge")}<ArrowRight size={20}/></button></section>
+    <nav className="game-category-nav" aria-label={t("Game categories")}><a href="#games">{t("Heritage Games")}</a><a href="#retro-arcade">{t("Retro Arcade")}</a></nav>
     <section id="games" className="practice-section" aria-labelledby="practice-title">
-      <div className="practice-heading"><div><p className="welcome-eyebrow">{t("YOUR CHILDHOOD FAVOURITES")}</p><h2 id="practice-title">{t("Which shall we play?")}</h2></div><p>{t("Play a game on its own, or bring it into a Challenge.")}</p></div>
+      <div className="practice-heading"><div><p className="welcome-eyebrow">{t("YOUR CHILDHOOD FAVOURITES")}</p><h2 id="practice-title">{t("Singapore Heritage Games")}</h2></div><p>{t("Relive your favourite childhood games.")}</p></div>
       <div className="heritage-game-grid">{games.map((game, index)=><article key={game.key} className={`heritage-game-card heritage-art-${game.key}`}>
         <div className="heritage-card-art"><GameArtwork game={game.key}/><span className="heritage-card-number">0{index+1}</span></div>
         <div className="heritage-card-content"><p className="heritage-card-players"><Users2 size={17}/>{t(game.players)}</p><h3>{t(game.title)}</h3><p>{t(game.description)}</p><div className="heritage-card-footer"><span>{t(game.control)}</span><button onClick={()=>onPlay(game.key)} aria-label={t("Play {0}", t(game.title))}>{t("Play Game")}<ArrowRight size={20}/></button></div><button className="four-practice-link" onClick={() => onCompetition(game.key)} aria-label={t("Challenge with {0}", t(game.title))}>{t("Add to Challenge")}</button></div>
+      </article>)}</div>
+    </section>
+    <section id="retro-arcade" className="practice-section retro-section" aria-labelledby="retro-title">
+      <div className="practice-heading"><div><p className="welcome-eyebrow">{t("ONE PLAYER. A NEW ADVENTURE.")}</p><h2 id="retro-title">{t("Retro Arcade")}</h2></div><p>{t("Classic arcade action, brought to your screen.")}</p></div>
+      <div className="heritage-game-grid retro-game-grid">{arcadeGames.map(game => <article className="heritage-game-card retro-game-card" key={game.key}>
+        <div className={`heritage-card-art ${game.key === "galaxy-defenders" ? "galaxy-card-art" : "sky-card-art"}`}>{game.key === "galaxy-defenders" ? <GalaxyArtwork /> : <><span className="sky-card-cloud" aria-hidden="true"/><SkyArtwork /></>}<span className="sky-card-badge">{t("Retro Arcade")}</span></div>
+        <div className="heritage-card-content"><p className="heritage-card-players"><Users2 size={17}/>{t(game.players)}</p><h3>{t(game.title)}</h3><strong className="sky-card-subtitle">{t(game.subtitle)}</strong><p>{t(game.description)}</p><div className="heritage-card-footer"><span>{t(game.control)}</span><button onClick={() => onPlay(game.key)} aria-label={t("Play {0}", game.title)}>{t("Play Now")}<ArrowRight size={20}/></button></div></div>
       </article>)}</div>
     </section>
     <footer className="heritage-footer"><strong>{t("Heritage Games")}</strong><span>{t("Made for memories. Played together.")}</span><a href="#main-content">{t("Back to top ↑")}</a></footer>
