@@ -12,7 +12,7 @@ const server = await createServer({
   esbuild: { jsx: "automatic" },
 });
 try {
-  const { default: Marbles } = await server.ssrLoadModule(
+  const { default: Marbles, createMarbles } = await server.ssrLoadModule(
     "/src/games/MarblesGame.tsx",
   );
   const { default: Sticks } = await server.ssrLoadModule(
@@ -89,15 +89,46 @@ try {
       else globalThis.document = previousDocument;
     }
   });
-  test("Tin cans uses the 3D guide and accessible aim controls in standalone and Challenge", () => {
+  test("Tin cans uses the slingshot guide and accessible aim controls in standalone and Challenge", () => {
     for (const individualAttempt of [undefined, { seed: 123, shots: 6 }]) {
       const html = renderToString(createElement(Arcade, { kind: "tin-can-knockdown", competitionMode: Boolean(individualAttempt), individualAttempt }));
-      assert.match(html, /3D throwing/);
-      assert.match(html, /tin-3d-scene/);
-      assert.match(html, /Aim height/);
-      assert.match(html, /Aim left or right/);
-      assert.match(html, /Throw ball|is ready/);
-      assert.match(html, /Loading 3D scene/);
+      assert.match(html, /Drag the ball back/);
+      assert.match(html, /sling-scene/);
+      assert.match(html, /Launch angle/);
+      assert.match(html, /Strength/);
+      assert.match(html, /Shoot ball|is ready/);
+      assert.match(html, /Balls left: 3/);
+    }
+  });
+  test("Marbles difficulty uses balanced non-overlapping four-colour layouts and seeded attempts", () => {
+    for (const [difficulty, count] of [["easy", 8], ["medium", 12], ["difficult", 16]]) {
+      const marbles = createMarbles(difficulty, 123);
+      const targets = marbles.filter(m => m.target);
+      assert.equal(targets.length, count);
+      for (const colour of ["Red", "Blue", "Yellow", "Green"]) assert.equal(targets.filter(m => m.group === colour).length, count / 4);
+      for (const a of marbles) for (const b of marbles) if (a.id !== b.id) assert.ok(Math.hypot(a.x - b.x, a.y - b.y) > a.radius + b.radius);
+      assert.deepEqual(marbles, createMarbles(difficulty, 123));
+    }
+  });
+  test("Marbles target indicator, first-hit rules and keyboard alternative are present", () => {
+    const html = renderToString(createElement(Marbles));
+    assert.match(html, /Target: Red/); assert.match(html, /target colour first/);
+    assert.match(html, /Shoot marble/); assert.match(html, /Space to shoot/);
+  });
+  test("Redesigned games show translated rules and controls without changing player names", () => {
+    const previousDocument = globalThis.document;
+    globalThis.document = { documentElement: { lang: "en" } };
+    try {
+      setLanguage("zh");
+      const tin = renderToString(createElement(Arcade, { kind: "tin-can-knockdown", playerNames: ["Mary", "Ahmad"] }));
+      const marble = renderToString(createElement(Marbles, { playerNames: ["Mary", "Ahmad"] }));
+      assert.match(tin, /Mary/); assert.match(marble, /Ahmad/);
+      assert.doesNotMatch(tin, /First Throw|Drag the ball back|Launch angle|Balls left|Three balls each/);
+      assert.doesNotMatch(marble, /Target: Red|Hit the target colour first/);
+    } finally {
+      setLanguage("en");
+      if (previousDocument === undefined) delete globalThis.document;
+      else globalThis.document = previousDocument;
     }
   });
   test("seeded challenge layouts repeat fairly and standalone remains random", () => {

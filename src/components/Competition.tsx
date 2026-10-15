@@ -150,7 +150,7 @@ const attemptHint = (game: HeritageGameKey) =>
     carom:
       "Pocket your own coins to play again. Cover the queen. Striker pocketed: foul.",
     "tin-can-knockdown":
-      "Six throws to topple the stack. Wait for the tins to settle after each throw.",
+      "Three balls on an identical level. Drag back to shoot. Wait for the tins to settle.",
   })[game];
 
 export default function Competition({
@@ -447,7 +447,7 @@ export default function Competition({
             </p>
           )}
           <fieldset className="challenge-player-count">
-            <legend>{t("Marbles and Sticks level · same for everyone")}</legend>
+            <legend>{t("Game level · same for everyone")}</legend>
             {(["easy", "medium", "difficult"] as const).map((level) => (
               <button
                 key={level}
@@ -511,7 +511,7 @@ export default function Competition({
       colours: [string, string] = [first.colour, second.colour];
     const individual =
       turn.players.length === 1
-        ? { seed: challengeSeed(session), shots: 6 }
+        ? { seed: challengeSeed(session), shots: round.game === "tin-can-knockdown" ? 3 : 6 }
         : undefined;
     const props = {
       playerNames: labels,

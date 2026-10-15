@@ -19,7 +19,7 @@ On Windows PowerShell, use `npm.cmd` if script execution is restricted. Tests us
 Select **Start Challenge** on Home, or **Add to Challenge** on a game card.
 
 1. **Choose Your Challenge**: Quick Challenge has two selected games (estimated 10–15 minutes); Full Challenge has all four (estimated 20–30 minutes). These are approximate estimates, especially for full Carrom games.
-2. **Who's Playing?**: choose two, three or four players, enter names or use defaults, and select a shared Marbles/Sticks difficulty.
+2. **Who's Playing?**: choose two, three or four players, enter names or use defaults, and select a shared game difficulty.
 3. **Challenge Lobby**: review players, identities, game order and duration. Edit Players or Edit Games before pressing **Start Challenge**.
 4. Press **Ready** for the current player's attempt or Carrom matchup. Finished results save automatically. The next person sees a handover and must press Ready.
 5. After everyone completes a game, review **Round Results** and **Overall Scores**. Press **Start Next Game**; games never advance automatically.
@@ -29,9 +29,9 @@ Each player has a stable colour and name. Names are always shown; colour is neve
 
 ### Individual attempts
 
-- **Marbles**: a fresh, identical seeded layout for each player; six shots or until the ring is empty. Each shot has a 45-second aiming limit, paused while rolling; timeout ends the attempt. Existing capture and bonus scoring is preserved.
+- **Marbles**: a fresh, identical seeded layout for each player; six shots or until the ring is empty. Each shot has a 45-second aiming limit, paused while rolling; timeout ends the attempt. Hit the shared target colour first; only matching captures score 100 each, with 50 extra each for two or more matching captures.
 - **Pick-Up Sticks**: the same seeded pile and level for each player; 45 seconds to collect exposed sticks. A blocked lift, timeout or empty pile ends the attempt. Selecting a stick alone is safe.
-- **Tin-Can Knockdown**: six throws per player against a fresh stack. Each newly fallen tin scores 100; scoring waits for sustained quiet. An empty stack resets for remaining throws.
+- **Tin-Can Knockdown**: three balls per player on an identical fixed level (levels 1/3/5 for Easy/Medium/Difficult). Each fallen tin scores 100; clearing adds 200 plus 50 per unused ball. Scoring waits for sustained quiet.
 
 ### Carrom format
 
@@ -66,8 +66,10 @@ The old `heritage-games-competition-v1` league save is retained separately and i
 No browser was connected during this implementation. Before a real event, inspect widths 320, 360, 390, 414, 768, 820 and 1024 pixels, including portrait, landscape and fullscreen. Walk Quick and Full through setup, all player handovers, game results, champion, Play Again, New Challenge and Return Home. Check English/Chinese, larger text, contrast, touch controls and refresh recovery. Phone/tablet acceptance remains unverified until these checks are run.
 
 
-### 3D Tin Can Knockdown
+### Tin-Can slingshot and Marbles colour challenge
 
-Tin Can Knockdown now uses a Three.js perspective scene and cannon-es rigid-body physics: six cylindrical cans, a wooden table, ground collisions, gravity, friction, bouncing and rotation about all three axes. The ball travels into the scene, with a dashed ballistic preview and target ring. Drag from the foreground ball toward the stack and release; drag length sets power. **Adjust shot** offers aim height, left/right and strength sliders, with **Throw ball** and keyboard Enter/Space as alternatives.
+Tin-Can Knockdown now uses an original side-view Canvas scene and planar cannon-es rigid bodies. Pull the launcher ball backwards and release; angle/strength sliders and Shoot ball provide alternatives. Five curated levels introduce breakable crates, solid walls, elevated supports and ramps. The collision-aware dotted guide stops at first contact. Each player receives a fresh identical level and three balls. Standalone play progresses through all five levels; Challenge uses its selected shared difficulty.
 
-Each newly tipped, displaced or fallen can earns 100 points once. Turns wait for physical motion to settle; removing an expired ball does not finish moving cans. Existing six-throw standalone/Challenge scoring, Ready handovers, mute, restart and fullscreen remain. Rendering loads on demand, uses capped resolution and one shadow light, redraws on resize, pauses simulation in hidden tabs, and disposes GPU resources on exit. Devices without WebGL use the classic canvas version. A lost graphics context preserves completed scores and throws; only the unfinished throw is replayed. Automated tests cover stable misses, depth travel, impact rotation, repeated throws, finite positions, power and settling; real browser/touch/GPU performance still requires device verification.
+Marbles has four balanced colour groups with letter markings. The collision solver records the shooter's first actual target contact. Only matching captures after a correct first hit earn points. The shared target advances through Red, Blue, Yellow and Green, skipping exhausted groups. Existing turns, timers, pause and seeded Challenge attempts remain.
+
+See [the gameplay redesign handover](docs/gameplay-redesign.md) for scoring, level solutions, changed files, test results and remaining device checks. The previous 3D Tin-Can files remain in the repository but are no longer the active game route.

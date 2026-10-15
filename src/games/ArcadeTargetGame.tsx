@@ -9,14 +9,14 @@ import { cansSettled, createCanWorld, stepCans, throwBall } from "./canPhysics";
 import { drawCans, drawCarom } from "./arcadeRendering";
 import { playArcadeSound, vibrateArcade } from "./arcadeSound";
 import "./arcade.css";
-import TinCan3DGame from "./TinCan3DGame";
+import TinSlingGame from "./TinSlingGame";
 
 type TinProgress = { scores: [number, number]; shot: number; fallenIds: number[] };
 type Props = CompetitionGameProps & { kind: "carom" | "tin-can-knockdown"; initialProgress?: TinProgress };
 type Aim = { x: number; y: number; power: number };
 
 export default function ArcadeTargetGame(props: Props) {
-  return props.kind === "tin-can-knockdown" ? <TinCan3DGame {...props} fallback={progress => <ArcadeTarget2D {...props} initialProgress={progress} />} /> : <ArcadeTarget2D {...props} />;
+  return props.kind === "tin-can-knockdown" ? <TinSlingGame {...props} /> : <ArcadeTarget2D {...props} />;
 }
 
 function ArcadeTarget2D({ kind, playerNames, competitionMode = false, onComplete, individualAttempt, playerColours, carromChallenge, initialProgress }: Props) {

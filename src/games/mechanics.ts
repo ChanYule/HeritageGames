@@ -2,8 +2,8 @@ export type Difficulty = "easy" | "medium" | "difficult";
 
 export const difficultySettings = {
   easy: { label: "Easy", marbles: 8, marbleRadius: 18, sticks: 10, stickSpread: 46, stickLength: 28 },
-  medium: { label: "Medium", marbles: 11, marbleRadius: 16, sticks: 18, stickSpread: 36, stickLength: 38 },
-  difficult: { label: "Difficult", marbles: 14, marbleRadius: 13, sticks: 28, stickSpread: 20, stickLength: 38 },
+  medium: { label: "Medium", marbles: 12, marbleRadius: 16, sticks: 18, stickSpread: 36, stickLength: 38 },
+  difficult: { label: "Difficult", marbles: 16, marbleRadius: 13, sticks: 28, stickSpread: 20, stickLength: 38 },
 } as const;
 
 export type Point = { x: number; y: number };

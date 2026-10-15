@@ -54,3 +54,34 @@
   .arcade-play-area:not(.is-fullscreen) .shot-adjustments { grid-column:1/-1; }
   .arcade-play-area:not(.is-fullscreen) .shot-adjustment-fields { left:auto; right:0; }
 }
+
+/* Colour challenge and side-view slingshot own their additional status rows. */
+.sling-play-area.arcade-play-area .arcade-controls { display:flex; flex-wrap:wrap; justify-content:center; max-width:100%; }
+.sling-play-area .arcade-controls .arcade-mute { font-size:1rem; min-width:100px; }
+.sling-play-area .arcade-controls .primary-button { min-height:48px; }
+.sling-play-area .sling-scene { box-sizing:border-box; flex:0 1 auto; object-fit:fill; }
+.sling-play-area .sling-result { box-sizing:border-box; }
+.sling-play-area.is-fullscreen .sling-scene { width:min(100%,calc((100dvh - 340px) * 1200 / 620)); height:auto; aspect-ratio:1200/620; max-height:none; }
+.marbles-play-area.is-fullscreen .marble-target { flex:0 0 auto; max-width:900px; box-sizing:border-box; padding:5px 10px; }
+.marbles-play-area.is-fullscreen .marble-target .target-marble { flex-basis:32px; height:32px; font-size:1rem; }
+.marbles-play-area.is-fullscreen .marble-target p { margin:1px 0; font-size:.85rem; }
+.marbles-play-area.is-fullscreen .canvas-frame { width:min(100%,900px,calc((100dvh - 390px) * 900 / 700)); }
+@media(max-height:600px) and (orientation:landscape) {
+  .game-play-area.is-fullscreen:is(.sling-play-area,.marbles-play-area) { display:grid!important; grid-template-columns:minmax(0,1fr) minmax(210px,30%); grid-template-rows:auto repeat(4,min-content) 1fr; align-items:center; align-content:start; }
+  .game-play-area.is-fullscreen:is(.sling-play-area,.marbles-play-area) > :is(.game-fullscreen-toolbar,.arcade-status,.play-status-bar,.mobile-game-toolbar,.marble-target,.marble-shot-controls,.arcade-controls,.sling-feedback,.sling-result) { position:relative; inset:auto; transform:none; width:100%; min-width:0; margin:0; grid-column:2; padding:4px; }
+  .game-play-area.is-fullscreen:is(.sling-play-area,.marbles-play-area) > .game-fullscreen-toolbar { grid-column:1/-1; grid-row:1; justify-content:flex-end; }
+  .game-play-area.is-fullscreen:is(.sling-play-area,.marbles-play-area) > :is(.canvas-frame,.sling-scene) { position:relative; inset:auto; transform:none; grid-column:1; grid-row:2/7; width:100%; height:auto; margin:auto; max-height:calc(100dvh - 70px); }
+  .marbles-play-area.is-fullscreen > .canvas-frame { width:min(100%,calc((100dvh - 70px)*900/700)); }
+  .marbles-play-area.is-fullscreen > .marble-target { grid-row:2; }
+  .marbles-play-area.is-fullscreen > .play-status-bar { grid-row:3; }
+  .marbles-play-area.is-fullscreen > .mobile-game-toolbar { grid-row:4; }
+  .marbles-play-area.is-fullscreen > .marble-shot-controls { grid-row:5; grid-template-columns:1fr 1fr; }
+  .sling-play-area.is-fullscreen > .arcade-status { grid-row:2; }
+  .sling-play-area.is-fullscreen > .sling-feedback { grid-row:3; }
+  .sling-play-area.is-fullscreen > .sling-result { grid-row:4; font-size:.85rem; }
+  .sling-play-area.is-fullscreen > .arcade-controls { grid-row:5; display:flex; gap:4px; }
+  .game-play-area.is-fullscreen:is(.sling-play-area,.marbles-play-area) .control-hint { display:none; }
+}
+.sling-result { animation:sling-clear .35s ease-out; }
+@keyframes sling-clear { from { opacity:.4; transform:translateY(6px); } to { opacity:1; transform:none; } }
+@media(prefers-reduced-motion:reduce) { .sling-result { animation:none; } }

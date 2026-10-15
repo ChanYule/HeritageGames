@@ -8,6 +8,7 @@ export type Marble = {
   target: boolean;
   captured: boolean;
   color: string;
+  group?: MarbleColour;
 };
 
 export const MARBLES_WIDTH = 900;
@@ -28,7 +29,7 @@ export function returnShooterToStart(marbles: Marble[]) {
 }
 
 /** Advance one fixed physics step, banking targets as soon as they leave the ring. */
-function advanceSubstep(marbles: Marble[], dt: number) {
+function advanceSubstep(marbles: Marble[], dt: number, shot?: MarbleShot) {
   let captured = 0;
   const captureOutside = (marble: Marble) => {
     if (!marble.target || marble.captured) return;
@@ -37,8 +38,10 @@ function advanceSubstep(marbles: Marble[], dt: number) {
     marble.vx = 0;
     marble.vy = 0;
     captured += 1;
+    if (shot && !shot.captured.some(item => item.id === marble.id)) shot.captured.push({ id: marble.id, colour: marble.group });
   };
 
+  const starts = new Map(marbles.map(m => [m.id, { x: m.x, y: m.y }]));
   for (const marble of marbles) {
     if (marble.captured) continue;
     marble.x += marble.vx * dt;
@@ -64,9 +67,24 @@ function advanceSubstep(marbles: Marble[], dt: number) {
     }
   }
 
-  for (let pass = 0; pass < 4; pass++) for (let i = 0; i < marbles.length; i++) {
-    for (let j = i + 1; j < marbles.length; j++) {
-      const a = marbles[i], b = marbles[j];
+  // Resolve actual overlapping contacts in swept entry-time order. The first-hit
+  // event is emitted only when this solver transfers an approaching impulse.
+  const entryTime = (a: Marble, b: Marble) => {
+    const oldA = starts.get(a.id)!, oldB = starts.get(b.id)!;
+    const px = oldB.x - oldA.x, py = oldB.y - oldA.y;
+    const dx = (b.x - oldB.x) - (a.x - oldA.x), dy = (b.y - oldB.y) - (a.y - oldA.y);
+    const radius = a.radius + b.radius, aa = dx * dx + dy * dy;
+    const bb = 2 * (px * dx + py * dy), cc = px * px + py * py - radius * radius;
+    const disc = bb * bb - 4 * aa * cc;
+    return cc <= 0 || aa === 0 || disc < 0 ? 0 : Math.max(0, (-bb - Math.sqrt(disc)) / (2 * aa));
+  };
+  const pairs: { a: Marble; b: Marble; time: number }[] = [];
+  for (let i = 0; i < marbles.length; i++) for (let j = i + 1; j < marbles.length; j++) {
+    const a = marbles[i], b = marbles[j]; pairs.push({ a, b, time: entryTime(a, b) });
+  }
+  pairs.sort((p, q) => p.time - q.time || Math.min(p.a.id, p.b.id) - Math.min(q.a.id, q.b.id) || Math.max(p.a.id, p.b.id) - Math.max(q.a.id, q.b.id));
+  for (let pass = 0; pass < 4; pass++) {
+    for (const { a, b } of pairs) {
       if (a.captured || b.captured) continue;
       const dx = b.x - a.x, dy = b.y - a.y;
       const distance = Math.hypot(dx, dy);
@@ -82,6 +100,11 @@ function advanceSubstep(marbles: Marble[], dt: number) {
 
       const speedAlongNormal = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
       if (speedAlongNormal < 0) {
+        if (shot && a.target !== b.target) {
+          const target = a.target ? a : b;
+          if (!shot.contacts.some(item => item.id === target.id)) shot.contacts.push({ id: target.id, colour: target.group });
+          shot.first ??= { id: target.id, colour: target.group };
+        }
         const impulse = -(1 + 0.88) * speedAlongNormal / 2;
         a.vx -= impulse * nx;
         a.vy -= impulse * ny;
@@ -106,7 +129,7 @@ function advanceSubstep(marbles: Marble[], dt: number) {
 }
 
 /** Adaptive substeps bound travel to a fraction of a marble radius. */
-export function advanceMarbles(marbles: Marble[], dt = 1) {
+export function advanceMarbles(marbles: Marble[], dt = 1, shot?: MarbleShot) {
   if (!Number.isFinite(dt) || dt <= 0) return { captured: 0, moving: false };
   const duration = Math.min(dt, 2);
   const speed = Math.max(0, ...marbles.map(m => Math.hypot(m.vx, m.vy)));
@@ -114,8 +137,45 @@ export function advanceMarbles(marbles: Marble[], dt = 1) {
   const steps = Math.max(1, Math.ceil(speed * duration / (radius * .4)));
   let captured = 0, moving = false;
   for (let i = 0; i < steps; i++) {
-    const result = advanceSubstep(marbles, duration / steps);
+    const result = advanceSubstep(marbles, duration / steps, shot);
     captured += result.captured; moving = result.moving;
   }
+  if (shot) shot.complete = !moving;
   return { captured, moving };
+}
+
+export const MARBLE_COLOURS = ["Red", "Blue", "Yellow", "Green"] as const;
+export type MarbleColour = typeof MARBLE_COLOURS[number];
+export const MARBLE_STYLE = {
+  Red: { color: "#c83c38", symbol: "R" }, Blue: { color: "#276ac4", symbol: "B" },
+  Yellow: { color: "#d5a51b", symbol: "Y" }, Green: { color: "#28834c", symbol: "G" },
+};
+export type MarbleContact = { id: number; colour?: MarbleColour };
+export type MarbleShot = { first: MarbleContact | null; contacts: MarbleContact[]; captured: MarbleContact[]; complete: boolean; scored: boolean };
+export const createMarbleShot = (): MarbleShot => ({ first: null, contacts: [], captured: [], complete: false, scored: false });
+export function nextMarbleColour(marbles: Marble[], current?: MarbleColour, advance = false): MarbleColour | undefined {
+  const start = current ? MARBLE_COLOURS.indexOf(current) + (advance ? 1 : 0) : 0;
+  for (let i = 0; i < 4; i++) {
+    const colour = MARBLE_COLOURS[(start + i) % 4];
+    if (marbles.some(m => m.target && !m.captured && m.group === colour)) return colour;
+  }
+}
+export function scoreMarbleShot(shot: MarbleShot, target?: MarbleColour) {
+  const valid = Boolean(target && shot.first?.colour === target);
+  const count = valid ? new Set(shot.captured.filter(m => m.colour === target).map(m => m.id)).size : 0;
+  const points = count * 100 + (count >= 2 ? count * 50 : 0);
+  return { count, points, reason: !shot.first ? "No contact" : !valid ? "Wrong colour hit first" : !count ? "No target-colour capture" : "Correct first hit" };
+}
+
+/** Bank one settled shot, advance the shared target and alternate exactly once. */
+export function resolveMarbleTurn(shot: MarbleShot, target: MarbleColour | undefined, marbles: Marble[], player: 0 | 1, individual = false, shotsUsed = 0, shotLimit = Infinity) {
+  if (!shot.complete || shot.scored) return null;
+  shot.scored = true;
+  const score = scoreMarbleShot(shot, target);
+  return {
+    ...score,
+    nextTarget: nextMarbleColour(marbles, target, score.points > 0),
+    nextPlayer: (individual ? 0 : player === 0 ? 1 : 0) as 0 | 1,
+    finished: !marbles.some(m => m.target && !m.captured) || (individual && shotsUsed >= shotLimit),
+  };
 }
