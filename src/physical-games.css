@@ -85,3 +85,13 @@
 .sling-result { animation:sling-clear .35s ease-out; }
 @keyframes sling-clear { from { opacity:.4; transform:translateY(6px); } to { opacity:1; transform:none; } }
 @media(prefers-reduced-motion:reduce) { .sling-result { animation:none; } }
+
+.marbles-play-area .marble-shot-controls .marble-position-toggle { grid-column:1/-1; }
+.marble-placement-controls { grid-column:1/-1; min-width:0; }
+.marble-placement-controls p { margin:4px 0 8px; color:#294d3e; line-height:1.35; }
+.marble-placement-controls > div { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; }
+.marble-placement-controls button { min-width:0; padding:6px; min-height:48px; }
+.marbles-play-area.is-fullscreen .marble-placement-controls p { font-size:.85rem; }
+@media(max-height:600px) and (orientation:landscape) {
+  .marbles-play-area.is-fullscreen .marble-placement-controls > div { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}

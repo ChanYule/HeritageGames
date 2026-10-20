@@ -9,7 +9,7 @@ import PlayerScoreboard from "../components/PlayerScoreboard";
 import TurnTimerPanel from "../components/TurnTimerPanel";
 import { difficultySettings, type Difficulty, randomMarblePositions, seededRandom, shotVelocity } from "./mechanics";
 import type { CompetitionGameProps } from "../types";
-import { MARBLE_COLOURS, MARBLE_STYLE, createMarbleShot, resolveMarbleTurn, type MarbleColour, advanceMarbles, returnShooterToStart, type Marble, MARBLES_LAUNCH, MARBLES_MAX_PULL, MARBLES_WIDTH as WIDTH, MARBLES_HEIGHT as HEIGHT, MARBLES_RING as RING } from "./marblesPhysics";
+import { MARBLE_COLOURS, MARBLE_STYLE, createMarbleShot, resolveMarbleTurn, placeMarbleShooter, type MarbleColour, advanceMarbles, returnShooterToStart, type Marble, MARBLES_LAUNCH, MARBLES_MAX_PULL, MARBLES_WIDTH as WIDTH, MARBLES_HEIGHT as HEIGHT, MARBLES_RING as RING } from "./marblesPhysics";
 
 type Player = 0 | 1;
 
@@ -118,6 +118,8 @@ function MarblesRound({ difficulty, playerNames, competitionMode = false, onComp
   const [paused, setPaused] = useState(false);
   const [awaitingReady, setAwaitingReady] = useState(!individualAttempt);
   const [captureFeedback, setCaptureFeedback] = useState<{ id: number; text: () => string; player: Player } | null>(null);
+  const [positioning, setPositioning] = useState(false);
+  const positioningRef = useRef(false);
   const [keyboardAim, setKeyboardAim] = useState(-90);
   const [keyboardPower, setKeyboardPower] = useState(75);
   const powerRef = useRef(keyboardPower); powerRef.current = keyboardPower;
@@ -125,6 +127,7 @@ function MarblesRound({ difficulty, playerNames, competitionMode = false, onComp
   aimRef.current = keyboardAim;
 
   const waitForPlayer = () => {
+    positioningRef.current = false; setPositioning(false);
     awaitingReadyRef.current = !individualAttempt;
     setAwaitingReady(!individualAttempt);
     draggingRef.current = false;
@@ -332,12 +335,15 @@ function MarblesRound({ difficulty, playerNames, competitionMode = false, onComp
 
       ctx.fillStyle = "rgba(255,255,255,.24)";
       ctx.fillRect(0, 510, WIDTH, HEIGHT - 510);
-      ctx.strokeStyle = "#567263"; ctx.lineWidth = 2; ctx.setLineDash([7, 7]);
-      ctx.beginPath(); ctx.arc(MARBLES_LAUNCH.x, MARBLES_LAUNCH.y, MARBLES_MAX_PULL, 0, Math.PI * 2); ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.beginPath(); ctx.arc(MARBLES_LAUNCH.x, MARBLES_LAUNCH.y, 26, 0, Math.PI * 2); ctx.stroke();
+      if (!movingRef.current && !gameOverRef.current) {
+        ctx.strokeStyle = "#567263"; ctx.lineWidth = 2; ctx.setLineDash([7, 7]);
+        const launch = marblesRef.current.find(m => !m.target) ?? MARBLES_LAUNCH;
+        ctx.beginPath(); ctx.arc(launch.x, launch.y, MARBLES_MAX_PULL, 0, Math.PI * 2); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.beginPath(); ctx.arc(launch.x, launch.y, 26, 0, Math.PI * 2); ctx.stroke();
+      }
       ctx.fillStyle = "#294c40"; ctx.font = "bold 16px system-ui"; ctx.textAlign = "center";
-      ctx.fillText(t("Drag back and release to shoot."), WIDTH / 2, HEIGHT - 14); ctx.textAlign = "start";
+      ctx.fillText(t(positioningRef.current ? "Move the shooter outside the ring." : "Drag back and release to shoot."), WIDTH / 2, HEIGHT - 14); ctx.textAlign = "start";
       ctx.beginPath();
       ctx.arc(RING.x, RING.y, RING.radius, 0, Math.PI * 2);
       ctx.strokeStyle = "#7c5f46";
@@ -381,13 +387,18 @@ function MarblesRound({ difficulty, playerNames, competitionMode = false, onComp
       ctx.restore();
 
       const marbles = marblesRef.current;
+      if (positioningRef.current) {
+        ctx.save(); ctx.strokeStyle = "#185b84"; ctx.lineWidth = 3; ctx.setLineDash([9, 7]);
+        ctx.strokeRect(130, 130, WIDTH - 260, HEIGHT - 260);
+        ctx.beginPath(); ctx.arc(RING.x, RING.y, RING.radius + 28, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+      }
 
-      if (!movingRef.current && !gameOverRef.current) {
+      if (!positioningRef.current && !movingRef.current && !gameOverRef.current) {
         const shooter = marbles.find(m => !m.target);
         if (shooter) {
           const pull = pointerRef.current;
           const velocity = draggingRef.current ? shotVelocity((shooter.x - pull.x) * 180 / MARBLES_MAX_PULL, (shooter.y - pull.y) * 180 / MARBLES_MAX_PULL) : { x: Math.cos(aimRef.current * Math.PI / 180) * 16.2 * powerRef.current / 100, y: Math.sin(aimRef.current * Math.PI / 180) * 16.2 * powerRef.current / 100 };
-          const key = `${velocity.x}:${velocity.y}:${shotsRef.current.join()}:${totalCapturedRef.current}`;
+          const key = `${shooter.x}:${shooter.y}:${velocity.x}:${velocity.y}:${shotsRef.current.join()}:${totalCapturedRef.current}`;
           if (guideCache.current.key !== key) {
             const clone = marbles.map(m => ({ ...m })), shot = createMarbleShot();
             const ball = clone.find(m => !m.target)!; ball.vx = velocity.x; ball.vy = velocity.y;
@@ -401,7 +412,7 @@ function MarblesRound({ difficulty, playerNames, competitionMode = false, onComp
         }
       }
 
-      if (draggingRef.current) {
+      if (draggingRef.current && !positioningRef.current) {
         const shooter = marbles.find((marble) => !marble.target);
         if (shooter) {
           const pointer = pointerRef.current;
@@ -609,7 +620,7 @@ function MarblesRound({ difficulty, playerNames, competitionMode = false, onComp
   }, [targetCount]);
 
   const takeShot = (vx: number, vy: number) => {
-    if (movingRef.current || gameOverRef.current || pausedRef.current || awaitingReadyRef.current || document.hidden || !Number.isFinite(vx + vy) || Math.hypot(vx, vy) < .1) return;
+    if (movingRef.current || gameOverRef.current || pausedRef.current || awaitingReadyRef.current || document.hidden || positioningRef.current || !Number.isFinite(vx + vy) || Math.hypot(vx, vy) < .1) return;
     const shooter = marblesRef.current.find((marble) => !marble.target);
     if (!shooter) return;
 
@@ -627,6 +638,29 @@ function MarblesRound({ difficulty, playerNames, competitionMode = false, onComp
     setMessage(() => () => t("{0}'s shot is rolling...", playerLabel(activePlayerRef.current)));
   };
 
+  const togglePositioning = () => {
+    draggingRef.current = false; dragPointerRef.current = null;
+    positioningRef.current = !positioningRef.current;
+    setPositioning(positioningRef.current);
+    const placing = positioningRef.current;
+    setMessage(() => () => t(placing ? "Move the shooter outside the ring, then press Done positioning." : "Drag back and release to shoot."));
+  };
+
+  const placeShooter = (x: number, y: number) => {
+    if (movingRef.current || gameOverRef.current || pausedRef.current || awaitingReadyRef.current || document.hidden) return;
+    if (!placeMarbleShooter(marblesRef.current, x, y)) {
+      setMessage(() => () => t("Choose a clear spot outside the ring and inside the dashed border."));
+      return;
+    }
+    setKeyboardAim(Math.round(Math.atan2(RING.y - y, RING.x - x) * 180 / Math.PI / 5) * 5);
+    setMessage(() => () => t("Starting position set. Press Done positioning to aim."));
+  };
+
+  const nudgeShooter = (dx: number, dy: number) => {
+    const shooter = marblesRef.current.find(m => !m.target);
+    if (shooter) placeShooter(shooter.x + dx, shooter.y + dy);
+  };
+
   const onPointerDown = (event: React.PointerEvent<HTMLCanvasElement>) => {
     if (dragPointerRef.current !== null || movingRef.current || gameOverRef.current || pausedRef.current || awaitingReadyRef.current || document.hidden || !event.isPrimary || event.button !== 0) return;
     event.preventDefault();
@@ -634,6 +668,12 @@ function MarblesRound({ difficulty, playerNames, competitionMode = false, onComp
     const shooter = marblesRef.current.find((marble) => !marble.target);
     if (!shooter) return;
 
+    if (positioningRef.current) {
+      placeShooter(point.x, point.y);
+      draggingRef.current = true; dragPointerRef.current = event.pointerId;
+      event.currentTarget.setPointerCapture(event.pointerId);
+      return;
+    }
     const touchPadding = event.pointerType === "touch" ? 58 : 20;
     if (Math.hypot(point.x - shooter.x, point.y - shooter.y) <= shooter.radius + touchPadding) {
       draggingRef.current = true;
@@ -642,7 +682,7 @@ function MarblesRound({ difficulty, playerNames, competitionMode = false, onComp
       pointerRef.current = { x: shooter.x, y: shooter.y };
       event.currentTarget.setPointerCapture(event.pointerId);
     } else {
-      setKeyboardAim(Math.round(Math.max(-175, Math.min(-5, Math.atan2(point.y - shooter.y, point.x - shooter.x) * 180 / Math.PI)) / 5) * 5);
+      setKeyboardAim(Math.round(Math.atan2(point.y - shooter.y, point.x - shooter.x) * 180 / Math.PI / 5) * 5);
       setMessage(() => () => t("Aim set. Press Shoot marble when you are ready."));
     }
   };
@@ -650,9 +690,11 @@ function MarblesRound({ difficulty, playerNames, competitionMode = false, onComp
   const onPointerMove = (event: React.PointerEvent<HTMLCanvasElement>) => {
     if (!draggingRef.current || pausedRef.current || dragPointerRef.current !== event.pointerId) return;
     const point = getCanvasPoint(event);
+    if (positioningRef.current) { placeShooter(point.x, point.y); return; }
     const dx = point.x - dragStartRef.current.x, dy = point.y - dragStartRef.current.y;
     const scale = Math.min(1, MARBLES_MAX_PULL / (Math.hypot(dx, dy) || 1));
-    pointerRef.current = { x: MARBLES_LAUNCH.x + dx * scale, y: MARBLES_LAUNCH.y + dy * scale };
+    const shooter = marblesRef.current.find(m => !m.target);
+    if (shooter) pointerRef.current = { x: shooter.x + dx * scale, y: shooter.y + dy * scale };
   };
 
   const onPointerUp = (event: React.PointerEvent<HTMLCanvasElement>) => {
@@ -664,6 +706,7 @@ function MarblesRound({ difficulty, playerNames, competitionMode = false, onComp
     const shooter = marblesRef.current.find((marble) => !marble.target);
     if (!shooter) return;
 
+    if (positioningRef.current) { placeShooter(point.x, point.y); return; }
     const dx = dragStartRef.current.x - point.x;
     const dy = dragStartRef.current.y - point.y;
     const distance = Math.min(Math.hypot(dx, dy), 180);
@@ -685,8 +728,16 @@ function MarblesRound({ difficulty, playerNames, competitionMode = false, onComp
   const onCanvasKeyDown = (event: React.KeyboardEvent<HTMLCanvasElement>) => {
     if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", " "].includes(event.key)) event.preventDefault();
     if (movingRef.current || pausedRef.current || gameOverRef.current || awaitingReadyRef.current) return;
-    if (event.key === "ArrowLeft") setKeyboardAim((value) => Math.max(-175, value - 5));
-    if (event.key === "ArrowRight") setKeyboardAim((value) => Math.min(-5, value + 5));
+    if (positioningRef.current) {
+      if (event.key === "ArrowLeft") nudgeShooter(-10, 0);
+      if (event.key === "ArrowRight") nudgeShooter(10, 0);
+      if (event.key === "ArrowUp") nudgeShooter(0, -10);
+      if (event.key === "ArrowDown") nudgeShooter(0, 10);
+      if (event.key === "Enter" || event.key === "Escape") { event.preventDefault(); togglePositioning(); }
+      return;
+    }
+    if (event.key === "ArrowLeft") setKeyboardAim((value) => Math.max(-180, value - 5));
+    if (event.key === "ArrowRight") setKeyboardAim((value) => Math.min(180, value + 5));
     if (event.key === "ArrowUp") setKeyboardPower((value) => Math.min(100, value + 5));
     if (event.key === "ArrowDown") setKeyboardPower((value) => Math.max(20, value - 5));
     if (event.key === " " && !event.repeat) shootWithControls();
@@ -707,7 +758,7 @@ function MarblesRound({ difficulty, playerNames, competitionMode = false, onComp
           objective={individualAttempt ? t("Six shots to knock marbles out. The same layout and level for everyone.") : t("Hit the target colour first, then knock it outside the ring.")}
           steps={[
             individualAttempt ? t("Drag back and release to shoot.") : t("Press I am ready. Drag back and release to shoot."),
-            t("You can also tap to aim, then press Shoot marble."),
+            t("Use Move shooter to choose a starting spot. Then drag back, or tap to aim and press Shoot marble."),
             t("Hit the target colour first, then knock it outside the ring. Matching captures score 100 each; two or more earn 50 extra each."),
             individualAttempt ? t("45 seconds per shot. Running out of time ends your attempt.") : t("Take one shot each, then pass the device. The next player starts the timer when ready."),
           ]}
@@ -809,7 +860,7 @@ function MarblesRound({ difficulty, playerNames, competitionMode = false, onComp
             onLostPointerCapture={(event) => { if (dragPointerRef.current === event.pointerId) { draggingRef.current = false; dragPointerRef.current = null; } }}
             onKeyDown={onCanvasKeyDown}
             tabIndex={awaitingReady || paused || gameOver ? -1 : 0}
-            aria-label={t("Marbles ring. Tap to aim, then use Shoot marble. Keyboard: arrows to aim and set power, Space to shoot.")}
+            aria-label={positioning ? t("Marbles positioning. Arrow keys move the shooter; Enter finishes positioning.") : t("Marbles ring. Tap to aim, then use Shoot marble. Keyboard: arrows to aim and set power, Space to shoot.")}
           />
           {captureFeedback ? (
             <div key={captureFeedback.id} className={`marble-capture-feedback player-${captureFeedback.player + 1}`} role="status">
@@ -829,10 +880,22 @@ function MarblesRound({ difficulty, playerNames, competitionMode = false, onComp
 
         <fieldset className="marble-shot-controls" disabled={moving || paused || gameOver || awaitingReady}>
           <legend>{t("Aim, then shoot")}</legend>
+          <button type="button" className="secondary-button marble-position-toggle" aria-pressed={positioning} onClick={togglePositioning}>{t(positioning ? "Done positioning" : "Move shooter")}</button>
+          {positioning && <div className="marble-placement-controls">
+            <p>{t("Tap a clear spot outside the ring, or drag the shooter. Arrow keys also move it.")}</p>
+            <div role="group" aria-label={t("Move shooter")}>
+              <button type="button" className="secondary-button" onClick={() => nudgeShooter(-10, 0)}>{t("Left")}</button>
+              <button type="button" className="secondary-button" onClick={() => nudgeShooter(10, 0)}>{t("Right")}</button>
+              <button type="button" className="secondary-button" onClick={() => nudgeShooter(0, -10)}>{t("Up")}</button>
+              <button type="button" className="secondary-button" onClick={() => nudgeShooter(0, 10)}>{t("Down")}</button>
+            </div>
+          </div>}
+          {!positioning && <>
+
           <details className="shot-adjustments"><summary>{t("Adjust shot")}</summary><div className="shot-adjustment-fields">
           <label>
-            <span>{t("Aim left or right")} <strong>{keyboardAim === -90 ? t("Straight ahead") : keyboardAim < -90 ? t("Left") : t("Right")}</strong></span>
-            <input type="range" min={-175} max={-5} step={5} value={keyboardAim} onChange={(event) => setKeyboardAim(Number(event.target.value))} />
+            <span>{t("Shot direction")} <strong>{keyboardAim}°</strong></span>
+            <input type="range" min={-180} max={180} step={5} value={keyboardAim} onChange={(event) => setKeyboardAim(Number(event.target.value))} />
           </label>
           <label>
             <span>{t("Power")} <strong>{keyboardPower}%</strong></span>
@@ -840,6 +903,7 @@ function MarblesRound({ difficulty, playerNames, competitionMode = false, onComp
           </label>
           </div></details>
           <button type="button" className="primary-button" onClick={shootWithControls}>{moving ? t("Shot rolling") : t("Shoot marble")}</button>
+          </>}
         </fieldset>
 
         <p className="control-hint">{individualAttempt ? t("Drag back and release to shoot.") : <>{t("Drag backwards and release, or focus the board and use Arrow keys plus Space. Blue swirl marble is")} {playerLabel(0)} {t("and red cross marble is")} {playerLabel(1)}.</>}</p>

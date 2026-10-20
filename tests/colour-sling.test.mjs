@@ -118,3 +118,33 @@ test('Marbles zero-point turns keep available target, alternate, and respect ind
  const turn=m.resolveMarbleTurn(invalid,'Red',board,1);assert.equal(turn.points,0);assert.equal(turn.nextTarget,'Red');assert.equal(turn.nextPlayer,0);
  const last=m.createMarbleShot();last.complete=true;const end=m.resolveMarbleTurn(last,'Red',board,0,true,6,6);assert.equal(end.finished,true);assert.equal(end.nextPlayer,0);
 });
+
+test('Marbles shooter can choose clear starting positions outside the ring without changing targets',()=>{
+ const board=[marble(1,'Red',450,260),marble(100,undefined,450,570,0,0,false)],target={...board[0]};
+ for(const[x,y]of [[150,260],[750,260],[450,540],[150,130]]){
+  assert.equal(m.placeMarbleShooter(board,x,y),true);assert.equal(board[1].x,x);assert.equal(board[1].y,y);assert.deepEqual(board[0],target);
+  assert.ok(x>=board[1].radius+m.MARBLES_MAX_PULL&&x<=m.MARBLES_WIDTH-board[1].radius-m.MARBLES_MAX_PULL);
+  assert.ok(y>=board[1].radius+m.MARBLES_MAX_PULL&&y<=m.MARBLES_HEIGHT-board[1].radius-m.MARBLES_MAX_PULL);
+ }
+});
+test('Marbles placement rejects the ring, insufficient pull-back room and invalid coordinates',()=>{
+ const board=[marble(100,undefined,450,570,0,0,false)],start={...board[0]};
+ for(const[x,y]of [[450,260],[450,480],[20,570],[880,260],[450,680],[150,20],[NaN,570],[150,Infinity]]){
+  assert.equal(m.placeMarbleShooter(board,x,y),false);assert.deepEqual(board[0],start);
+ }
+});
+test('Marbles placement blocks target overlap near the ring edge and any rolling shot',()=>{
+ const board=[marble(1,'Red',450,470),marble(100,undefined,450,570,0,0,false)];
+ assert.equal(m.placeMarbleShooter(board,450,490),false);
+ board[0].vx=1;assert.equal(m.placeMarbleShooter(board,150,260),false);board[0].vx=0;
+ board[1].vy=-10;assert.equal(m.placeMarbleShooter(board,150,260),false);board[1].vy=0;
+ board[0].captured=true;assert.equal(m.placeMarbleShooter(board,450,490),true);
+});
+for(const[x,vx]of [[150,16.2],[750,-16.2]])test(`Marbles physics and colour scoring work from chosen starting x=${x}`,()=>{
+ const board=[marble(1,'Red',450,260),marble(100,undefined,450,570,0,0,false)],shot=m.createMarbleShot();
+ assert.ok(m.placeMarbleShooter(board,x,260));assert.equal(shot.first,null);assert.equal(shot.captured.length,0);
+ board[1].vx=vx;
+ for(let i=0;i<1600&&!shot.complete;i++)m.advanceMarbles(board,1,shot);
+ assert.equal(shot.complete,true);assert.equal(shot.first.colour,'Red');assert.equal(m.scoreMarbleShot(shot,'Red').points,100);
+ m.returnShooterToStart(board);assert.equal(board[1].x,m.MARBLES_LAUNCH.x);assert.equal(board[1].y,m.MARBLES_LAUNCH.y);
+});

@@ -114,6 +114,7 @@ try {
     const html = renderToString(createElement(Marbles));
     assert.match(html, /Target: Red/); assert.match(html, /target colour first/);
     assert.match(html, /Shoot marble/); assert.match(html, /Space to shoot/);
+    assert.match(html, /Move shooter/); assert.match(html, /aria-pressed="false"/);
   });
   test("Redesigned games show translated rules and controls without changing player names", () => {
     const previousDocument = globalThis.document;
@@ -124,7 +125,7 @@ try {
       const marble = renderToString(createElement(Marbles, { playerNames: ["Mary", "Ahmad"] }));
       assert.match(tin, /Mary/); assert.match(marble, /Ahmad/);
       assert.doesNotMatch(tin, /First Throw|Drag the ball back|Launch angle|Balls left|Three balls each/);
-      assert.doesNotMatch(marble, /Target: Red|Hit the target colour first/);
+      assert.doesNotMatch(marble, /Target: Red|Hit the target colour first|Move shooter|Use Move shooter/);
     } finally {
       setLanguage("en");
       if (previousDocument === undefined) delete globalThis.document;

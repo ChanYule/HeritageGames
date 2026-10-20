@@ -18,6 +18,17 @@ export const MARBLES_RING = { x: MARBLES_WIDTH / 2, y: 260, radius: 200 };
 export const MARBLES_LAUNCH = { x: MARBLES_WIDTH / 2, y: 570 };
 export const MARBLES_MAX_PULL = 110;
 
+export function placeMarbleShooter(marbles: Marble[], x: number, y: number) {
+  const shooter = marbles.find(m => !m.target);
+  if (!shooter || !Number.isFinite(x + y) || marbles.some(m => !m.captured && Math.hypot(m.vx, m.vy) > 0)) return false;
+  const margin = shooter.radius + MARBLES_MAX_PULL;
+  if (x < margin || x > MARBLES_WIDTH - margin || y < margin || y > MARBLES_HEIGHT - margin) return false;
+  if (Math.hypot(x - MARBLES_RING.x, y - MARBLES_RING.y) < MARBLES_RING.radius + shooter.radius + 8) return false;
+  if (marbles.some(m => m.target && !m.captured && Math.hypot(x - m.x, y - m.y) < shooter.radius + m.radius + 4)) return false;
+  shooter.x = x; shooter.y = y;
+  return true;
+}
+
 export function returnShooterToStart(marbles: Marble[]) {
   const shooter = marbles.find((marble) => !marble.target);
   if (!shooter) return;

@@ -47,3 +47,12 @@ No browser surface is available in this session. Real-device touch/stylus input,
 Created: `src/games/TinSlingGame.tsx`, `src/games/tinSlingPhysics.ts`, `tests/colour-sling.test.mjs`, this document.
 
 Modified: `README.md`, `src/games/ArcadeTargetGame.tsx`, `src/games/MarblesGame.tsx`, `src/games/marblesPhysics.ts`, `src/games/mechanics.ts`, `src/games/arcade.css`, `src/physical-games.css`, `src/components/Competition.tsx`, `src/locales/zh.ts`, `tests/challenge-integration.test.mjs`.
+
+
+## Choosing the Marbles shooter starting position
+
+Before each shot, press **Move shooter**, then tap a clear location outside the ring or drag to it. Direction buttons and board Arrow keys provide alternatives; **Done positioning** (or Enter on the board) returns to aiming. Shot direction now supports all angles for shots from either side. Placement cannot fire a shot or score points.
+
+A legal start leaves one maximum pull plus the shooter radius between the ball and every board edge, remains outside the ring, and cannot overlap an uncaptured target. Placement is disabled while any marble is moving. Both players and Challenge attempts use the same limits, existing timers continue, and each new turn resets the shooter to the default starting position. Resize/fullscreen keeps the selected position. Trajectory previews and drag anchoring use the chosen position.
+
+Placement follow-up validation: all 199 tests passed, including legal/illegal starts, collision clearance, movement locks, shooting and scoring from both sides, turn resets and translated controls. The production build passed; real-device interaction remains unverified.
