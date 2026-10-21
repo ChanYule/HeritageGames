@@ -1,0 +1,11 @@
+<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"></head><body><div id="root"></div><script type="module">
+import React from '/node_modules/.vite/deps/react.js';
+import ReactDOM from '/node_modules/.vite/deps/react-dom_client.js';
+import GameShell from '/src/components/GameShell.tsx';
+import Sticks from '/src/games/PickUpSticksGame.tsx';
+import '/src/styles.css';import '/src/senior.css';import '/src/fullscreen.css';import '/src/physical-games.css';import '/src/gameViewport.css';
+window.results=[];
+const q=new URLSearchParams(location.search),individual=q.has('individual');
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(GameShell,{title:'Pick-Up Sticks',subtitle:'Test',onBack:()=>{}},React.createElement(Sticks,{competitionMode:!q.has('practice'),playerNames:['Mary','Ahmad'],fixedDifficulty:q.get('difficulty')||'easy',...(individual?{individualAttempt:{seed:42,shots:6}}:{}),onComplete:r=>window.results.push(r)})));
+</script></body></html>
+

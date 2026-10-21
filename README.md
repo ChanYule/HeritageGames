@@ -30,7 +30,7 @@ Each player has a stable colour and name. Names are always shown; colour is neve
 ### Individual attempts
 
 - **Marbles**: a fresh, identical seeded layout for each player; six shots or until the ring is empty. Each shot has a 45-second aiming limit, paused while rolling; timeout ends the attempt. Hit the shared target colour first; only matching captures score 100 each, with 50 extra each for two or more matching captures.
-- **Pick-Up Sticks**: the same seeded pile and level for each player; 45 seconds to collect exposed sticks. A blocked lift, timeout or empty pile ends the attempt. Selecting a stick alone is safe.
+- **Pick-Up Sticks**: the same seeded pile and level for each player; 45 seconds to extract sticks carefully. Moving another stick beyond tolerance, timeout or an empty pile ends the attempt. Selecting alone is safe. Drag slowly or use the direction buttons; three clean pickups add 20 points and five add 50.
 - **Tin-Can Knockdown**: three balls per player on an identical fixed level (levels 1/3/5 for Easy/Medium/Difficult). Each fallen tin scores 100; clearing adds 200 plus 50 per unused ball. Scoring waits for sustained quiet.
 
 ### Carrom format
@@ -63,7 +63,7 @@ The old `heritage-games-competition-v1` league save is retained separately and i
 
 `npm test` covers Challenge creation, placement points, tie rules, handovers, progression, all Carrom formats, duplicate/stale callbacks, restarts and validated storage recovery, plus existing physics and mechanics. Server-rendered integration tests verify standalone controls, individual scoreboards and initial Challenge setup; they do not prove live interaction or viewport fit.
 
-No browser was connected during this implementation. Before a real event, inspect widths 320, 360, 390, 414, 768, 820 and 1024 pixels, including portrait, landscape and fullscreen. Walk Quick and Full through setup, all player handovers, game results, champion, Play Again, New Challenge and Return Home. Check English/Chinese, larger text, contrast, touch controls and refresh recovery. Phone/tablet acceptance remains unverified until these checks are run.
+The 21 October 2026 upgrade includes headless Edge measurements of all six registered games in normal view, native fullscreen and a forced immersive fallback. See [implementation and verification notes](docs/pick-up-sticks-responsive-upgrade.md) for viewport sizes, screenshots, automated gameplay checks and remaining physical-device checks. Before a real event, rehearse on the actual phones and tablets. Walk Quick and Full through setup, all player handovers, game results, champion, Play Again, New Challenge and Return Home. Check English/Chinese, larger text, contrast, touch controls and refresh recovery. Phone/tablet acceptance remains unverified until these checks are run.
 
 
 ### Tin-Can slingshot and Marbles colour challenge

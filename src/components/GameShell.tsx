@@ -17,6 +17,8 @@ export default function GameShell({ title, subtitle, onBack, backLabel = t("All 
   useLanguage();
   const playAreaRef = useRef<HTMLDivElement | null>(null);
   const titleRef = useRef<HTMLHeadingElement | null>(null);
+  const [playAreaReady, setPlayAreaReady] = useState(false);
+  const [paused, setPaused] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [pseudoFullscreen, setPseudoFullscreen] = useState(false);
   const [nativeFullscreenSupported, setNativeFullscreenSupported] = useState(true);
@@ -56,6 +58,14 @@ export default function GameShell({ title, subtitle, onBack, backLabel = t("All 
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleEscape);
     };
+  }, [pseudoFullscreen]);
+
+  useEffect(() => {
+    if (!pseudoFullscreen) return;
+    const ancestors: HTMLElement[] = [];
+    let node = playAreaRef.current?.parentElement;
+    while (node && node !== document.body) { ancestors.push(node); node.classList.add('immersive-ancestor'); node=node.parentElement; }
+    return () => ancestors.forEach(node=>node.classList.remove('immersive-ancestor'));
   }, [pseudoFullscreen]);
 
   const fullscreenActive = isFullscreen || pseudoFullscreen;
@@ -131,6 +141,7 @@ export default function GameShell({ title, subtitle, onBack, backLabel = t("All 
               type="button"
               className="game-fullscreen-button"
               onClick={toggleFullscreen}
+              disabled={!playAreaReady}
               aria-label={fullscreenActive ? t("Exit fullscreen") : t("Enter fullscreen")}
               aria-pressed={fullscreenActive}
               aria-describedby="fullscreen-button-tooltip"
@@ -170,7 +181,7 @@ export default function GameShell({ title, subtitle, onBack, backLabel = t("All 
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.08, duration: 0.36 }}
       >
-        <GameFullscreenContext.Provider value={{ playAreaRef, fullscreenActive, pseudoFullscreen, toggleFullscreen }}>
+        <GameFullscreenContext.Provider value={{ playAreaRef, fullscreenActive, pseudoFullscreen, toggleFullscreen, paused, setPaused, setPlayAreaReady }}>
           {children}
         </GameFullscreenContext.Provider>
       </motion.div>

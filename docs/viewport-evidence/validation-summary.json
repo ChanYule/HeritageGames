@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-21",
+  "unitTests": {
+    "passed": 213,
+    "failed": 0
+  },
+  "mainViewportCases": 234,
+  "expandedControlCases": 30,
+  "gameplayChecks": 14,
+  "browser": "Headless Microsoft Edge on Windows, touch-capable contexts",
+  "typescript": "passed",
+  "productionBuild": {
+    "status": "passed",
+    "mainBundleKB": 582.21,
+    "mainBundleGzipKB": 189.53,
+    "warning": "Bundle exceeds 500 kB before gzip"
+  },
+  "physicalDevicesTested": false
+}

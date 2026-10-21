@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, type PointerEvent } from "react";
-import GamePlayArea from "../components/GamePlayArea";
+import { useContext, useEffect, useRef, useState, type PointerEvent } from "react";
+import GamePlayArea, { GameFullscreenContext } from "../components/GamePlayArea";
 import PlayerScoreboard from "../components/PlayerScoreboard";
 import { t, useLanguage } from "../i18n";
 import type { CompetitionGameProps } from "../types";
@@ -24,7 +24,10 @@ export default function TinSlingGame({ playerNames, playerColours, competitionMo
   const mutedRef = useRef(muted); mutedRef.current = muted;
   const updateRef = useRef<() => void>(() => {});
   const preview = useRef<{ x: number; y: number }[]>([]);
-  const canPlay = ready && !moving && !result && !finished;
+  const fullscreenState = useContext(GameFullscreenContext);
+  const paused = fullscreenState?.paused ?? false;
+  const pauseRef = useRef(paused); pauseRef.current = paused;
+  const canPlay = !paused && ready && !moving && !result && !finished;
   const w = world.current, spec = TIN_LEVELS[level];
   const draw = () => {
     const element = canvas.current, ctx = element?.getContext("2d"); if (!element || !ctx) return;
@@ -71,7 +74,7 @@ export default function TinSlingGame({ playerNames, playerColours, competitionMo
     if (!gesture.current) { const radians = angle * Math.PI / 180; pull.current = { x: -Math.cos(radians) * MAX_PULL * power / 100, y: -Math.sin(radians) * MAX_PULL * power / 100 }; }
     const dots = fixedDifficulty === "difficult" || level === 4 ? 18 : fixedDifficulty === "medium" || level >= 2 ? 28 : 40;
     preview.current = slingTrajectory(world.current!, pull.current.x, pull.current.y).slice(0, dots); draw();
-  }, [angle, power, ready, moving, result, finished, version, level, active, fixedDifficulty]);
+  }, [angle, power, ready, moving, result, finished, version, level, active, fixedDifficulty, paused]);
   useEffect(() => {
     const cancel = () => { gesture.current = null; updateRef.current(); };
     const observer = new ResizeObserver(cancel); if (canvas.current) observer.observe(canvas.current);
@@ -85,7 +88,7 @@ export default function TinSlingGame({ playerNames, playerColours, competitionMo
     gesture.current = null; locked.current = true; setMoving(true); playArcadeSound("throw", !mutedRef.current);
     let previous = 0, accumulator = 0, impacts = world.current!.impacts, breaks = world.current!.breaks;
     const frame = (time: number) => {
-      if (document.hidden) { previous = time; raf.current = requestAnimationFrame(frame); return; }
+      if (document.hidden || pauseRef.current) { previous = time; raf.current = requestAnimationFrame(frame); return; }
       accumulator += previous ? Math.min(.05, (time - previous) / 1000) : 1 / 60; previous = time;
       while (accumulator >= 1 / 120) { stepSling(world.current!, 1 / 120); accumulator -= 1 / 120; }
       const current = world.current!;
@@ -114,6 +117,7 @@ export default function TinSlingGame({ playerNames, playerColours, competitionMo
     else newAttempt(level, 0);
   };
   const restart = () => { cancelAnimationFrame(raf.current); locked.current = false; reported.current = false; levelScores.current.clear(); setScores([0, 0]); setMoving(false); setFinished(false); setFirstClear(false); newAttempt(initialLevel, 0); };
+  useEffect(() => { if (paused) { gesture.current=null; preview.current=[]; updateRef.current(); } }, [paused]);
   return <div className="arcade-layout sling-layout">
     <div className="arcade-intro"><h2>{t("Tin-Can Knockdown")}</h2><p>{t("Drag the ball back and release to shoot.")}</p><details><summary>{t("How to play")}</summary><p>{t("Three balls each. Both players start with identical tins. Break wooden crates, lob over stone, or use ramps. Tins must topple or leave their place to score.")}</p><p>{t("Each tin: 100. Clear bonus: 200. Each unused ball: 50.")}</p></details></div>
     <GamePlayArea className="arcade-play-area sling-play-area">

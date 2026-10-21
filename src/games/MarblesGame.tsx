@@ -846,6 +846,7 @@ function MarblesRound({ difficulty, playerNames, competitionMode = false, onComp
             {timerEnabled ? <Timer size={15} aria-hidden="true" /> : <TimerOff size={15} aria-hidden="true" />}
             <span>{t("Timer")} {t(timerEnabled ? "on" : "off")}</span>
           </button>
+          {!competitionMode && <button type="button" className="mobile-game-control secondary" onClick={reset}>{t("New match")}</button>}
         </div>
 
         <div className={`canvas-frame active-play-frame pauseable-play-area ${paused ? "is-paused" : ""}`} style={{ borderColor: PLAYER_COLORS[activePlayer] }}>

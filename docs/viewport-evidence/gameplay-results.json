@@ -1,0 +1,19 @@
+{
+  "checks": [
+    "captured pointer cancellation restores the baseline without scoring",
+    "keyboard arrows award stick points only after complete travel",
+    "completed pickup cannot score twice",
+    "third and fifth pickups award +20 and +50 exactly once",
+    "resize and fullscreen exit preserve scores and logical stick positions",
+    "clearing the pile reports the competition result once",
+    "disturbance gives zero points, resets streak and hands the shared pile to Ahmad",
+    "failed shared-pile turn does not submit an unfinished competition result",
+    "resizing during captured drag introduces no phantom movement or score",
+    "real touch extraction and touch cancellation use the same scoring rules",
+    "restart clears scores, streak, extraction and removed sticks",
+    "optional colour mission awards +30 separately from stick and streak points",
+    "carom: pause freezes an active physics shot and resume continues it",
+    "tin-can-knockdown: pause freezes an active physics shot and resume continues it"
+  ],
+  "errors": []
+}

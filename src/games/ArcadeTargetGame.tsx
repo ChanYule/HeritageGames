@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef, useState, type PointerEvent } from "react";
+import { useCallback, useContext, useEffect, useRef, useState, type PointerEvent } from "react";
 import { RotateCcw, Volume2, VolumeX } from "lucide-react";
 import { t, useLanguage } from "../i18n";
-import GamePlayArea from "../components/GamePlayArea";
+import GamePlayArea, { GameFullscreenContext } from "../components/GamePlayArea";
 import PlayerScoreboard from "../components/PlayerScoreboard";
 import type { CompetitionGameProps } from "../types";
 import { caromSettled, createCaromWorld, legalStrikerX, shootCarom, stepCarom, createCaromMatch, resolveCaromTurn, coinColour, strikerBaseline } from "./caromPhysics";
@@ -63,7 +63,10 @@ function ArcadeTarget2D({ kind, playerNames, competitionMode = false, onComplete
   const active = casual ? casualActive : individualAttempt ? 0 : (shot % 2) as 0 | 1;
   const baseline = strikerBaseline(active);
   const finished = casual ? casualWinner !== null : shot >= (individualAttempt?.shots ?? 12);
-  const canPlay = ready && !moving && !finished;
+  const fullscreenState = useContext(GameFullscreenContext);
+  const paused = fullscreenState?.paused ?? false;
+  const pauseRef = useRef(paused); pauseRef.current = paused;
+  const canPlay = !paused && ready && !moving && !finished;
 
   const render = useCallback((preview: Aim | null, showStriker = ready && !moving) => {
     const element = canvas.current, ctx = element?.getContext("2d");
@@ -130,7 +133,7 @@ function ArcadeTarget2D({ kind, playerNames, competitionMode = false, onComplete
     let last = 0, accumulator = 0;
     const frame = (timestamp: number) => {
       if (!locked.current) return;
-      if (document.hidden) { last = timestamp; raf.current = requestAnimationFrame(frame); return; }
+      if (document.hidden || pauseRef.current) { last = timestamp; raf.current = requestAnimationFrame(frame); return; }
       const dt = last ? Math.min((timestamp - last) / 1000, 1 / 30) : 1 / 60;
       last = timestamp;
       accumulator += dt;
@@ -238,6 +241,7 @@ function ArcadeTarget2D({ kind, playerNames, competitionMode = false, onComplete
   };
   const winner = casualWinner !== null ? t("{0} wins!", labels[casualWinner]) : scores[0] === scores[1] ? t("It's a draw!") : t("{0} wins!", labels[scores[0] > scores[1] ? 0 : 1]);
 
+  useEffect(() => { if (paused) { drag.current=null; aimRef.current=null; setAim(null); renderRef.current(null); } }, [paused]);
   return <div className="arcade-layout">
     <div className="arcade-intro"><p className="eyebrow">{t(carom ? "CAROM" : "TIN CAN KNOCKDOWN")}</p><h2>{t(carom ? "Pocket the coins" : "Topple the cans")}</h2><p>{t(carom ? "Move the striker on the baseline. Drag back and release to shoot." : "Drag the ball toward the cans. Aim higher or lower on the stack.")}</p></div>
     {carom && <details className="carrom-rules"><summary>{t("How to play Carrom")}</summary><ol>

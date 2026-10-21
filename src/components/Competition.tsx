@@ -146,7 +146,7 @@ const attemptHint = (game: HeritageGameKey) =>
     marbles:
       "Six shots to knock marbles out. The same layout and level for everyone.",
     "pick-up-sticks":
-      "Lift top sticks for 45 seconds. A blocked lift ends your attempt.",
+      "Lift carefully for 45 seconds. Disturbing another stick ends your attempt.",
     carom:
       "Pocket your own coins to play again. Cover the queen. Striker pocketed: foul.",
     "tin-can-knockdown":
