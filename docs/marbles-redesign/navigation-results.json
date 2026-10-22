@@ -1,0 +1,10 @@
+{
+  "checks": [
+    "homepage Play Marbles opens the redesigned game",
+    "Chinese, larger text and contrast preferences work in fullscreen",
+    "back navigation returns to the homepage",
+    "homepage Challenge navigation opens mode selection",
+    "existing arcade sound setting remains muted after reload"
+  ],
+  "errors": []
+}

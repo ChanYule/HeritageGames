@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-21",
+  "automatedTests": {
+    "passed": 244,
+    "newMarblesTests": 31,
+    "targetedIntegrationRerun": 16
+  },
+  "viewportCases": 234,
+  "expandedControlCases": 30,
+  "marblesGameplayChecks": 12,
+  "navigationAndPreferenceChecks": 5,
+  "uncaughtBrowserExceptions": [],
+  "typescript": "passed",
+  "productionBuild": {
+    "status": "passed",
+    "mainBundleKB": 584.63,
+    "gzipKB": 190.96,
+    "warning": "existing bundle above 500 kB"
+  },
+  "physicalDeviceTesting": false
+}

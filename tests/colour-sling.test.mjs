@@ -10,7 +10,7 @@ const m=await load('marblesPhysics'), g=await load('tinSlingPhysics');
 const marble=(id,group,x,y,vx=0,vy=0,target=true)=>({id,group,x,y,vx,vy,target,radius:18,captured:false,color:'#c33'});
 const settle=w=>{let steps=0;while(!w.settled&&steps++<4800)g.stepSling(w,1/120);assert.ok(w.settled,'rigid bodies must settle');return steps;};
 for(const [name,first,captures,expected] of [
- ['wrong first colour','Blue',['Red','Red'],0],['wrong captured colour','Red',['Blue'],0],['two valid captures','Red',['Red','Red'],300],['no capture','Red',[],0],['mixed captures','Red',['Red','Blue'],100],['no contact',null,['Red'],0],['three valid captures','Red',['Red','Red','Red'],450],
+ ['wrong first colour','Blue',['Red','Red'],0],['wrong captured colour','Red',['Blue'],0],['two valid captures','Red',['Red','Red'],250],['no capture','Red',[],0],['mixed captures','Red',['Red','Blue'],100],['no contact',null,['Red'],0],['three valid captures','Red',['Red','Red','Red'],450],
 ])test(`Marbles scoring: ${name}`,()=>{
  const s=m.createMarbleShot();s.first=first?{id:1,colour:first}:null;s.captured=captures.map((colour,id)=>({id,colour}));
  assert.equal(m.scoreMarbleShot(s,'Red').points,expected);
@@ -38,7 +38,7 @@ test('Marbles wall/target-target contacts and stationary overlaps do not set fir
  const overlap=[marble(1,'Red',450,250),marble(100,undefined,450,250,0,0,false)];m.advanceMarbles(overlap,1,shot);assert.equal(shot.first,null);
 });
 test('Marbles newly captured event contains ID and colour only once, plus completion',()=>{
- const board=[marble(5,'Green',668,260,4)],shot=m.createMarbleShot();
+ const board=[marble(5,'Green',m.MARBLES_RING.x+m.MARBLES_RING.radius+19,m.MARBLES_RING.y,4)],shot=m.createMarbleShot();
  m.advanceMarbles(board,1,shot);m.advanceMarbles(board,1,shot);
  assert.deepEqual(shot.captured,[{id:5,colour:'Green'}]);assert.equal(shot.complete,true);
 });
@@ -121,7 +121,7 @@ test('Marbles zero-point turns keep available target, alternate, and respect ind
 
 test('Marbles shooter can choose clear starting positions outside the ring without changing targets',()=>{
  const board=[marble(1,'Red',450,260),marble(100,undefined,450,570,0,0,false)],target={...board[0]};
- for(const[x,y]of [[150,260],[750,260],[450,540],[150,130]]){
+ for(const[x,y]of [[160,160],[740,160],[450,720],[160,500]]){
   assert.equal(m.placeMarbleShooter(board,x,y),true);assert.equal(board[1].x,x);assert.equal(board[1].y,y);assert.deepEqual(board[0],target);
   assert.ok(x>=board[1].radius+m.MARBLES_MAX_PULL&&x<=m.MARBLES_WIDTH-board[1].radius-m.MARBLES_MAX_PULL);
   assert.ok(y>=board[1].radius+m.MARBLES_MAX_PULL&&y<=m.MARBLES_HEIGHT-board[1].radius-m.MARBLES_MAX_PULL);
@@ -129,20 +129,20 @@ test('Marbles shooter can choose clear starting positions outside the ring witho
 });
 test('Marbles placement rejects the ring, insufficient pull-back room and invalid coordinates',()=>{
  const board=[marble(100,undefined,450,570,0,0,false)],start={...board[0]};
- for(const[x,y]of [[450,260],[450,480],[20,570],[880,260],[450,680],[150,20],[NaN,570],[150,Infinity]]){
+ for(const[x,y]of [[450,260],[450,480],[20,570],[880,260],[450,880],[150,20],[NaN,570],[150,Infinity]]){
   assert.equal(m.placeMarbleShooter(board,x,y),false);assert.deepEqual(board[0],start);
  }
 });
 test('Marbles placement blocks target overlap near the ring edge and any rolling shot',()=>{
- const board=[marble(1,'Red',450,470),marble(100,undefined,450,570,0,0,false)];
- assert.equal(m.placeMarbleShooter(board,450,490),false);
+ const y=m.MARBLES_RING.y+m.MARBLES_RING.radius;const board=[marble(1,'Red',450,y+16),marble(100,undefined,450,720,0,0,false)];
+ assert.equal(m.placeMarbleShooter(board,450,y+27),false);
  board[0].vx=1;assert.equal(m.placeMarbleShooter(board,150,260),false);board[0].vx=0;
  board[1].vy=-10;assert.equal(m.placeMarbleShooter(board,150,260),false);board[1].vy=0;
- board[0].captured=true;assert.equal(m.placeMarbleShooter(board,450,490),true);
+ board[0].captured=true;assert.equal(m.placeMarbleShooter(board,450,y+27),true);
 });
-for(const[x,vx]of [[150,16.2],[750,-16.2]])test(`Marbles physics and colour scoring work from chosen starting x=${x}`,()=>{
- const board=[marble(1,'Red',450,260),marble(100,undefined,450,570,0,0,false)],shot=m.createMarbleShot();
- assert.ok(m.placeMarbleShooter(board,x,260));assert.equal(shot.first,null);assert.equal(shot.captured.length,0);
+for(const[x,vx]of [[160,16.2],[740,-16.2]])test(`Marbles physics and colour scoring work from chosen starting x=${x}`,()=>{
+ const board=[marble(1,'Red',450,400),marble(100,undefined,450,720,0,0,false)],shot=m.createMarbleShot();
+ assert.ok(m.placeMarbleShooter(board,x,400));assert.equal(shot.first,null);assert.equal(shot.captured.length,0);
  board[1].vx=vx;
  for(let i=0;i<1600&&!shot.complete;i++)m.advanceMarbles(board,1,shot);
  assert.equal(shot.complete,true);assert.equal(shot.first.colour,'Red');assert.equal(m.scoreMarbleShot(shot,'Red').points,100);

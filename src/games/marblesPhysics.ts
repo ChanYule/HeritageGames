@@ -12,11 +12,11 @@ export type Marble = {
 };
 
 export const MARBLES_WIDTH = 900;
-export const MARBLES_HEIGHT = 700;
-export const MARBLES_RING = { x: MARBLES_WIDTH / 2, y: 260, radius: 200 };
+export const MARBLES_HEIGHT = 900;
+export const MARBLES_RING = { x: MARBLES_WIDTH / 2, y: 330, radius: 270 };
 
-export const MARBLES_LAUNCH = { x: MARBLES_WIDTH / 2, y: 570 };
-export const MARBLES_MAX_PULL = 110;
+export const MARBLES_LAUNCH = { x: MARBLES_WIDTH / 2, y: 720 };
+export const MARBLES_MAX_PULL = 140;
 
 export function placeMarbleShooter(marbles: Marble[], x: number, y: number) {
   const shooter = marbles.find(m => !m.target);
@@ -116,11 +116,12 @@ function advanceSubstep(marbles: Marble[], dt: number, shot?: MarbleShot) {
           if (!shot.contacts.some(item => item.id === target.id)) shot.contacts.push({ id: target.id, colour: target.group });
           shot.first ??= { id: target.id, colour: target.group };
         }
-        const impulse = -(1 + 0.88) * speedAlongNormal / 2;
-        a.vx -= impulse * nx;
-        a.vy -= impulse * ny;
-        b.vx += impulse * nx;
-        b.vy += impulse * ny;
+        const inverseA = 1 / (a.radius * a.radius), inverseB = 1 / (b.radius * b.radius);
+        const impulse = -(1 + 0.88) * speedAlongNormal / (inverseA + inverseB);
+        a.vx -= impulse * inverseA * nx;
+        a.vy -= impulse * inverseA * ny;
+        b.vx += impulse * inverseB * nx;
+        b.vy += impulse * inverseB * ny;
       }
     }
   }
@@ -162,8 +163,8 @@ export const MARBLE_STYLE = {
   Yellow: { color: "#d5a51b", symbol: "Y" }, Green: { color: "#28834c", symbol: "G" },
 };
 export type MarbleContact = { id: number; colour?: MarbleColour };
-export type MarbleShot = { first: MarbleContact | null; contacts: MarbleContact[]; captured: MarbleContact[]; complete: boolean; scored: boolean };
-export const createMarbleShot = (): MarbleShot => ({ first: null, contacts: [], captured: [], complete: false, scored: false });
+export type MarbleShot = { target?:MarbleColour; first: MarbleContact | null; contacts: MarbleContact[]; captured: MarbleContact[]; complete: boolean; scored: boolean };
+export const createMarbleShot = (target?:MarbleColour): MarbleShot => ({ target, first: null, contacts: [], captured: [], complete: false, scored: false });
 export function nextMarbleColour(marbles: Marble[], current?: MarbleColour, advance = false): MarbleColour | undefined {
   const start = current ? MARBLE_COLOURS.indexOf(current) + (advance ? 1 : 0) : 0;
   for (let i = 0; i < 4; i++) {
@@ -174,7 +175,7 @@ export function nextMarbleColour(marbles: Marble[], current?: MarbleColour, adva
 export function scoreMarbleShot(shot: MarbleShot, target?: MarbleColour) {
   const valid = Boolean(target && shot.first?.colour === target);
   const count = valid ? new Set(shot.captured.filter(m => m.colour === target).map(m => m.id)).size : 0;
-  const points = count * 100 + (count >= 2 ? count * 50 : 0);
+  const points = count === 0 ? 0 : count === 1 ? 100 : count === 2 ? 250 : 450 + (count - 3) * 200;
   return { count, points, reason: !shot.first ? "No contact" : !valid ? "Wrong colour hit first" : !count ? "No target-colour capture" : "Correct first hit" };
 }
 
@@ -189,4 +190,57 @@ export function resolveMarbleTurn(shot: MarbleShot, target: MarbleColour | undef
     nextPlayer: (individual ? 0 : player === 0 ? 1 : 0) as 0 | 1,
     finished: !marbles.some(m => m.target && !m.captured) || (individual && shotsUsed >= shotLimit),
   };
+}
+
+
+export const MARBLES_LAUNCH_LINE = { min:160, max:740, y:MARBLES_LAUNCH.y };
+/** Launch rail retains the safety checks of the legacy free-placement API. */
+export function positionMarbleOnLine(marbles:Marble[], x:number) {
+  if (!Number.isFinite(x)) return false;
+  return placeMarbleShooter(marbles, Math.max(MARBLES_LAUNCH_LINE.min,Math.min(MARBLES_LAUNCH_LINE.max,x)),MARBLES_LAUNCH_LINE.y);
+}
+export function marbleCanvasPoint(x:number,y:number,rect:{left:number;top:number;width:number;height:number}) {
+  return {x:(x-rect.left)*MARBLES_WIDTH/rect.width,y:(y-rect.top)*MARBLES_HEIGHT/rect.height};
+}
+export function marblePullVelocity(dx:number,dy:number) {
+  if(!Number.isFinite(dx+dy))return {x:0,y:0,power:0};
+  const length=Math.hypot(dx,dy),power=Math.min(1,length/MARBLES_MAX_PULL);
+  return {x:length && dx ? -dx/length*16.2*power:0,y:length && dy ? -dy/length*16.2*power:0,power};
+}
+export type MarblePrediction = {id:number;colour?:MarbleColour;distance:number;x:number;y:number;normal:{x:number;y:number}};
+/** Expanded-circle ray entry, limited by friction and the first board boundary.
+ * It predicts the unobstructed first contact, never later bounces/chain captures. */
+export function predictMarbleContact(marbles:Marble[],vx:number,vy:number) {
+  const shooter=marbles.find(m=>!m.target), speed=Math.hypot(vx,vy);
+  if(!shooter || speed<.07 || !Number.isFinite(speed)) return {contact:null as MarblePrediction|null,end:{x:shooter?.x??0,y:shooter?.y??0},distance:0};
+  const dx=vx/speed,dy=vy/speed;
+  let maxDistance=marbleRollingRange(speed,Math.min(13,...marbles.map(m=>m.radius)));
+  for(const [coordinate,direction,maximum] of [[shooter.x,dx,MARBLES_WIDTH],[shooter.y,dy,MARBLES_HEIGHT]]) {
+    if(direction>0) maxDistance=Math.min(maxDistance,(maximum-shooter.radius-coordinate)/direction);
+    if(direction<0) maxDistance=Math.min(maxDistance,(shooter.radius-coordinate)/direction);
+  }
+  let contact:MarblePrediction|null=null;
+  for(const m of marbles) {
+    if(!m.target || m.captured) continue;
+    const px=m.x-shooter.x,py=m.y-shooter.y,projection=px*dx+py*dy,r=shooter.radius+m.radius;
+    const perpendicular=px*px+py*py-projection*projection;
+    if(perpendicular>r*r || projection<0) continue;
+    const distance=Math.max(0,projection-Math.sqrt(Math.max(0,r*r-perpendicular)));
+    if(distance>maxDistance || (contact && (distance>contact.distance+1e-8 || (Math.abs(distance-contact.distance)<1e-8 && m.id>contact.id)))) continue;
+    const x=shooter.x+dx*distance,y=shooter.y+dy*distance,n=Math.hypot(m.x-x,m.y-y)||1;
+    contact={id:m.id,colour:m.group,distance,x,y,normal:{x:(m.x-x)/n,y:(m.y-y)/n}};
+  }
+  const distance=contact?.distance??maxDistance;
+  return {contact,end:{x:shooter.x+dx*distance,y:shooter.y+dy*distance},distance};
+}
+
+/** Match the solver's adaptive integration and stopping threshold before impact. */
+export function marbleRollingRange(initialSpeed:number, radius=13) {
+  if(!Number.isFinite(initialSpeed)||initialSpeed<.07)return 0;
+  let speed=initialSpeed,distance=0;
+  for(let frame=0;frame<2000&&speed>=.07;frame++) {
+    const steps=Math.max(1,Math.ceil(speed/(radius*.4))),friction=Math.pow(.985,1/steps);
+    for(let step=0;step<steps&&speed>=.07;step++) {distance+=speed/steps;speed*=friction;}
+  }
+  return distance;
 }

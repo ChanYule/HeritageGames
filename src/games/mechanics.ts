@@ -1,9 +1,9 @@
 export type Difficulty = "easy" | "medium" | "difficult";
 
 export const difficultySettings = {
-  easy: { label: "Easy", marbles: 8, marbleRadius: 18, sticks: 10, stickSpread: 46, stickLength: 28 },
-  medium: { label: "Medium", marbles: 12, marbleRadius: 16, sticks: 18, stickSpread: 36, stickLength: 38 },
-  difficult: { label: "Difficult", marbles: 16, marbleRadius: 13, sticks: 28, stickSpread: 20, stickLength: 38 },
+  easy: { label: "Easy", marbles: 8, marbleRadius: 22, sticks: 10, stickSpread: 46, stickLength: 28 },
+  medium: { label: "Medium", marbles: 12, marbleRadius: 20, sticks: 18, stickSpread: 36, stickLength: 38 },
+  difficult: { label: "Difficult", marbles: 16, marbleRadius: 18, sticks: 28, stickSpread: 20, stickLength: 38 },
 } as const;
 
 export type Point = { x: number; y: number };
@@ -44,41 +44,40 @@ export function chaptehFlightTuning(level: number) {
   };
 }
 
-// Random non-overlapping positions keep every target comfortably inside the ring.
-export function randomMarblePositions(random = Math.random, difficulty: Difficulty = "medium"): Point[] {
-  const settings = difficultySettings[difficulty];
-  const positions: Point[] = [];
-  const maxRadius = 162;
-  const minDistance = settings.marbleRadius * 2 + 5;
-  let attempts = 0;
-
-  while (positions.length < settings.marbles && attempts < 6000) {
-    attempts += 1;
-    const angle = random() * Math.PI * 2;
-    const radius = Math.sqrt(random()) * maxRadius;
-    const candidate = { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius };
-    if (positions.every((point) => Math.hypot(point.x - candidate.x, point.y - candidate.y) > minDistance)) {
-      positions.push(candidate);
-    }
-  }
-
-  if (positions.length < settings.marbles) {
-    const fallback: Point[] = [];
-    for (let ring = 0; ring < 3 && fallback.length < settings.marbles; ring++) {
-      const ringRadius = ring === 0 ? 0 : ring === 1 ? 72 : 138;
-      const slots = ring === 0 ? 1 : ring === 1 ? 6 : 12;
-      const offset = random() * Math.PI * 2;
-      for (let index = 0; index < slots && fallback.length < settings.marbles; index++) {
-        const angle = offset + (Math.PI * 2 * index) / slots;
-        const candidate = { x: Math.cos(angle) * ringRadius, y: Math.sin(angle) * ringRadius };
-        if (fallback.every((point) => Math.hypot(point.x - candidate.x, point.y - candidate.y) > minDistance)) {
-          fallback.push(candidate);
-        }
+export type MarblePattern = 'scattered' | 'clusters' | 'central' | 'mixed';
+export const MARBLE_PATTERNS:MarblePattern[]=['scattered','clusters','central','mixed'];
+/** Balanced, seeded formations. Four exposed front anchors give every colour
+ * a direct shot from the launch rail; remaining marbles form the chosen pattern. */
+export function randomMarblePositions(random = Math.random, difficulty: Difficulty = 'medium', pattern?:MarblePattern):Point[] {
+  const settings=difficultySettings[difficulty], gap=settings.marbleRadius*2+9;
+  const selected=pattern??MARBLE_PATTERNS[Math.floor(random()*4)%4];
+  const positions:Point[]=[45,75,105,135].map(degrees=>({x:Math.cos(degrees*Math.PI/180)*225+(random()-.5)*5,y:Math.sin(degrees*Math.PI/180)*225+(random()-.5)*5}));
+  const legal=(p:Point)=>Math.hypot(p.x,p.y)<=232 && positions.every(q=>Math.hypot(p.x-q.x,p.y-q.y)>=gap) && positions.slice(0,4).every(q=>p.y<q.y-gap || Math.abs(p.x-q.x)>gap);
+  for(let i=4;i<settings.marbles;i++) {
+    let placed=false;
+    for(let attempt=0;attempt<160;attempt++) {
+      let p:Point;
+      if(selected==='central' || (selected==='mixed'&&i%2===0)) {
+        const columns=5,row=Math.floor((attempt+i-4)/columns)%5,col=(attempt+i-4)%columns;
+        p={x:(col-2)*gap,y:(row-2)*gap-40};
+      } else if(selected==='clusters') {
+        const centre=[{x:-130,y:-95},{x:130,y:-95},{x:0,y:50}][(i+Math.floor(attempt/12))%3];
+        const angle=(attempt%6)*Math.PI/3;
+        p={x:centre.x+Math.cos(angle)*gap*(attempt%2),y:centre.y+Math.sin(angle)*gap*(attempt%2)};
+      } else {
+        // Stratified sectors prevent all of the random samples falling in one corner.
+        const angle=Math.PI+(i-4+random()*.45)/(settings.marbles-3)*Math.PI;
+        const radius=100+random()*128;
+        p={x:Math.cos(angle)*radius,y:Math.sin(angle)*radius+20};
       }
+      if(legal(p)) {positions.push(p);placed=true;break;}
     }
-    return fallback.slice(0, settings.marbles);
+    if(!placed) {
+      // Validated lattice fallback, including adversarial constant random sources.
+      outer:for(let y=-200;y<=120;y+=gap)for(let x=-220;x<=220;x+=gap)if(legal({x,y})){positions.push({x,y});placed=true;break outer;}
+    }
+    if(!placed) throw new Error('No valid marble formation');
   }
-
   return positions;
 }
 

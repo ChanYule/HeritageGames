@@ -1,0 +1,156 @@
+{
+  "checks": [
+    "left/right reposition controls do not shoot or score",
+    "real touch slides the shooter horizontally without accidental firing",
+    "captured drag remains stable across resize; cancellation neither shoots nor scores",
+    "real touch cancellation leaves the shot and score untouched",
+    "score result and handover fit phone portrait, phone landscape and tablet",
+    "real touch wrong-colour first hit awards zero",
+    "pause freezes rolling physics; resume continues the same shot",
+    "valid capture scores only after settling and advances the available target",
+    "complete six-shot Challenge session matches deterministic physics and reports once",
+    "fullscreen/orientation changes preserve scores, result and completion count",
+    "shared-pile miss hands the unchanged target and device to Ahmad only after settling",
+    "shared-pile scoring uses the same points and target progression as Challenge",
+    "restart clears shots, scores, target progression and active player"
+  ],
+  "shots": [
+    {
+      "plan": {
+        "x": 160,
+        "angle": -25,
+        "power": 100
+      },
+      "result": {
+        "expected": [
+          0,
+          0
+        ],
+        "target": "Red",
+        "points": 0,
+        "first": "Blue"
+      },
+      "message": "Blue hit first. Target Red. 0 points."
+    },
+    {
+      "plan": {
+        "x": 560,
+        "angle": -85,
+        "power": 100
+      },
+      "result": {
+        "expected": [
+          100,
+          0
+        ],
+        "target": "Blue",
+        "points": 100,
+        "first": "Red"
+      },
+      "message": "Correct hit! 1 Red captured. +100 points."
+    },
+    {
+      "plan": {
+        "x": 160,
+        "angle": -50,
+        "power": 100
+      },
+      "result": {
+        "expected": [
+          200,
+          0
+        ],
+        "target": "Yellow",
+        "points": 100,
+        "first": "Blue"
+      },
+      "message": "Correct hit! 1 Blue captured. +100 points."
+    },
+    {
+      "plan": {
+        "x": 200,
+        "angle": -40,
+        "power": 100
+      },
+      "result": {
+        "expected": [
+          300,
+          0
+        ],
+        "target": "Green",
+        "points": 100,
+        "first": "Yellow"
+      },
+      "message": "Correct hit! 1 Yellow captured. +100 points."
+    },
+    {
+      "plan": {
+        "x": 160,
+        "angle": -60,
+        "power": 100
+      },
+      "result": {
+        "expected": [
+          400,
+          0
+        ],
+        "target": "Yellow",
+        "points": 100,
+        "first": "Green"
+      },
+      "message": "Correct hit! 1 Green captured. +100 points."
+    },
+    {
+      "plan": {
+        "x": 160,
+        "angle": -70,
+        "power": 100
+      },
+      "result": {
+        "expected": [
+          500,
+          0
+        ],
+        "target": "Green",
+        "points": 100,
+        "first": "Yellow"
+      },
+      "message": "Attempt complete. 500 points."
+    },
+    {
+      "plan": {
+        "x": 160,
+        "angle": -25,
+        "power": 100
+      },
+      "result": {
+        "expected": [
+          0,
+          0
+        ],
+        "target": "Red",
+        "points": 0,
+        "first": "Blue"
+      },
+      "message": "Blue hit first. Target Red. 0 points."
+    },
+    {
+      "plan": {
+        "x": 160,
+        "angle": -70,
+        "power": 100
+      },
+      "result": {
+        "expected": [
+          0,
+          100
+        ],
+        "target": "Blue",
+        "points": 100,
+        "first": "Red"
+      },
+      "message": "Correct hit! 1 Red captured. +100 points."
+    }
+  ],
+  "errors": []
+}

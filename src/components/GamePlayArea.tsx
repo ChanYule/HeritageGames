@@ -15,7 +15,7 @@ export const GameFullscreenContext = createContext<{
   setPaused: (paused:boolean) => void;
 } | null>(null);
 
-export default function GamePlayArea({ children, className = "" }: { children: ReactNode; className?: string }) {
+export default function GamePlayArea({ children, className = "", aspectRatio }: { children: ReactNode; className?: string; aspectRatio?:number }) {
   useLanguage();
   const challengeProgress = useContext(ChallengeFullscreenContext);
   const fullscreen = useContext(GameFullscreenContext);
@@ -92,7 +92,7 @@ export default function GamePlayArea({ children, className = "" }: { children: R
         if (landscape) width -= (controls?.offsetWidth ?? 130) + 12;
         else height -= (controls?.offsetHeight ?? 110) + 8;
       }
-      const ratio = shooter ? 2/3 : root.matches('.marbles-play-area') ? 900/700 : root.matches('.sticks-play-area') ? 900/560 : root.matches('.sling-play-area') ? 1200/620 : 1;
+      const ratio = aspectRatio ?? (shooter ? 2/3 : root.matches('.marbles-play-area') ? 900/700 : root.matches('.sticks-play-area') ? 900/560 : root.matches('.sling-play-area') ? 1200/620 : 1);
       const fittedWidth = Math.max(1, Math.min(width, height * ratio));
       screen.style.setProperty('--fit-width', `${fittedWidth}px`);
       screen.style.setProperty('--fit-height', `${fittedWidth / ratio}px`);
@@ -104,7 +104,7 @@ export default function GamePlayArea({ children, className = "" }: { children: R
     window.visualViewport?.addEventListener('resize', viewport);
     window.addEventListener('resize', viewport); viewport();
     return () => { observer.disconnect(); window.visualViewport?.removeEventListener('resize',viewport); window.removeEventListener('resize',viewport); };
-  }, [className, active]);
+  }, [className, active, aspectRatio]);
 
   return (
     <div onClickCapture={event => {

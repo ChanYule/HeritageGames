@@ -1,0 +1,30 @@
+﻿<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"></head><body><div id="root"></div><script type="module">
+import React from '/node_modules/.vite/deps/react.js';import ReactDOM from '/node_modules/.vite/deps/react-dom_client.js';
+import GameShell from '/src/components/GameShell.tsx';import Game,{createMarbles} from '/src/games/MarblesGame.tsx';
+import * as physics from '/src/games/marblesPhysics.ts';
+import '/src/styles.css';import '/src/senior.css';import '/src/fullscreen.css';import '/src/physical-games.css';import '/src/gameViewport.css';
+const query=new URLSearchParams(location.search),individual=!query.has('shared');
+Math.random=()=>.5;
+window.results=[];window.replica=createMarbles('easy',individual?42:undefined);window.target='Red';window.expected=[0,0];window.player=0;
+window.plan=(wrong=false)=>{
+ const board=window.replica,target=window.target;
+ let backup=null;
+ for(const ball of board.filter(b=>b.target&&!b.captured&&(wrong?b.group!==target:b.group===target)))for(let x=160;x<=740;x+=40)for(const power of [100,85,70,55]){
+  const angle=Math.round(Math.atan2(ball.y-720,ball.x-x)*180/Math.PI/5)*5;
+  const copy=structuredClone(board);physics.positionMarbleOnLine(copy,x);const shooter=copy.find(b=>!b.target);shooter.vx=Math.cos(angle*Math.PI/180)*16.2*power/100;shooter.vy=Math.sin(angle*Math.PI/180)*16.2*power/100;
+  const prediction=physics.predictMarbleContact(copy,shooter.vx,shooter.vy);if(!prediction.contact||(wrong?prediction.contact.colour===target:prediction.contact.colour!==target))continue;
+  const shot=physics.createMarbleShot(target);for(let i=0;i<1400&&!shot.complete;i++)physics.advanceMarbles(copy,1,shot);
+  const result=physics.scoreMarbleShot(shot,target);const plan={x,angle,power,copy,shot,result,predicted:prediction.contact.colour};
+  if(wrong||result.points>0)return plan;backup??=plan;
+ }
+ return backup??{x:450,angle:90,power:30};
+};
+window.commit=plan=>{
+ if(!plan.copy){const copy=structuredClone(window.replica);physics.returnShooterToStart(copy);const shooter=copy.find(b=>!b.target);shooter.vy=4.86;const shot=physics.createMarbleShot(window.target);for(let i=0;i<1400&&!shot.complete;i++)physics.advanceMarbles(copy,1,shot);plan={...plan,copy,shot,result:physics.scoreMarbleShot(shot,window.target)};}
+ window.expected[window.player]+=plan.result.points;window.replica=plan.copy;
+ window.target=physics.nextMarbleColour(window.replica,window.target,plan.result.points>0);
+ physics.returnShooterToStart(window.replica);if(!individual)window.player=1-window.player;
+ return {expected:window.expected,target:window.target,points:plan.result.points,first:plan.shot.first?.colour};
+};
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(GameShell,{title:'Marbles',subtitle:'Test',onBack:()=>{}},React.createElement(Game,{competitionMode:true,playerNames:['Mary','Ahmad'],fixedDifficulty:'easy',...(individual?{individualAttempt:{seed:42,shots:6}}:{}),onComplete:r=>window.results.push(r)})));
+</script></body></html>
