@@ -717,4 +717,8 @@ export const zh: Record<string, string> = {
   "{0} Targets Left": "还剩{0}颗目标弹珠",
   "{0}s Remaining": "剩余{0}秒",
   "Match options": "比赛选项",
+  "Coins pocketed": "已进洞棋子",
+  "Board points": "本局得分",
+  "{0}, {1} coins pocketed{2}": "{0}，已进洞{1}枚棋子{2}",
+  "Your best score on each level counts toward your run total.": "每一关的最高分会计入您的总分。",
 };

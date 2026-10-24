@@ -7,6 +7,8 @@ type Props = {
   individual?: boolean;
   colours?: [string, string];
   scores: [number, number];
+  scoreUnit?: "points" | "coins";
+  animateScores?: boolean;
   labels?: [string, string];
   gameOver?: boolean;
   secondary?: [string, string];
@@ -19,6 +21,8 @@ export default function PlayerScoreboard({
   individual = false,
   colours,
   scores,
+  scoreUnit = "points",
+  animateScores = false,
   labels = [t("Player 1"), t("Player 2")],
   gameOver = false,
   secondary,
@@ -77,7 +81,7 @@ export default function PlayerScoreboard({
             transition={{ type: "spring", stiffness: 330, damping: 26 }}
             layout
             aria-current={isActive ? "true" : undefined}
-            aria-label={t("{0}, {1} points{2}", labels[player], scores[player], isActive ? t(", current turn") : "")}
+            aria-label={t(scoreUnit === "coins" ? "{0}, {1} coins pocketed{2}" : "{0}, {1} points{2}", labels[player], scores[player], isActive ? t(", current turn") : "")}
           >
             <div className="player-score-name">
               <span className="player-dot" style={colours ? { background: colours[player] } : undefined} />
@@ -94,7 +98,7 @@ export default function PlayerScoreboard({
             </div>
             <div className="premium-score-value-wrap">
               {gameOver && scores[player] === Math.max(...scores) && scores[0] !== scores[1] ? <Trophy size={16} /> : null}
-              <AnimatePresence mode="popLayout" initial={false}>
+              {animateScores ? <AnimatePresence mode="popLayout" initial={false}>
                 <motion.strong
                   key={`${player}-${scores[player]}`}
                   className="player-score-value"
@@ -105,7 +109,7 @@ export default function PlayerScoreboard({
                 >
                   {scores[player]}
                 </motion.strong>
-              </AnimatePresence>
+              </AnimatePresence> : <strong className="player-score-value">{scores[player]}</strong>}
             </div>
             {secondary && <span className="player-score-secondary">{secondary[player]}</span>}
             {paused && isActive ? (

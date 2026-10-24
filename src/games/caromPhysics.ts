@@ -101,6 +101,15 @@ export function caromSettled(world: CaromWorld): boolean {
 }
 
 export const coinColour = (id: number): "queen" | "light" | "dark" => id === 1 ? "queen" : id % 2 === 0 ? "light" : "dark";
+/** Count secured coins after resolving returns/dues; queen and striker are separate. */
+export function caromPocketedCoins(world: CaromWorld): [number, number] {
+  const totals: [number, number] = [0, 0];
+  for (const disc of world.discs) {
+    if (!disc.pocketed || disc.id === 0 || disc.id === 1) continue;
+    totals[coinColour(disc.id) === "light" ? 0 : 1]++;
+  }
+  return totals;
+}
 export type CaromMatch = {
   active: 0 | 1;
   queenPending: 0 | 1 | null;

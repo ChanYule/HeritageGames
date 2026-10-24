@@ -1,0 +1,65 @@
+{
+  "automatedTests": 251,
+  "layoutChecks": 234,
+  "expandedControlChecks": 30,
+  "gameplayChecks": 58,
+  "layoutFailures": [],
+  "expandedControlFailures": [],
+  "browserErrors": [],
+  "performance": [
+    {
+      "game": "marbles",
+      "samples": 354,
+      "meanFrameMs": 16.80706214689266,
+      "p95FrameMs": 16.800000000000182,
+      "maxFrameMs": 50.20000000000027,
+      "longTasks": 0,
+      "largestLongTaskMs": 0
+    },
+    {
+      "game": "pick-up-sticks",
+      "samples": 360,
+      "meanFrameMs": 16.664911111111113,
+      "p95FrameMs": 16.80000000000109,
+      "maxFrameMs": 17.800000000000182,
+      "longTasks": 0,
+      "largestLongTaskMs": 0
+    },
+    {
+      "game": "carom",
+      "samples": 359,
+      "meanFrameMs": 16.71309192200558,
+      "p95FrameMs": 16.899999999999636,
+      "maxFrameMs": 33.30000000000018,
+      "longTasks": 0,
+      "largestLongTaskMs": 0
+    },
+    {
+      "game": "tin-can-knockdown",
+      "samples": 360,
+      "meanFrameMs": 16.666388888888896,
+      "p95FrameMs": 17,
+      "maxFrameMs": 19.600000000000364,
+      "longTasks": 0,
+      "largestLongTaskMs": 0
+    },
+    {
+      "game": "sky-1942",
+      "samples": 360,
+      "meanFrameMs": 16.66666666666668,
+      "p95FrameMs": 16.900000000000546,
+      "maxFrameMs": 18.399999999999636,
+      "longTasks": 0,
+      "largestLongTaskMs": 0
+    },
+    {
+      "game": "galaxy-defenders",
+      "samples": 360,
+      "meanFrameMs": 16.666666666666675,
+      "p95FrameMs": 16.90000000000009,
+      "maxFrameMs": 18.100000000000364,
+      "longTasks": 0,
+      "largestLongTaskMs": 0
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "checks": [
+    "a real opening-rack pocket updates Player 1 after settling",
+    "successive pockets accumulate without replacing the earlier total",
+    "a miss preserves totals and hands over to Player 2",
+    "Player 2 pockets update their own total",
+    "live totals remain visible and unchanged across phone/tablet orientation changes",
+    "fullscreen exit preserves live totals",
+    "new match resets both totals"
+  ],
+  "shots": [
+    {
+      "x": 414,
+      "angle": -135,
+      "power": 66,
+      "scores": [
+        1,
+        0
+      ]
+    },
+    {
+      "x": 469,
+      "angle": -115,
+      "power": 78,
+      "scores": [
+        2,
+        0
+      ]
+    },
+    {
+      "x": 115,
+      "angle": -90,
+      "power": 10,
+      "scores": [
+        2,
+        0
+      ]
+    },
+    {
+      "x": 315,
+      "angle": 49,
+      "power": 77,
+      "scores": [
+        2,
+        1
+      ]
+    }
+  ],
+  "errors": []
+}

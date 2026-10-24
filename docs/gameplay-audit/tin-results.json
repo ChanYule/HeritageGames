@@ -1,0 +1,298 @@
+{
+  "checks": [
+    "pause freezes a moving Tin shot; resume continues it",
+    "partial Tin captures update the live run total before the attempt ends",
+    "a weaker retry cannot remove earlier points or award duplicate tin points",
+    "an improved retry adds only the improvement and the clear/unused-ball bonuses once",
+    "Tin player handover keeps both totals separate",
+    "next level preserves the earned run total",
+    "Tin restart clears scores and retry credits",
+    "easy Tin Challenge completes with the simulated score and exactly one result",
+    "medium Tin Challenge completes with the simulated score and exactly one result",
+    "difficult Tin Challenge completes with the simulated score and exactly one result"
+  ],
+  "shots": [
+    {
+      "angle": 10,
+      "power": 100,
+      "score": 500,
+      "resolved": false,
+      "balls": 2,
+      "breakdown": {
+        "tins": 500,
+        "clear": 0,
+        "unused": 0
+      },
+      "visible": [
+        500,
+        0
+      ]
+    },
+    {
+      "angle": 75,
+      "power": 12,
+      "score": 500,
+      "resolved": false,
+      "balls": 1,
+      "breakdown": {
+        "tins": 500,
+        "clear": 0,
+        "unused": 0
+      },
+      "visible": [
+        500,
+        0
+      ]
+    },
+    {
+      "angle": 75,
+      "power": 12,
+      "score": 500,
+      "resolved": true,
+      "balls": 0,
+      "breakdown": {
+        "tins": 500,
+        "clear": 0,
+        "unused": 0
+      },
+      "visible": [
+        500,
+        0
+      ]
+    },
+    {
+      "angle": 75,
+      "power": 12,
+      "score": 0,
+      "resolved": false,
+      "balls": 2,
+      "breakdown": {
+        "tins": 0,
+        "clear": 0,
+        "unused": 0
+      },
+      "visible": [
+        500,
+        0
+      ]
+    },
+    {
+      "angle": 75,
+      "power": 12,
+      "score": 0,
+      "resolved": false,
+      "balls": 1,
+      "breakdown": {
+        "tins": 0,
+        "clear": 0,
+        "unused": 0
+      },
+      "visible": [
+        500,
+        0
+      ]
+    },
+    {
+      "angle": 75,
+      "power": 12,
+      "score": 0,
+      "resolved": true,
+      "balls": 0,
+      "breakdown": {
+        "tins": 0,
+        "clear": 0,
+        "unused": 0
+      },
+      "visible": [
+        500,
+        0
+      ]
+    },
+    {
+      "angle": 10,
+      "power": 100,
+      "score": 500,
+      "resolved": false,
+      "balls": 2,
+      "breakdown": {
+        "tins": 500,
+        "clear": 0,
+        "unused": 0
+      },
+      "visible": [
+        500,
+        0
+      ]
+    },
+    {
+      "angle": 10,
+      "power": 70,
+      "score": 850,
+      "resolved": true,
+      "balls": 1,
+      "breakdown": {
+        "tins": 600,
+        "clear": 200,
+        "unused": 50
+      },
+      "visible": [
+        850,
+        0
+      ]
+    },
+    {
+      "angle": 75,
+      "power": 12,
+      "score": 0,
+      "resolved": false,
+      "balls": 2,
+      "breakdown": {
+        "tins": 0,
+        "clear": 0,
+        "unused": 0
+      },
+      "visible": [
+        850,
+        0
+      ]
+    },
+    {
+      "angle": 75,
+      "power": 12,
+      "score": 0,
+      "resolved": false,
+      "balls": 1,
+      "breakdown": {
+        "tins": 0,
+        "clear": 0,
+        "unused": 0
+      },
+      "visible": [
+        850,
+        0
+      ]
+    },
+    {
+      "angle": 75,
+      "power": 12,
+      "score": 0,
+      "resolved": true,
+      "balls": 0,
+      "breakdown": {
+        "tins": 0,
+        "clear": 0,
+        "unused": 0
+      },
+      "visible": [
+        850,
+        0
+      ]
+    },
+    {
+      "angle": 10,
+      "power": 100,
+      "score": 500,
+      "resolved": false,
+      "balls": 2,
+      "breakdown": {
+        "tins": 500,
+        "clear": 0,
+        "unused": 0
+      },
+      "visible": [
+        500
+      ]
+    },
+    {
+      "angle": 10,
+      "power": 70,
+      "score": 850,
+      "resolved": true,
+      "balls": 1,
+      "breakdown": {
+        "tins": 600,
+        "clear": 200,
+        "unused": 50
+      },
+      "visible": [
+        850
+      ]
+    },
+    {
+      "angle": 10,
+      "power": 100,
+      "score": 500,
+      "resolved": false,
+      "balls": 2,
+      "breakdown": {
+        "tins": 500,
+        "clear": 0,
+        "unused": 0
+      },
+      "visible": [
+        500
+      ]
+    },
+    {
+      "angle": 30,
+      "power": 55,
+      "score": 850,
+      "resolved": true,
+      "balls": 1,
+      "breakdown": {
+        "tins": 600,
+        "clear": 200,
+        "unused": 50
+      },
+      "visible": [
+        850
+      ]
+    },
+    {
+      "angle": 10,
+      "power": 85,
+      "score": 400,
+      "resolved": false,
+      "balls": 2,
+      "breakdown": {
+        "tins": 400,
+        "clear": 0,
+        "unused": 0
+      },
+      "visible": [
+        400
+      ]
+    },
+    {
+      "angle": 40,
+      "power": 55,
+      "score": 500,
+      "resolved": false,
+      "balls": 1,
+      "breakdown": {
+        "tins": 500,
+        "clear": 0,
+        "unused": 0
+      },
+      "visible": [
+        500
+      ]
+    },
+    {
+      "angle": 20,
+      "power": 55,
+      "score": 800,
+      "resolved": true,
+      "balls": 0,
+      "breakdown": {
+        "tins": 600,
+        "clear": 200,
+        "unused": 0
+      },
+      "visible": [
+        800
+      ]
+    }
+  ],
+  "errors": []
+}

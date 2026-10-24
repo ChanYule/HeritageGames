@@ -1,0 +1,24 @@
+{
+  "checks": [
+    "real touch cancellation uses no ball and awards no score",
+    "a real pull-and-release touch shot uses the same settled scoring as button controls"
+  ],
+  "shots": [
+    {
+      "angle": 10,
+      "power": 100,
+      "score": 500,
+      "resolved": false,
+      "balls": 2,
+      "breakdown": {
+        "tins": 500,
+        "clear": 0,
+        "unused": 0
+      },
+      "visible": [
+        500
+      ]
+    }
+  ],
+  "errors": []
+}

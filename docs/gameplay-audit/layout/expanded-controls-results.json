@@ -1,0 +1,245 @@
+{
+  "results": [
+    {
+      "game": "marbles",
+      "state": "shot adjustments open",
+      "width": 320,
+      "height": 568,
+      "outside": [],
+      "overflow": false
+    },
+    {
+      "game": "marbles",
+      "state": "shooter placement",
+      "width": 320,
+      "height": 568,
+      "outside": [],
+      "overflow": false
+    },
+    {
+      "game": "marbles",
+      "state": "Chinese and larger text",
+      "width": 320,
+      "height": 568,
+      "outside": [],
+      "overflow": false
+    },
+    {
+      "game": "marbles",
+      "state": "shot adjustments open",
+      "width": 667,
+      "height": 375,
+      "outside": [],
+      "overflow": false
+    },
+    {
+      "game": "marbles",
+      "state": "shooter placement",
+      "width": 667,
+      "height": 375,
+      "outside": [],
+      "overflow": false
+    },
+    {
+      "game": "marbles",
+      "state": "Chinese and larger text",
+      "width": 667,
+      "height": 375,
+      "outside": [],
+      "overflow": false
+    },
+    {
+      "game": "marbles",
+      "state": "shot adjustments open",
+      "width": 1024,
+      "height": 768,
+      "outside": [],
+      "overflow": false
+    },
+    {
+      "game": "marbles",
+      "state": "shooter placement",
+      "width": 1024,
+      "height": 768,
+      "outside": [],
+      "overflow": false
+    },
+    {
+      "game": "marbles",
+      "state": "Chinese and larger text",
+      "width": 1024,
+      "height": 768,
+      "outside": [],
+      "overflow": false
+    },
+    {
+      "game": "pick-up-sticks",
+      "state": "Chinese and larger text",
+      "width": 320,
+      "height": 568,
+      "outside": [],
+      "overflow": false
+    },
+    {
+      "game": "pick-up-sticks",
+      "state": "Chinese and larger text",
+      "width": 667,
+      "height": 375,
+      "outside": [],
+      "overflow": false
+    },
+    {
+      "game": "pick-up-sticks",
+      "state": "Chinese and larger text",
+      "width": 1024,
+      "height": 768,
+      "outside": [],
+      "overflow": false
+    },
+    {
+      "game": "carom",
+      "state": "shot adjustments open",
+      "width": 320,
+      "height": 568,
+      "outside": [],
+      "overflow": false
+    },
+    {
+      "game": "carom",
+      "state": "Chinese and larger text",
+      "width": 320,
+      "height": 568,
+      "outside": [],
+      "overflow": false
+    },
+    {
+      "game": "carom",
+      "state": "shot adjustments open",
+      "width": 667,
+      "height": 375,
+      "outside": [],
+      "overflow": false
+    },
+    {
+      "game": "carom",
+      "state": "Chinese and larger text",
+      "width": 667,
+      "height": 375,
+      "outside": [],
+      "overflow": false
+    },
+    {
+      "game": "carom",
+      "state": "shot adjustments open",
+      "width": 1024,
+      "height": 768,
+      "outside": [],
+      "overflow": false
+    },
+    {
+      "game": "carom",
+      "state": "Chinese and larger text",
+      "width": 1024,
+      "height": 768,
+      "outside": [],
+      "overflow": false
+    },
+    {
+      "game": "tin-can-knockdown",
+      "state": "shot adjustments open",
+      "width": 320,
+      "height": 568,
+      "outside": [],
+      "overflow": false
+    },
+    {
+      "game": "tin-can-knockdown",
+      "state": "Chinese and larger text",
+      "width": 320,
+      "height": 568,
+      "outside": [],
+      "overflow": false
+    },
+    {
+      "game": "tin-can-knockdown",
+      "state": "shot adjustments open",
+      "width": 667,
+      "height": 375,
+      "outside": [],
+      "overflow": false
+    },
+    {
+      "game": "tin-can-knockdown",
+      "state": "Chinese and larger text",
+      "width": 667,
+      "height": 375,
+      "outside": [],
+      "overflow": false
+    },
+    {
+      "game": "tin-can-knockdown",
+      "state": "shot adjustments open",
+      "width": 1024,
+      "height": 768,
+      "outside": [],
+      "overflow": false
+    },
+    {
+      "game": "tin-can-knockdown",
+      "state": "Chinese and larger text",
+      "width": 1024,
+      "height": 768,
+      "outside": [],
+      "overflow": false
+    },
+    {
+      "game": "sky-1942",
+      "state": "Chinese and larger text",
+      "width": 320,
+      "height": 568,
+      "outside": [],
+      "overflow": false
+    },
+    {
+      "game": "sky-1942",
+      "state": "Chinese and larger text",
+      "width": 667,
+      "height": 375,
+      "outside": [],
+      "overflow": false
+    },
+    {
+      "game": "sky-1942",
+      "state": "Chinese and larger text",
+      "width": 1024,
+      "height": 768,
+      "outside": [],
+      "overflow": false
+    },
+    {
+      "game": "galaxy-defenders",
+      "state": "Chinese and larger text",
+      "width": 320,
+      "height": 568,
+      "outside": [],
+      "overflow": false
+    },
+    {
+      "game": "galaxy-defenders",
+      "state": "Chinese and larger text",
+      "width": 667,
+      "height": 375,
+      "outside": [],
+      "overflow": false
+    },
+    {
+      "game": "galaxy-defenders",
+      "state": "Chinese and larger text",
+      "width": 1024,
+      "height": 768,
+      "outside": [],
+      "overflow": false
+    }
+  ],
+  "errors": []
+}

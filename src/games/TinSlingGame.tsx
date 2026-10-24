@@ -5,6 +5,7 @@ import { t, useLanguage } from "../i18n";
 import type { CompetitionGameProps } from "../types";
 import { createSlingWorld, launchSling, MAX_PULL, SLING, slingTrajectory, stepSling, TIN_LEVELS, type SlingWorld } from "./tinSlingPhysics";
 import { playArcadeSound } from "./arcadeSound";
+import { creditSlingScore } from "./tinSlingScoring";
 import "./arcade.css";
 
 export default function TinSlingGame({ playerNames, playerColours, competitionMode = false, individualAttempt, fixedDifficulty, onComplete }: CompetitionGameProps) {
@@ -97,7 +98,9 @@ export default function TinSlingGame({ playerNames, playerColours, competitionMo
       updateRef.current();
       if (current.settled) {
         locked.current = false; setMoving(false); setLastPoints(current.score - previousScore); refresh(n => n + 1);
-        if (current.resolved) { setResult(true); const key = `${level}:${active}`, previousScore = levelScores.current.get(key) ?? 0; levelScores.current.set(key, current.score); setScores(s => { const next: [number, number] = [...s]; next[active] += current.score - previousScore; return next; }); if (current.breakdown.clear) playArcadeSound("score", !mutedRef.current); if (competitionMode && individualAttempt) setFinished(true); }
+        const earned = creditSlingScore(levelScores.current, level, active, current.score);
+        if (earned) setScores(s => { const next: [number, number] = [...s]; next[active] += earned; return next; });
+        if (current.resolved) { setResult(true); if (current.breakdown.clear) playArcadeSound("score", !mutedRef.current); if (competitionMode && individualAttempt) setFinished(true); }
         return;
       }
       raf.current = requestAnimationFrame(frame);
@@ -119,7 +122,7 @@ export default function TinSlingGame({ playerNames, playerColours, competitionMo
   const restart = () => { cancelAnimationFrame(raf.current); locked.current = false; reported.current = false; levelScores.current.clear(); setScores([0, 0]); setMoving(false); setFinished(false); setFirstClear(false); newAttempt(initialLevel, 0); };
   useEffect(() => { if (paused) { gesture.current=null; preview.current=[]; updateRef.current(); } }, [paused]);
   return <div className="arcade-layout sling-layout">
-    <div className="arcade-intro"><h2>{t("Tin-Can Knockdown")}</h2><p>{t("Drag the ball back and release to shoot.")}</p><details><summary>{t("How to play")}</summary><p>{t("Three balls each. Both players start with identical tins. Break wooden crates, lob over stone, or use ramps. Tins must topple or leave their place to score.")}</p><p>{t("Each tin: 100. Clear bonus: 200. Each unused ball: 50.")}</p></details></div>
+    <div className="arcade-intro"><h2>{t("Tin-Can Knockdown")}</h2><p>{t("Drag the ball back and release to shoot.")}</p><details><summary>{t("How to play")}</summary><p>{t("Three balls each. Both players start with identical tins. Break wooden crates, lob over stone, or use ramps. Tins must topple or leave their place to score.")}</p><p>{t("Each tin: 100. Clear bonus: 200. Each unused ball: 50.")}</p><p>{t("Your best score on each level counts toward your run total.")}</p></details></div>
     <GamePlayArea className="arcade-play-area sling-play-area">
       <PlayerScoreboard individual={Boolean(individualAttempt)} colours={playerColours} labels={labels} scores={scores} activePlayer={active} gameOver={finished} />
       <div className="arcade-status" role="status" aria-live="polite"><strong>{t("Level {0} of {1}", level + 1, 5)} · {t(spec.name)}</strong><span>{t(spec.objective)}</span><span>{t("Balls left: {0} · Level score: {1}", w.balls, w.score)} · {labels[active]}</span><small>{t("Run score: {0}", scores[active])}</small>{lastPoints !== null && <small>{t("Last shot: +{0} points", lastPoints)}</small>}<small className="fullscreen-score-summary">{labels[0]}: {scores[0]} · {labels[1]}: {scores[1]}</small></div>

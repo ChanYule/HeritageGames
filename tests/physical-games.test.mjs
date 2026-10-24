@@ -8,6 +8,35 @@ async function load(name) {
   return import(`data:text/javascript;base64,${Buffer.from(outputText).toString("base64")}`);
 }
 const c = await load("caromPhysics"), tin = await load("canPhysics"), m = await load("marblesPhysics");
+test("Carrom live totals accumulate settled coins for both colours without awarding final board points early", () => {
+  const w=c.createCaromWorld(), match=c.createCaromMatch();
+  assert.deepEqual(c.caromPocketedCoins(w),[0,0]);
+  pocket(w,[2]); c.resolveCaromTurn(w,match);
+  assert.deepEqual(c.caromPocketedCoins(w),[1,0]);
+  pocket(w,[4,3]); c.resolveCaromTurn(w,match);
+  assert.deepEqual(c.caromPocketedCoins(w),[2,1]);
+  pocket(w,[]); c.resolveCaromTurn(w,match);
+  assert.deepEqual(c.caromPocketedCoins(w),[2,1]);
+  assert.deepEqual(match.points,[0,0]);
+});
+test("Carrom live totals exclude queen and striker and reverse returned foul coins", () => {
+  const w=c.createCaromWorld(), match=c.createCaromMatch();
+  pocket(w,[2,4]); c.resolveCaromTurn(w,match);
+  pocket(w,[0,6]); c.resolveCaromTurn(w,match);
+  assert.deepEqual(c.caromPocketedCoins(w),[1,0]);
+  assert.deepEqual(match.dues,[0,0]);
+  w.discs.find(d=>d.id===1).pocketed=true;
+  assert.deepEqual(c.caromPocketedCoins(w),[1,0]);
+  assert.deepEqual(c.caromPocketedCoins(c.createCaromWorld()),[0,0]);
+});
+test("Carrom unpaid dues consume the next pocket instead of inflating the live total", () => {
+  const w=c.createCaromWorld(), match=c.createCaromMatch(); match.breakComplete=true;
+  pocket(w,[0]); c.resolveCaromTurn(w,match);
+  pocket(w,[]); c.resolveCaromTurn(w,match);
+  pocket(w,[2]); c.resolveCaromTurn(w,match);
+  assert.deepEqual(c.caromPocketedCoins(w),[0,0]);
+  assert.deepEqual(match.dues,[0,0]);
+});
 const disc = (id, x, y, vx = 0, vy = 0) => ({ id, x, y, vx, vy, r:15, pocketed:false });
 const settle = (world, step, done) => {
   for (let i=0; i<2400 && !done(world); i++) step(world, 1/120);

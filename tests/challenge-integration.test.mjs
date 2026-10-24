@@ -73,6 +73,8 @@ try {
       assert.match(html, /White: 9 coins left; 0 due/);
       assert.match(html, /Black: 9 coins left; 0 due/);
       assert.match(html, /Single board/);
+      assert.match(html, /Coins pocketed/);
+      assert.match(html, /Player 1, 0 coins pocketed/);
       assert.doesNotMatch(html, /shot 1 of 6|All twelve shots/);
     }
   });

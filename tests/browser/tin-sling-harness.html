@@ -1,0 +1,10 @@
+﻿<!doctype html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"></head><body><div id="root"></div><script type="module">
+import React from '/node_modules/.vite/deps/react.js';import ReactDOM from '/node_modules/.vite/deps/react-dom_client.js';
+import GameShell from '/src/components/GameShell.tsx';import Game from '/src/games/TinSlingGame.tsx';import * as physics from '/src/games/tinSlingPhysics.ts';
+import '/src/styles.css';import '/src/senior.css';import '/src/fullscreen.css';import '/src/physical-games.css';import '/src/gameViewport.css';
+const query=new URLSearchParams(location.search),practice=query.has('practice'),difficulty=query.get('difficulty')??'easy',level=difficulty==='difficult'?4:difficulty==='medium'?2:0;
+window.results=[];window.replica=physics.createSlingWorld(level);
+window.resetReplica=()=>{window.replica=physics.createSlingWorld(level);};
+window.simulate=(angle,power)=>{const r=angle*Math.PI/180,w=window.replica;if(!physics.launchSling(w,-Math.cos(r)*physics.MAX_PULL*power/100,-Math.sin(r)*physics.MAX_PULL*power/100))throw Error('Replica refused shot');for(let i=0;i<4800&&!w.settled;i++)physics.stepSling(w,1/120);if(!w.settled)throw Error('Replica did not settle');return {score:w.score,resolved:w.resolved,balls:w.balls,breakdown:w.breakdown};};
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(GameShell,{title:'Tin-Can Knockdown',subtitle:'Test',onBack:()=>{}},React.createElement(Game,{competitionMode:!practice,fixedDifficulty:difficulty,playerNames:['Mary','Ahmad'],...(!practice?{individualAttempt:{seed:42,shots:3}}:{}),onComplete:r=>window.results.push(r)})));
+</script></body></html>

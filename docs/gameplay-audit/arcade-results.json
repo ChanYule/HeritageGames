@@ -1,0 +1,44 @@
+{
+  "results": [
+    {
+      "game": "sky-1942",
+      "checks": [
+        "real enemy hits update the visible HUD score",
+        "pause freezes score and playfield",
+        "game over matches the final score and forbids further scoring",
+        "one score submission saves the correct local result",
+        "reload preserves the saved leaderboard without duplicate entries",
+        "new game resets the current score"
+      ],
+      "final": 50,
+      "saved": [
+        {
+          "name": "AUDIT",
+          "score": 50,
+          "stage": 1
+        }
+      ]
+    },
+    {
+      "game": "galaxy-defenders",
+      "checks": [
+        "real enemy hits update the visible HUD score",
+        "pause freezes score and playfield",
+        "game over matches the final score and forbids further scoring",
+        "one score submission saves the correct local result",
+        "reload preserves the saved leaderboard without duplicate entries",
+        "new game resets the current score"
+      ],
+      "final": 60,
+      "saved": [
+        {
+          "name": "AUDIT",
+          "score": 60,
+          "wave": 1,
+          "mode": "beginner"
+        }
+      ]
+    }
+  ],
+  "errors": []
+}

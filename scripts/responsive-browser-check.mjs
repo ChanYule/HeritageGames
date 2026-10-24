@@ -23,7 +23,7 @@ for(const fallback of [false,true]) {
     const result=await page.locator('.measured-game-layout').evaluate((root,{game,mode,width,height})=>{
      const rect=e=>{const r=e.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,bottom:r.bottom};};
      const board=root.querySelector('.sky-screen,.galaxy-screen,.canvas-frame,.sticks-board,.carom-board,.sling-scene');
-     const nodes=[board,...root.querySelectorAll('.game-essential-controls button,.game-essential-controls summary,.sky-controls button,.sky-joystick,.galaxy-controls button,.game-fullscreen-toolbar button')].filter(e=>e && e.getBoundingClientRect().width && !e.closest('details:not([open]) .shot-adjustment-fields'));
+     const nodes=[board,...root.querySelectorAll('.game-essential-controls button,.game-essential-controls summary,.sky-controls button,.sky-joystick,.galaxy-controls button,.game-fullscreen-toolbar button')].filter(e=>e && e.checkVisibility() && e.getBoundingClientRect().width && !e.closest('details:not([open]) .shot-adjustment-fields'));
      const outside=nodes.map(e=>({tag:e.className,text:e.textContent?.trim().slice(0,35),...rect(e)})).filter(r=>r.x< -1||r.y< -1||r.right>innerWidth+1||r.bottom>innerHeight+1);
      const b=rect(board);
      const clipped=nodes.filter(e=>{const r=e.getBoundingClientRect();for(let parent=e.parentElement;parent&&parent!==root;parent=parent.parentElement){const c=getComputedStyle(parent);if(c.overflowX==='hidden'||c.overflowY==='hidden'){const a=parent.getBoundingClientRect();if(r.left<a.left-1||r.right>a.right+1||r.top<a.top-1||r.bottom>a.bottom+1)return true;}}return false;}).map(e=>e.className);

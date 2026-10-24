@@ -4,7 +4,7 @@ import { t, useLanguage } from "../i18n";
 import GamePlayArea, { GameFullscreenContext } from "../components/GamePlayArea";
 import PlayerScoreboard from "../components/PlayerScoreboard";
 import type { CompetitionGameProps } from "../types";
-import { caromSettled, createCaromWorld, legalStrikerX, shootCarom, stepCarom, createCaromMatch, resolveCaromTurn, coinColour, strikerBaseline } from "./caromPhysics";
+import { caromSettled, createCaromWorld, legalStrikerX, shootCarom, stepCarom, createCaromMatch, resolveCaromTurn, coinColour, strikerBaseline, caromPocketedCoins } from "./caromPhysics";
 import { cansSettled, createCanWorld, stepCans, throwBall } from "./canPhysics";
 import { drawCans, drawCarom } from "./arcadeRendering";
 import { playArcadeSound, vibrateArcade } from "./arcadeSound";
@@ -24,6 +24,7 @@ function ArcadeTarget2D({ kind, playerNames, competitionMode = false, onComplete
   const carom = kind === "carom";
   const labels: [string, string] = playerNames ?? [t("Player 1"), t("Player 2")];
   const [scores, setScores] = useState<[number, number]>(initialProgress?.scores ?? [0, 0]);
+  const [pocketedCoins, setPocketedCoins] = useState<[number, number]>([0, 0]);
   const [shot, setShot] = useState(initialProgress?.shot ?? 0);
   const [casualActive, setCasualActive] = useState<0 | 1>(0);
   const [casualWinner, setCasualWinner] = useState<0 | 1 | null>(null);
@@ -63,6 +64,7 @@ function ArcadeTarget2D({ kind, playerNames, competitionMode = false, onComplete
   const active = casual ? casualActive : individualAttempt ? 0 : (shot % 2) as 0 | 1;
   const baseline = strikerBaseline(active);
   const finished = casual ? casualWinner !== null : shot >= (individualAttempt?.shots ?? 12);
+  const displayedScores = casual && !finished ? pocketedCoins : scores;
   const fullscreenState = useContext(GameFullscreenContext);
   const paused = fullscreenState?.paused ?? false;
   const pauseRef = useRef(paused); pauseRef.current = paused;
@@ -107,6 +109,7 @@ function ArcadeTarget2D({ kind, playerNames, competitionMode = false, onComplete
     setMoving(false); setReady(Boolean(individualAttempt)); setAim(null); setShot(current => current + 1);
     if (casual) {
       const result = resolveCaromTurn(caromWorld.current, match.current);
+      setPocketedCoins(caromPocketedCoins(caromWorld.current));
       scored = result.own;
       setCasualActive(match.current.active); setCasualWinner(match.current.winner);
       setScores([...match.current.points]);
@@ -236,7 +239,7 @@ function ArcadeTarget2D({ kind, playerNames, competitionMode = false, onComplete
     cancelAnimationFrame(raf.current); cancelAnimationFrame(previewFrame.current); previewFrame.current = 0; locked.current = false; reported.current = false;
     caromWorld.current = createCaromWorld(); canWorld.current = createCanWorld();
     match.current = createCaromMatch(); setCasualActive(0); setCasualWinner(null); drag.current = null; aimRef.current = null;
-    setScores([0, 0]); setShot(0); setReady(false); setMoving(false); setAim(null); setStrikerX(300); setAngle(-90);
+    setScores([0, 0]); setPocketedCoins([0, 0]); setShot(0); setReady(false); setMoving(false); setAim(null); setStrikerX(300); setAngle(-90);
     setMessage(carom ? "Move the striker, then drag back to shoot." : "Drag the ball toward the cans and release.");
   };
   const winner = casualWinner !== null ? t("{0} wins!", labels[casualWinner]) : scores[0] === scores[1] ? t("It's a draw!") : t("{0} wins!", labels[scores[0] > scores[1] ? 0 : 1]);
@@ -254,8 +257,11 @@ function ArcadeTarget2D({ kind, playerNames, competitionMode = false, onComplete
       <li>{t("Winner earns one point per opponent coin remaining, plus three for their covered queen. This is one board, without a tournament timer.")}</li>
     </ol></details>}
     <GamePlayArea className="arcade-play-area">
-      <PlayerScoreboard secondary={carom ? ([0, 1] as const).map(side => t("{0}: {1} coins left; {2} due", t(side === 0 ? "White" : "Black"), caromWorld.current.discs.filter(d => !d.pocketed && d.id !== 0 && coinColour(d.id) === (side === 0 ? "light" : "dark")).length, match.current.dues[side])) as [string, string] : undefined} individual={Boolean(individualAttempt)} colours={playerColours} activePlayer={active} scores={scores} labels={labels} gameOver={finished} />
-      <div className="arcade-status" role="status" aria-live="polite"><strong>{finished ? winner : ready ? casual ? t("{0}: {1} coins", labels[active], t(active === 0 ? "White" : "Black")) : t("{0}'s shot {1} of {2}", labels[active], individualAttempt ? shot + 1 : Math.floor(shot / 2) + 1, individualAttempt?.shots ?? 6) : t("Pass the device to {0}", labels[active])}</strong><span>{finished ? casual ? `${t(message)} ${t("Board complete. Winner earns {0} board points.", scores[casualWinner ?? 0])}` : t(individualAttempt ? "Round complete." : "All twelve shots are complete.") : moving ? t("Wait for everything to settle…") : t(message, messagePoints)}</span><small className="fullscreen-score-summary">{labels[0]}: {scores[0]} · {labels[1]}: {scores[1]}</small></div>
+      <div className="carrom-scoreboard">
+      {carom && <p className="carrom-score-label">{t(finished ? "Board points" : "Coins pocketed")}</p>}
+      <PlayerScoreboard animateScores={!carom} scoreUnit={casual && !finished ? "coins" : "points"} secondary={carom ? ([0, 1] as const).map(side => t("{0}: {1} coins left; {2} due", t(side === 0 ? "White" : "Black"), caromWorld.current.discs.filter(d => !d.pocketed && d.id !== 0 && coinColour(d.id) === (side === 0 ? "light" : "dark")).length, match.current.dues[side])) as [string, string] : undefined} individual={Boolean(individualAttempt)} colours={playerColours} activePlayer={active} scores={displayedScores} labels={labels} gameOver={finished} />
+      </div>
+      <div className="arcade-status" role="status" aria-live="polite"><strong>{finished ? winner : ready ? casual ? t("{0}: {1} coins", labels[active], t(active === 0 ? "White" : "Black")) : t("{0}'s shot {1} of {2}", labels[active], individualAttempt ? shot + 1 : Math.floor(shot / 2) + 1, individualAttempt?.shots ?? 6) : t("Pass the device to {0}", labels[active])}</strong><span>{finished ? casual ? `${t(message)} ${t("Board complete. Winner earns {0} board points.", scores[casualWinner ?? 0])}` : t(individualAttempt ? "Round complete." : "All twelve shots are complete.") : moving ? t("Wait for everything to settle…") : t(message, messagePoints)}</span><small className="fullscreen-score-summary">{labels[0]}: {displayedScores[0]} · {labels[1]}: {displayedScores[1]}</small></div>
       <canvas ref={canvas} className={carom ? "carom-board" : "can-scene"} tabIndex={0} onKeyDown={event => { if (event.key === " " || event.key === "Enter") { event.preventDefault(); if (!event.repeat) shoot(); } }} aria-label={t(carom ? "Carom board with coins and four corner pockets" : "Tin can stack and throwing ball")} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={cancelDrag} onLostPointerCapture={cancelDrag} />
       {casual && <p className="arcade-rule-hint">{match.current.queenPending !== null ? t("Cover the queen with your own coin this shot.") : match.current.queenCovered !== null ? t("Queen covered by {0}.", labels[match.current.queenCovered]) : t("Queen available after your first own coin. Cover it before your last coin.")}</p>}
       <div className="arcade-controls">
